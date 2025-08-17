@@ -35,7 +35,6 @@ $template->setValue('shipping_method', $data['shipping_method']);
 $template->setValue('date_requested', date('F j, Y', strtotime($data['date_requested'])));
 $template->setValue('status', $data['status']);
 
-// Save and download
 $filename = $data['document_type'] . '-' . $data['id'] . '.docx';
 $template->saveAs($filename);
 
