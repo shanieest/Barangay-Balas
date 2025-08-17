@@ -238,7 +238,7 @@ requireAuth();
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="js/script.js"></script>
-<script>
+ <script>
     // Global variables
 let currentResidentId = null;
 let currentRequestId = null;
@@ -313,7 +313,8 @@ function refreshResidentList(page = 1, search = '') {
 // Function to render residents table with data
 function renderResidentsTable(residents, pagination) {
     const tableBody = getElement('#residentsTable tbody');
-    if (!tableBody) return;
+    if (!tableBody) 
+        return;
     
     tableBody.innerHTML = '';
     

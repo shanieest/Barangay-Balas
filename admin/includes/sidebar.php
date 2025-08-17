@@ -1,7 +1,6 @@
 <?php
 require_once 'includes/db.php';
 
-// Start session if not started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -46,7 +45,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="sb-nav-link-icon"><i class="fas fa-user-people"></i></div>
                     Census data
                 </a>
-                <a class="nav-link" href="document-requests.php">
+                <a class="nav-link" href="documentAdmin.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-file-alt"></i></div>
                     Document Requests
                 </a>

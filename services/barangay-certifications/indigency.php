@@ -38,15 +38,18 @@
     <form id="documentRequests" action="documents_request.php" method="POST">
       <div class="row g-3">
         <input type="hidden" name="document_type" value="indigency">
-        <!-- Full Name -->
-        <div class="col-md-12">
-          <input name="full_name" type="text" class="form-control" placeholder="Full Name *" required>
+
+        <!-- Name Fields -->
+        <div class="col-md-4">
+          <input name="first_name" type="text" class="form-control" placeholder="First Name *" required>
+        </div>
+        <div class="col-md-4">
+          <input name="middle_name" type="text" class="form-control" placeholder="Middle Name">
+        </div>
+        <div class="col-md-4">
+          <input name="last_name" type="text" class="form-control" placeholder="Last Name *" required>
         </div>
 
-        <div class="col-md-12">
-          <label for="editBirthDate" class="form-label">Date of Birth</label>
-          <input type="date" class="form-control" id="BirthDate" name="dob">
-        </div>
 
         <!-- Address -->
         <div class="col-md-4">
@@ -84,8 +87,7 @@
           <select name="shipping_method" class="form-select" required>
             <option value="">Select Shipping Method *</option>
             <option value="Pick Up">Pick Up (Claim Anytime)</option>
-            <option value="Delivery">Deliver (charge applies)</option>
-          </select>
+         </select>
         </div>
       </div>
 

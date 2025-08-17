@@ -5,7 +5,7 @@ require '../../includes/db.php';
 $request_id = $_GET['request_id'];
 
 $stmt = $conn->prepare("
-    SELECT dr.*, r.full_name, r.address, r.purok, r.civil_status, r.sex, r.age
+    SELECT dr.*, r.first_name, r.middle_name, r.last_name, r.address, r.purok, r.civil_status, r.sex, TIMESTAMPDIFF(YEAR, r.dob, CURDATE()) as age
     FROM document_requests dr
     JOIN residents r ON dr.resident_id = r.id
     WHERE dr.id = ?
@@ -24,20 +24,19 @@ if (!file_exists($templatePath)) {
 $template = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
 
 // Replace placeholders
-$template->setValue('full_name', $data['full_name']);
+$full_name = trim($data['first_name'] . " " . $data['middle_name'] . " " . $data['last_name']);
+$template->setValue('full_name', $full_name);
 $template->setValue('address', $data['address']);
 $template->setValue('purok', $data['purok']);
 $template->setValue('age', $data['age']);
 $template->setValue('sex', $data['sex']);
 $template->setValue('purpose', $data['purpose']);
 $template->setValue('civil_status', $data['civil_status']);
-$template->setValue('request_date', date('F j, Y', strtotime($data['request_date'])));
-$template->setValue('queue_number', str_pad($data['queue_number'], 3, '0', STR_PAD_LEFT));
-$template->setValue('year', $data['request_year']);
-// add more as needed
+$template->setValue('request_date', date('F j, Y', strtotime($data['date_requested'])));
+$template->setValue('request_number', $data['request_number']); // ✅ new
 
 // Save and download
-$filename = $data['document_type'] . '-' . $data['queue_number'] . '.docx';
+$filename = $data['document_type'] . '-' . $data['request_number'] . '.docx';
 $template->saveAs($filename);
 
 header("Content-Disposition: attachment; filename=" . $filename);

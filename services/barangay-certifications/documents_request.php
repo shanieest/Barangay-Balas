@@ -1,60 +1,85 @@
 <?php
 require '../../includes/db.php';
+session_start();
 
-$full_name = $_POST['full_name'];
-$dob = $_POST['dob'];
-$document_type = $_POST['document_type'];
-$purpose = $_POST['purpose'];
-$year = date("Y");
 
-// Check if resident exists
-$checkResident = $conn->prepare("SELECT * FROM residents WHERE full_name = ? AND dob = ?");
-$checkResident->bind_param("ss", $full_name, $dob);
+$account_id = $_SESSION['resident_account_id'];
+
+// ✅ Check if resident account exists and is approved
+$checkResident = $conn->prepare("
+    SELECT ra.id, ra.status, ra.email, r.id AS resident_id, 
+           r.first_name, r.middle_name, r.last_name, r.birthdate,
+           r.address, r.purok, r.sex, TIMESTAMPDIFF(YEAR, r.birthdate, CURDATE()) as age
+    FROM resident_accounts ra
+    JOIN residents r ON ra.resident_id = r.id
+    WHERE ra.id = ?
+    LIMIT 1
+");
+$checkResident->bind_param("i", $account_id);
 $checkResident->execute();
 $residentResult = $checkResident->get_result();
 
 if ($residentResult->num_rows === 0) {
-    die("<script>alert('Resident not found. Must be registered in census.'); window.location.href = '/barangay-balas/index.php';</script>");
+    die("<script>
+        alert('No portal account found. Please register first.');
+        window.location.href = '/balas-2.0/index.php';
+    </script>");
 }
 
 $resident = $residentResult->fetch_assoc();
-$resident_id = $resident['id'];
 
-// Get latest queue number
-$stmt = $conn->prepare("SELECT MAX(queue_number) as last_queue FROM document_requests WHERE document_type = ? AND request_year = ?");
-$stmt->bind_param("si", $document_type, $year);
-$stmt->execute();
-$result = $stmt->get_result()->fetch_assoc();
+// ✅ Must be approved
+if ($resident['status'] !== 'approved') {
+    die("<script>
+        alert('Your Barangay Portal Account must be approved to request documents.');
+        window.location.href = '/balas-2.0/index.php';
+    </script>");
+}
 
-$next_queue_raw = isset($result['last_queue']) ? (int)$result['last_queue'] + 1 : 1;
-$next_queue = str_pad($next_queue_raw, 3, '0', STR_PAD_LEFT);
+$resident_id = $resident['resident_id'];
+$email       = $resident['email']; 
+$full_name   = trim($resident['first_name'] . ' ' . $resident['middle_name'] . ' ' . $resident['last_name']);
 
-// Insert request including address, sex, and civil status
+// ✅ Safely get POST values (only from form)
+$document_type = $_POST['document_type'] ?? '';
+$purpose       = $_POST['purpose'] ?? '';
+$requirements  = $_POST['requirements'] ?? ''; // optional
+
+// ✅ Validate required inputs
+if (empty($document_type) || empty($purpose)) {
+    die("<script>
+        alert('Please fill in all required fields.');
+        window.history.back();
+    </script>");
+}
+
+// ✅ Auto-generate request_number (YEAR + random 5-digit ID)
+$request_number = date("Y") . '-' . str_pad(mt_rand(1, 99999), 5, "0", STR_PAD_LEFT);
+
+// ✅ Insert request
 $insert = $conn->prepare("
     INSERT INTO document_requests (
-        resident_id, document_type, request_year, queue_number, purpose,
-        address, sex, civil_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        request_number, resident_id, document_type, purpose, requirements, status, date_requested
+    ) VALUES (?, ?, ?, ?, ?, 'pending', NOW())
 ");
 $insert->bind_param(
-    "isisssss",
+    "sisss",
+    $request_number,
     $resident_id,
     $document_type,
-    $year,
-    $next_queue,
     $purpose,
-    $resident['address'],
-    $resident['sex'],
-    $resident['civil_status']
-    
+    $requirements
 );
 
 if ($insert->execute()) {
     echo "<script>
-        alert('Document requested successfully! Queue No: $next_queue');
-        window.location.href = '/barangay-balas/index.php';
+        alert('Document requested successfully! Request No: {$request_number}');
+        window.location.href = '/balas-2.0/index.php';
     </script>";
 } else {
-    echo "<script>alert('Request failed. Please try again.');</script>";
+    echo "<script>
+        alert('Request failed. Please try again.');
+        window.history.back();
+    </script>";
 }
 ?>

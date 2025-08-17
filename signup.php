@@ -509,7 +509,7 @@ if (isset($_SESSION['login_error'])) {
 
             let addressParts = [];
 
-            if (houseNo) addressParts.push(houseNo);
+            if (houseNo) addressParts.push("House " + houseNo);
             if (purok) addressParts.push("Purok " + purok);
 
             addressParts.push("Balas, Mexico, Pampanga, Philippines");

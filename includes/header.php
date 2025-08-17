@@ -102,15 +102,15 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" role="button">Barangay Certifications</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="\balas 2.0\services\barangay-certifications\residency.php">Certificate of Residency</a></li>
-                <li><a class="dropdown-item" href="\balas 2.0\services\barangay-certifications\indigency.php">Certificate of Indigency</a></li>
+                <li><a class="dropdown-item" href="\balas-2.0\services\barangay-certifications\residency.php">Certificate of Residency</a></li>
+                <li><a class="dropdown-item" href="\balas-2.0\services\barangay-certifications\indigency.php">Certificate of Indigency</a></li>
               </ul>
             </li>
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" role="button">Barangay Clearance</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="\barangay-balas\services\barangay-clearance\businessClearance.php">Business Clearance</a></li>
-                <li><a class="dropdown-item" href="\barangay-balas\services\barangay-clearance\employmentClearance.php">Employment Clearance</a></li>
+                <li><a class="dropdown-item" href="\balas-2.0\services\barangay-clearance\businessClearance.php">Business Clearance</a></li>
+                <li><a class="dropdown-item" href="\balas-2.0\services\barangay-clearance\employmentClearance.php">Employment Clearance</a></li>
               </ul>
             </li>
             <li class="dropdown-submenu">
