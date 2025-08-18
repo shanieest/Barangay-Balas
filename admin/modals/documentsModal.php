@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const requestId = button.getAttribute('data-id');
             
             // Fetch basic request info
-            fetch(`get-request-basic.php?id=${requestId}`)
+            fetch(`document-info.php?id=${requestId}`)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('disapproveRequestId').value = requestId;

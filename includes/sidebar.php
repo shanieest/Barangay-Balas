@@ -12,7 +12,7 @@
                 <li>
                     <a href="#documents">
                         <i class="fas fa-file-alt"></i>
-                        <span class="sidebar-text">Request Documents</span>
+                        <span class="sidebar-text">Services</span>
                     </a>
                 </li>
                 <li>

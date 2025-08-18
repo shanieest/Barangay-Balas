@@ -1,72 +1,107 @@
-  <!-- Top Navbar -->
-            <nav class="top-navbar navbar navbar-expand-lg navbar-light bg-white">
-                <div class="container-fluid">
-                    <button class="btn btn-link" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="d-flex align-items-center ms-auto">
-                        <div class="dropdown me-3">
-                            <button class="btn btn-link position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-bell fa-lg"></i>
-                                <span class="notification-badge">3</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="width: 300px;">
-                                <li>
-                                    <h6 class="dropdown-header">Notifications</h6>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                        <div class="me-3">
-                                            <i class="fas fa-file-alt text-primary"></i>
-                                        </div>
-                                        <div>
-                                            <div>Your Barangay Clearance is ready for pickup</div>
-                                            <small class="text-muted">2 hours ago</small>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                        <div class="me-3">
-                                            <i class="fas fa-bullhorn text-warning"></i>
-                                        </div>
-                                        <div>
-                                            <div>New announcement: Barangay Meeting</div>
-                                            <small class="text-muted">1 day ago</small>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center" href="#">
-                                        <div class="me-3">
-                                            <i class="fas fa-exclamation-circle text-danger"></i>
-                                        </div>
-                                        <div>
-                                            <div>Your document request needs additional information</div>
-                                            <small class="text-muted">3 days ago</small>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <a class="dropdown-item text-center text-primary" href="#">View All Notifications</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-link dropdown-toggle d-flex align-items-center" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="https://via.placeholder.com/40" alt="Profile" class="rounded-circle me-2">
-                                <span>Juan Dela Cruz</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li><a class="dropdown-item" href="#profile"><i class="fas fa-user me-2"></i>Profile</a></li>
-                                <li><a class="dropdown-item" href="#settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+<?php
+require_once 'includes/db.php';
+require_once 'includes/auth.php';
+
+// ============================
+// Fetch Notifications (Latest Activity Logs)
+// ============================
+$notifSql = "SELECT activity, timestamp 
+             FROM activity_logs 
+             ORDER BY timestamp DESC 
+             LIMIT 5";
+$notifResult = $conn->query($notifSql);
+$notifCount = $notifResult->num_rows;
+
+// ============================
+// Get Logged-in User
+// ============================
+$userId = $_SESSION['user_id'] ?? null;
+$user = null;
+
+if ($userId) {
+    $userSql = "SELECT first_name, last_name, photo_path 
+                FROM admin_users 
+                WHERE id = ?";
+    $stmt = $conn->prepare($userSql);
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $userResult = $stmt->get_result();
+    $user = $userResult->fetch_assoc();
+    $stmt->close();
+}
+
+// Default profile photo if none
+$profilePhoto = $user && $user['photo_path'] 
+    ? $user['photo_path'] 
+    : "https://via.placeholder.com/40";
+$userName = $user 
+    ? $user['first_name'] . " " . $user['last_name'] 
+    : "Administrator";
+?>
+
+<!-- Top Navbar -->
+<nav class="top-navbar navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container-fluid">
+        <!-- Sidebar Toggle Button -->
+        <button class="btn btn-link" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Right Side -->
+        <div class="d-flex align-items-center ms-auto">
+            
+            <!-- Notifications Dropdown -->
+            <div class="dropdown me-3">
+                <button class="btn btn-link position-relative" type="button" 
+                        id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-bell fa-lg"></i>
+                    <?php if ($notifCount > 0): ?>
+                        <span class="notification-badge"><?php echo $notifCount; ?></span>
+                    <?php endif; ?>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="width: 300px;">
+                    <li><h6 class="dropdown-header">Notifications</h6></li>
+
+                    <?php if ($notifCount > 0): ?>
+                        <?php while ($row = $notifResult->fetch_assoc()): ?>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="me-3">
+                                        <i class="fas fa-info-circle text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <div><?php echo htmlspecialchars($row['activity']); ?></div>
+                                        <small class="text-muted">
+                                            <?php echo date("M d, Y h:i A", strtotime($row['timestamp'])); ?>
+                                        </small>
+                                    </div>
+                                </a>
+                            </li>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <li><a class="dropdown-item text-center text-muted">No notifications</a></li>
+                    <?php endif; ?>
+
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-center text-primary" href="all_notifications.php">View All Notifications</a></li>
+                </ul>
+            </div>
+
+            <!-- Profile Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-link dropdown-toggle d-flex align-items-center" type="button" 
+                        id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="<?php echo $profilePhoto; ?>" 
+                         alt="Profile" class="rounded-circle me-2" width="40" height="40">
+                    <span><?php echo htmlspecialchars($userName); ?></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="settings.php"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>

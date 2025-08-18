@@ -1,6 +1,7 @@
 <?php 
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();
+require_once __DIR__ . '/includes/db.php'; // $conn = mysqli connection
 ?>
 
 <!DOCTYPE html>
@@ -26,19 +27,65 @@ requireAuth();
                     <ol class="breadcrumb mb-4">
                         <li class="breadcrumb-item active">Dashboard</li>
                     </ol>
-                    
+
+                    <?php
+                    // ================== STATISTICS ===================
+                    function getCount($conn, $query) {
+                        $result = $conn->query($query);
+                        return ($result && $row = $result->fetch_assoc()) ? (int)$row['total'] : 0;
+                    }
+
+                    $residents_count  = getCount($conn, "SELECT COUNT(*) AS total FROM residents");
+                    $pending_requests = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Pending'");
+                    $approved_today   = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Approved' AND DATE(date_processed) = CURDATE()");
+                    $announcements    = getCount($conn, "SELECT COUNT(*) AS total FROM announcements WHERE DATE(date_posted) = CURDATE()");
+
+                    // ================== CHART DATA ===================
+                    // Requests this week by type
+                    $requestsData = [];
+                    $labels = [];
+                    $reqQuery = $conn->query("
+                        SELECT dt.document_type, COUNT(*) as total
+                        FROM document_requests dr
+                        JOIN document_types dt ON dr.document_type_id = dt.id
+                        WHERE YEARWEEK(dr.date_requested, 1) = YEARWEEK(CURDATE(), 1)
+                        GROUP BY dt.document_type
+                    ");
+                    if ($reqQuery) {
+                        while ($row = $reqQuery->fetch_assoc()) {
+                            $labels[] = $row['document_type'];
+                            $requestsData[] = $row['total'];
+                        }
+                    }
+
+                    // Residents by account status
+                    $residentLabels = ['Verified', 'Pending', 'Rejected'];
+                    $residentData = [0, 0, 0];
+                    $resQuery = $conn->query("
+                        SELECT ra.status, COUNT(*) as total
+                        FROM resident_accounts ra
+                        JOIN residents r ON ra.resident_id = r.id
+                        GROUP BY ra.status
+                    ");
+                    if ($resQuery) {
+                        while ($row = $resQuery->fetch_assoc()) {
+                            if ($row['status'] === 'Verified') $residentData[0] = $row['total'];
+                            if ($row['status'] === 'Pending')  $residentData[1] = $row['total'];
+                            if ($row['status'] === 'Rejected') $residentData[2] = $row['total'];
+                        }
+                    }
+                    ?>
+
                     <div class="row">
-                        <!-- Statistics Cards -->
+                        <!-- Total Residents -->
                         <div class="col-xl-3 col-md-6">
                             <div class="card bg-primary text-white mb-4">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="fw-normal">Total Residents</h6>
-                                            <h3 class="mb-0">1,254</h3>
-                                        </div>
-                                        <i class="fas fa-users fa-2x"></i>
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-normal">Total Residents</h6>
+                                        <h3 class="mb-0"><?= $residents_count ?></h3>
                                     </div>
+                                    <i class="fas fa-users fa-2x"></i>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
                                     <a class="small text-white stretched-link" href="residents.php">View Details</a>
@@ -46,17 +93,16 @@ requireAuth();
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <!-- Pending Requests -->
                         <div class="col-xl-3 col-md-6">
                             <div class="card bg-warning text-white mb-4">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="fw-normal">Pending Requests</h6>
-                                            <h3 class="mb-0">24</h3>
-                                        </div>
-                                        <i class="fas fa-file-alt fa-2x"></i>
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-normal">Pending Requests</h6>
+                                        <h3 class="mb-0"><?= $pending_requests ?></h3>
                                     </div>
+                                    <i class="fas fa-file-alt fa-2x"></i>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
                                     <a class="small text-white stretched-link" href="document-requests.php">View Details</a>
@@ -64,17 +110,16 @@ requireAuth();
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <!-- Approved Today -->
                         <div class="col-xl-3 col-md-6">
                             <div class="card bg-success text-white mb-4">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="fw-normal">Approved Today</h6>
-                                            <h3 class="mb-0">12</h3>
-                                        </div>
-                                        <i class="fas fa-check-circle fa-2x"></i>
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-normal">Approved Today</h6>
+                                        <h3 class="mb-0"><?= $approved_today ?></h3>
                                     </div>
+                                    <i class="fas fa-check-circle fa-2x"></i>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
                                     <a class="small text-white stretched-link" href="document-requests.php">View Details</a>
@@ -82,17 +127,16 @@ requireAuth();
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <!-- New Announcements -->
                         <div class="col-xl-3 col-md-6">
                             <div class="card bg-danger text-white mb-4">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="fw-normal">New Announcements</h6>
-                                            <h3 class="mb-0">5</h3>
-                                        </div>
-                                        <i class="fas fa-bullhorn fa-2x"></i>
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-normal">New Announcements</h6>
+                                        <h3 class="mb-0"><?= $announcements ?></h3>
                                     </div>
+                                    <i class="fas fa-bullhorn fa-2x"></i>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
                                     <a class="small text-white stretched-link" href="announcements.php">View Details</a>
@@ -101,37 +145,26 @@ requireAuth();
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Charts Section -->
                     <div class="row">
                         <div class="col-xl-6">
                             <div class="card mb-4">
-                                <div class="card-header">
-                                    <i class="fas fa-chart-bar me-1"></i>
-                                    Recent Document Requests
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="requestsChart" width="100%" height="40"></canvas>
-                                </div>
+                                <div class="card-header"><i class="fas fa-chart-bar me-1"></i>Recent Document Requests</div>
+                                <div class="card-body"><canvas id="requestsChart"></canvas></div>
                             </div>
                         </div>
                         <div class="col-xl-6">
                             <div class="card mb-4">
-                                <div class="card-header">
-                                    <i class="fas fa-chart-pie me-1"></i>
-                                    Resident Registration Status
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="residentsChart" width="100%" height="40"></canvas>
-                                </div>
+                                <div class="card-header"><i class="fas fa-chart-pie me-1"></i>Resident Registration Status</div>
+                                <div class="card-body"><canvas id="residentsChart"></canvas></div>
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Recent Activities -->
                     <div class="card mb-4">
-                        <div class="card-header">
-                            <i class="fas fa-table me-1"></i>
-                            Recent Activities
-                        </div>
+                        <div class="card-header"><i class="fas fa-table me-1"></i>Recent Activities</div>
                         <div class="card-body">
                             <table class="table table-bordered">
                                 <thead>
@@ -142,38 +175,33 @@ requireAuth();
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>2023-06-15 14:30</td>
-                                        <td>Approved Brgy. Clearance request for Juan Dela Cruz</td>
-                                        <td>Admin User</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2023-06-15 13:45</td>
-                                        <td>Added new announcement: "Community Meeting"</td>
-                                        <td>Admin User</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2023-06-15 11:20</td>
-                                        <td>Registered new resident: Maria Santos</td>
-                                        <td>Admin User</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2023-06-15 10:15</td>
-                                        <td>Updated profile information</td>
-                                        <td>Admin User</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2023-06-15 09:30</td>
-                                        <td>Logged in to the system</td>
-                                        <td>Admin User</td>
-                                    </tr>
+                                    <?php
+                                    $logs = $conn->query("
+                                        SELECT a.timestamp, a.activity, u.first_name, u.last_name 
+                                        FROM activity_logs a
+                                        JOIN admin_users u ON a.user_id = u.id
+                                        ORDER BY a.timestamp DESC 
+                                        LIMIT 5
+                                    ");
+                                    if ($logs && $logs->num_rows > 0) {
+                                        while ($row = $logs->fetch_assoc()) {
+                                            echo "<tr>
+                                                    <td>{$row['timestamp']}</td>
+                                                    <td>{$row['activity']}</td>
+                                                    <td>{$row['first_name']} {$row['last_name']}</td>
+                                                  </tr>";
+                                        }
+                                    } else {
+                                        echo "<tr><td colspan='3'>No activities found</td></tr>";
+                                    }
+                                    ?>
                                 </tbody>
                             </table>
                         </div>
                     </div>
+
                 </div>
             </main>
-            
             <?php include 'includes/footer.php'; ?>
         </div>
     </div>
@@ -181,69 +209,45 @@ requireAuth();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
     <script src="js/script.js"></script>
-    <script>
-        // Sample charts for dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            // Requests Chart
-            const requestsCtx = document.getElementById('requestsChart').getContext('2d');
-            const requestsChart = new Chart(requestsCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Brgy. Clearance', 'Business Permit', 'Indigency', 'Residency', 'Cedula'],
-                    datasets: [{
-                        label: 'Requests This Week',
-                        data: [12, 8, 5, 7, 10],
-                        backgroundColor: [
-                            '#E63946',
-                            '#1D3557',
-                            '#FFD166',
-                            '#A8DADC',
-                            '#457B9D'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-            
-            // Residents Chart
-            const residentsCtx = document.getElementById('residentsChart').getContext('2d');
-            const residentsChart = new Chart(residentsCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Verified', 'Pending', 'Rejected'],
-                    datasets: [{
-                        data: [856, 124, 32],
-                        backgroundColor: [
-                            '#1D3557',
-                            '#FFD166',
-                            '#E63946'
-                        ],
-                        hoverBackgroundColor: [
-                            '#457B9D',
-                            '#F4A261',
-                            '#C1121F'
-                        ],
-                        hoverBorderColor: "rgba(234, 236, 244, 1)",
-                    }],
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                        }
-                    }
-                }
-            });
-        });
-    </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Requests Chart (Dynamic)
+    const requestsCtx = document.getElementById('requestsChart').getContext('2d');
+    new Chart(requestsCtx, {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode($labels) ?>,
+            datasets: [{
+                label: 'Requests This Week',
+                data: <?= json_encode($requestsData) ?>,
+                backgroundColor: [
+                    '#E63946','#1D3557','#FFD166','#A8DADC','#457B9D'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    // Residents Chart (Dynamic)
+    const residentsCtx = document.getElementById('residentsChart').getContext('2d');
+    new Chart(residentsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: <?= json_encode($residentLabels) ?>,
+            datasets: [{
+                data: <?= json_encode($residentData) ?>,
+                backgroundColor: ['#1D3557','#FFD166','#E63946'],
+                hoverBackgroundColor: ['#457B9D','#F4A261','#C1121F']
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'right' } }
+        }
+    });
+});
+</script>
 </body>
 </html>

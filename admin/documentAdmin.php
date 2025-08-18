@@ -4,11 +4,15 @@ require 'includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();
 
-$sql = "SELECT dr.id, dr.purpose, dr.requirements, dr.status, dr.date_requested, 
-               dr.date_processed, dr.notes, dt.document_type
+$sql = "SELECT dr.id, dr.purpose, dr.status, 
+               dr.date_requested, dr.date_processed, dr.notes, 
+               dt.document_type, 
+               CONCAT(r.first_name, ' ', r.last_name) AS resident_name
         FROM document_requests dr
-        JOIN document_types dt ON dr.document_type = dt.id
+        LEFT JOIN document_types dt ON dr.document_type_id = dt.id
+        LEFT JOIN residents r ON dr.resident_id = r.id
         ORDER BY dr.date_requested DESC";
+
 $result = $conn->query($sql);
 
 // Separate requests by status
@@ -66,7 +70,6 @@ while ($row = $result->fetch_assoc()) {
                   <table class="table table-striped table-bordered">
                     <thead>
                       <tr>
-                        <th>Queue #</th>
                         <th>Request ID</th>
                         <th>Resident</th>
                         <th>Document Type</th>
@@ -79,7 +82,6 @@ while ($row = $result->fetch_assoc()) {
                       <?php if (count($pending) > 0): ?>
                         <?php foreach ($pending as $row): ?>
                           <tr>
-                            <td><?= htmlspecialchars($row['request_number']) ?></td>
                             <td><?= $row['id'] ?></td>
                             <td><?= htmlspecialchars($row['resident_name']) ?></td>
                             <td><?= htmlspecialchars($row['document_type']) ?></td>
@@ -96,7 +98,7 @@ while ($row = $result->fetch_assoc()) {
                           </tr>
                         <?php endforeach; ?>
                       <?php else: ?>
-                        <tr><td colspan="7" class="text-center">No pending requests</td></tr>
+                        <tr><td colspan="6" class="text-center">No pending requests</td></tr>
                       <?php endif; ?>
                     </tbody>
                   </table>
@@ -109,7 +111,6 @@ while ($row = $result->fetch_assoc()) {
                   <table class="table table-striped table-bordered">
                     <thead>
                       <tr>
-                        <th>Queue #</th>
                         <th>Request ID</th>
                         <th>Resident</th>
                         <th>Document Type</th>
@@ -122,7 +123,6 @@ while ($row = $result->fetch_assoc()) {
                       <?php if (count($approved) > 0): ?>
                         <?php foreach ($approved as $row): ?>
                           <tr>
-                            <td><?= htmlspecialchars($row['request_number']) ?></td>
                             <td><?= $row['id'] ?></td>
                             <td><?= htmlspecialchars($row['resident_name']) ?></td>
                             <td><?= htmlspecialchars($row['document_type']) ?></td>
@@ -136,7 +136,7 @@ while ($row = $result->fetch_assoc()) {
                           </tr>
                         <?php endforeach; ?>
                       <?php else: ?>
-                        <tr><td colspan="7" class="text-center">No approved requests</td></tr>
+                        <tr><td colspan="6" class="text-center">No approved requests</td></tr>
                       <?php endif; ?>
                     </tbody>
                   </table>
@@ -149,7 +149,6 @@ while ($row = $result->fetch_assoc()) {
                   <table class="table table-striped table-bordered">
                     <thead>
                       <tr>
-                        <th>Queue #</th>
                         <th>Request ID</th>
                         <th>Resident</th>
                         <th>Document Type</th>
@@ -163,7 +162,6 @@ while ($row = $result->fetch_assoc()) {
                       <?php if (count($disapproved) > 0): ?>
                         <?php foreach ($disapproved as $row): ?>
                           <tr>
-                            <td><?= htmlspecialchars($row['request_number']) ?></td>
                             <td><?= $row['id'] ?></td>
                             <td><?= htmlspecialchars($row['resident_name']) ?></td>
                             <td><?= htmlspecialchars($row['document_type']) ?></td>
@@ -178,7 +176,7 @@ while ($row = $result->fetch_assoc()) {
                           </tr>
                         <?php endforeach; ?>
                       <?php else: ?>
-                        <tr><td colspan="8" class="text-center">No disapproved requests</td></tr>
+                        <tr><td colspan="7" class="text-center">No disapproved requests</td></tr>
                       <?php endif; ?>
                     </tbody>
                   </table>

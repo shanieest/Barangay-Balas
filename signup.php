@@ -1,5 +1,10 @@
 <?php
 session_start();
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (isset($_SESSION['registration_success'])) {
     echo '<div class="alert alert-success">'.$_SESSION['registration_success'].'</div>';
     unset($_SESSION['registration_success']);
@@ -9,8 +14,7 @@ if (isset($_SESSION['login_error'])) {
     echo '<div class="alert alert-danger">'.$_SESSION['login_error'].'</div>';
     unset($_SESSION['login_error']);
 }
-
-?> 
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -189,7 +193,7 @@ if (isset($_SESSION['login_error'])) {
                         <i class="fas fa-info-circle"></i> Please login with your registered email address.
                     </div>
                     <form id="loginForm">
-                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                         <div class="form-group">
                             <label for="loginEmail">Email</label>
                             <div class="input-group">

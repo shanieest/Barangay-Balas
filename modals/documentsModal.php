@@ -126,3 +126,4 @@ document.getElementById("birthdate").addEventListener("change", function() {
   document.getElementById("age").value = age >= 0 ? age : "";
 });
 </script>
+
