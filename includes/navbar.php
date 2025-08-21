@@ -2,25 +2,29 @@
 require_once 'includes/db.php';
 require_once 'includes/auth.php';
 
-// ============================
-// Fetch Notifications (Latest Activity Logs)
-// ============================
-$notifSql = "SELECT activity, timestamp 
-             FROM activity_logs 
-             ORDER BY timestamp DESC 
-             LIMIT 5";
-$notifResult = $conn->query($notifSql);
-$notifCount = $notifResult->num_rows;
-
-// ============================
-// Get Logged-in User
-// ============================
 $userId = $_SESSION['user_id'] ?? null;
 $user = null;
+$notifCount = 0;
+$notifResult = null;
+
+
+if ($userId) {
+    $notifSql = "SELECT activity, timestamp 
+                 FROM activity_logs
+                 WHERE user_id = ?
+                 ORDER BY timestamp DESC 
+                 LIMIT 5";
+    $stmt = $conn->prepare($notifSql);
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $notifResult = $stmt->get_result();
+    $notifCount = $notifResult->num_rows;
+    $stmt->close();
+}
 
 if ($userId) {
     $userSql = "SELECT first_name, last_name, photo_path 
-                FROM admin_users 
+                FROM residents 
                 WHERE id = ?";
     $stmt = $conn->prepare($userSql);
     $stmt->bind_param("i", $userId);
@@ -36,7 +40,7 @@ $profilePhoto = $user && $user['photo_path']
     : "https://via.placeholder.com/40";
 $userName = $user 
     ? $user['first_name'] . " " . $user['last_name'] 
-    : "Administrator";
+    : "User";
 ?>
 
 <!-- Top Navbar -->
@@ -62,7 +66,7 @@ $userName = $user
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="width: 300px;">
                     <li><h6 class="dropdown-header">Notifications</h6></li>
 
-                    <?php if ($notifCount > 0): ?>
+                    <?php if ($notifCount > 0 && $notifResult): ?>
                         <?php while ($row = $notifResult->fetch_assoc()): ?>
                             <li>
                                 <a class="dropdown-item d-flex align-items-center" href="#">

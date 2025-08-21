@@ -713,15 +713,97 @@ function viewRequest(id) {
                 displayRequestModal(data.data);
             } else {
                 showToast(data.message || 'Request not found', 'danger');
-                return Promise.reject('Request not found');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('Failed to load request details: ' + (error.message || error), 'danger');
+            showToast('Failed to load request details: ' + error.message, 'danger');
         });
 }
+
 // Display request data in modal
+function displayRequestModal(request) {
+    const viewModal = getElement('#viewRequestModal');
+    if (!viewModal) return;
+    
+    // Format birthdate safely
+    let formattedBirthdate = 'N/A';
+    if (request.birthdate) {
+        try {
+            const birthdate = new Date(request.birthdate);
+            if (!isNaN(birthdate.getTime())) {
+                formattedBirthdate = birthdate.toLocaleDateString('en-US', { 
+                    year: 'numeric', month: 'long', day: 'numeric' 
+                }) + (request.age ? ` (${request.age} years old)` : '');
+            }
+        } catch (e) {
+            console.error('Error parsing birthdate:', e);
+        }
+    }
+    
+    // Set status badge class
+    let statusClass = '';
+    if (request.account_status === 'Approved') {
+        statusClass = 'account-approved';
+    } else if (request.account_status === 'Pending') {
+        statusClass = 'account-pending';
+    } else if (request.account_status === 'Disapproved') {
+        statusClass = 'account-disapproved';
+    }
+    
+    // Safely generate request ID - handle cases where request.id might be undefined
+    const requestId = request.id ? `BRGY-REQ-${request.id.toString().padStart(4, '0')}` : 'N/A';
+    
+    // Safely get name
+    const requestName = request.first_name && request.last_name ? 
+        `${request.first_name} ${request.last_name}` : 'N/A';
+    
+    // Update modal content
+    updateModalField(viewModal, '.request-status-badge', `badge ${statusClass}`, request.account_status || 'N/A');
+    updateModalText(viewModal, '.request-name', requestName);
+    updateModalText(viewModal, '.request-id', `Request ID: ${requestId}`);
+    updateModalText(viewModal, '.request-birthdate', formattedBirthdate);
+    updateModalText(viewModal, '.request-sex', request.sex ? 
+        (request.sex === 'male' ? 'Male' : 'Female') : 'N/A');
+    updateModalText(viewModal, '.request-contact', request.contact_number || 'N/A');
+    updateModalText(viewModal, '.request-email', request.email || 'N/A');
+    updateModalImage(viewModal, '.request-photo', request.photo_path || 'img/default-profile.jpg');
+    updateModalImage(viewModal, '.request-valid-id', request.valid_id_path || 'img/default-id.jpg');
+    updateModalText(viewModal, '.request-date-requested', request.date_requested || 'N/A');
+    updateModalText(viewModal, '.request-processed-by', request.processed_by || 'N/A');
+    updateModalText(viewModal, '.request-date-processed', request.date_processed || 'N/A');
+    updateModalText(viewModal, '.request-notes', request.notes || 'N/A');
+
+    // Show/hide processed info section
+    const processedInfo = viewModal.querySelector('#requestProcessedInfo');
+    if (processedInfo) {
+        processedInfo.style.display = request.account_status !== 'Pending' ? 'block' : 'none';
+    }
+
+    // Set buttons state
+    const approveBtn = getElement('#approveRequestBtn');
+    const rejectBtn = getElement('#rejectRequestBtn');
+    if (approveBtn && rejectBtn) {
+        approveBtn.dataset.id = request.id || '';
+        rejectBtn.dataset.id = request.id || '';
+        
+        if (request.account_status !== 'Pending') {
+            approveBtn.style.display = 'none';
+            rejectBtn.style.display = 'none';
+        } else {
+            approveBtn.style.display = 'inline-block';
+            rejectBtn.style.display = 'inline-block';
+        }
+    }
+
+    // Store current request ID
+    currentRequestId = request.id;
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(viewModal);
+    modal.show();
+}
+
 function displayRequestModal(request) {
     const viewModal = getElement('#viewRequestModal');
     if (!viewModal) return;

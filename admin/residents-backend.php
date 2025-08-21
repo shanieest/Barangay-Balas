@@ -76,11 +76,12 @@ function handleListResidents() {
     
     $offset = ($page - 1) * $per_page;
     
+    // Updated query to show residents with APPROVED accounts
     $query = "SELECT r.*, ra.account_status, ra.notes as account_notes, 
               ra.date_processed as account_date_processed, 
               CONCAT(a.first_name, ' ', a.last_name) as processed_by
               FROM residents r
-              LEFT JOIN resident_accounts ra ON r.id = ra.resident_id
+              INNER JOIN resident_accounts ra ON r.id = ra.resident_id
               LEFT JOIN admin_users a ON ra.processed_by = a.id";
     
     $where = [];
@@ -92,7 +93,8 @@ function handleListResidents() {
         $params[] = $id;
         $types .= 'i';
     } else {
-        $where[] = "r.verification_status = 'Verified'";
+        // Changed from verification_status to account_status
+        $where[] = "ra.account_status = 'Approved'";
         
         if ($search) {
             $where[] = "(CONCAT(r.first_name, ' ', r.last_name) LIKE ? OR r.contact_number LIKE ? OR r.email LIKE ?)";
@@ -109,7 +111,8 @@ function handleListResidents() {
     }
     
     // Get total count
-    $countQuery = "SELECT COUNT(*) as total FROM residents r";
+    $countQuery = "SELECT COUNT(*) as total FROM residents r
+                  INNER JOIN resident_accounts ra ON r.id = ra.resident_id";
     if (!empty($where)) {
         $countQuery .= " WHERE " . implode(" AND ", $where);
     }

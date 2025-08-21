@@ -13,7 +13,7 @@ if (!isset($_SESSION['logged_in'])) {
     exit();
 }
 
-$inactive = 1800; // 30 minutes in seconds
+$inactive = 1800; // 30 minutes
 if (isset($_SESSION['last_activity'])) {
     $session_life = time() - $_SESSION['last_activity'];
     if ($session_life > $inactive) {

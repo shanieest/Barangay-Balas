@@ -46,14 +46,25 @@ function handleUpdateProfile($user_id) {
             throw new Exception("Missing required field: $field");
         }
     }
-    
+
+    // Ensure contact_number always exists
+    $contact_number = isset($data['contact_number']) ? trim($data['contact_number']) : '';
+
     $stmt = $conn->prepare("UPDATE admin_users SET 
         first_name = ?, last_name = ?, email = ?, contact_number = ?
         WHERE id = ?");
     
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
+    }
+
     $stmt->bind_param("ssssi", 
-        $data['first_name'], $data['last_name'], $data['email'], 
-        $data['contact_number'] ?? '', $user_id);
+        $data['first_name'], 
+        $data['last_name'], 
+        $data['email'], 
+        $contact_number, 
+        $user_id
+    );
     
     if (!$stmt->execute()) {
         throw new Exception("Failed to update profile: " . $stmt->error);
@@ -69,7 +80,6 @@ function handleUpdatePassword($user_id) {
     
     $data = $_POST;
     
-    // Validate required fields
     $required = ['current_password', 'new_password', 'confirm_password'];
     foreach ($required as $field) {
         if (empty($data[$field])) {
@@ -85,7 +95,6 @@ function handleUpdatePassword($user_id) {
         throw new Exception("Password must be at least 8 characters long");
     }
     
-    // Verify current password
     $stmt = $conn->prepare("SELECT password FROM admin_users WHERE id = ?");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
@@ -101,7 +110,6 @@ function handleUpdatePassword($user_id) {
         throw new Exception("Current password is incorrect");
     }
     
-    // Update password
     $hashed_password = password_hash($data['new_password'], PASSWORD_DEFAULT);
     
     $stmt = $conn->prepare("UPDATE admin_users SET password = ? WHERE id = ?");
@@ -125,43 +133,35 @@ function handleUploadPhoto($user_id) {
     
     $file = $_FILES['photo'];
     
-    // Validate file
     if ($file['error'] !== UPLOAD_ERR_OK) {
         throw new Exception("File upload error: " . $file['error']);
     }
     
-    // Check file type
     $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
     if (!in_array($file['type'], $allowed_types)) {
         throw new Exception("Only JPG, PNG, and GIF files are allowed");
     }
     
-    // Check file size (max 5MB)
     if ($file['size'] > 5 * 1024 * 1024) {
         throw new Exception("File size must be less than 5MB");
     }
     
-    // Generate unique filename
     $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = "profile_{$user_id}_" . time() . ".$ext";
     $upload_dir = __DIR__ . '/uploads/profile_photos/';
     
-    // Create upload directory if it doesn't exist
     if (!file_exists($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
     
     $destination = $upload_dir . $filename;
     
-    // Move uploaded file
     if (!move_uploaded_file($file['tmp_name'], $destination)) {
         throw new Exception("Failed to save uploaded file");
     }
     
-    // Update database with new photo path
     $web_path = "uploads/profile_photos/$filename";
     
-    // Delete old photo if exists
     $stmt = $conn->prepare("SELECT photo_path FROM admin_users WHERE id = ?");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
@@ -195,7 +195,6 @@ function handleDeleteAccount($user_id) {
         throw new Exception("Please type 'DELETE MY ACCOUNT' to confirm");
     }
     
-    // Verify password
     $stmt = $conn->prepare("SELECT password FROM admin_users WHERE id = ?");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
@@ -211,7 +210,6 @@ function handleDeleteAccount($user_id) {
         throw new Exception("Current password is incorrect");
     }
     
-    // Delete user (in a real app, you might want to deactivate instead)
     $stmt = $conn->prepare("DELETE FROM admin_users WHERE id = ?");
     $stmt->bind_param("i", $user_id);
     
