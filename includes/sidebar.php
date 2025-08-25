@@ -11,7 +11,7 @@
                 </li>
                 <li>
                     <a href="#documents">
-                        <i class="fas fa-file-alt"></i>
+                        <i class="fas fa-briefcase"></i>
                         <span class="sidebar-text">Services</span>
                     </a>
                 </li>

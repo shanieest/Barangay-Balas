@@ -15,7 +15,6 @@ header('Content-Type: application/json');
 
 $response = ['success' => false, 'message' => ''];
 
-// Helper function to bind params dynamically with reference
 function bindParams(mysqli_stmt $stmt, string $types, array $params) {
     $bind_names[] = $types;
     for ($i = 0; $i < count($params); $i++) {

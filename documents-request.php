@@ -12,7 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $purpose        = $_POST['purpose'] ?? '';
     $shipping_method = $_POST['shipping_method'] ?? '';
 
-    // ✅ Get document type ID
     $docTypeQuery = $conn->prepare("SELECT id FROM document_types WHERE document_type = ?");
     $docTypeQuery->bind_param("s", $document_type);
     $docTypeQuery->execute();
@@ -26,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $doc_type_id = $docTypeRow['id'];
 
-    // ✅ Insert request
     $stmt = $conn->prepare("INSERT INTO document_requests 
         (first_name, middle_name, last_name, email, document_type, purpose, shipping_method, status, date_requested) 
         VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())");

@@ -4,8 +4,9 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <span>Household Information</span>
-                            <button class="btn btn-sm btn-primary">Update Household</button>
-                        </div>
+<button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#updateHouseholdModal">
+                Update Household
+            </button>                        </div>
                         <div class="card-body">
                             <div class="row mb-4">
                                 <div class="col-md-6">
@@ -145,3 +146,4 @@
                         </div>
                     </div>
                 </section>
+                  <?php include "modals/censusModal.php";?>

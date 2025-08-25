@@ -632,7 +632,6 @@ function displayResidentModal(resident) {
     
     // Update other fields
     updateModalText(viewModal, '.resident-name', `${resident.first_name} ${resident.last_name}`);
-    updateModalText(viewModal, '.resident-id', `Resident ID: BRGY-${resident.id.toString().padStart(4, '0')}`);
     updateModalText(viewModal, '.resident-birthdate', formattedBirthdate);
     updateModalText(viewModal, '.resident-sex', resident.sex === 'male' ? 'Male' : 'Female');
     updateModalText(viewModal, '.resident-contact', resident.contact_number);
@@ -1028,7 +1027,6 @@ function showDeleteModal(id) {
                 const confirmDeleteBtn = getElement('#confirmDeleteBtn');
                 
                 if (deleteResidentName) deleteResidentName.textContent = `${data.data.first_name} ${data.data.last_name}`;
-                if (deleteResidentId) deleteResidentId.textContent = `BRGY-${data.data.id.toString().padStart(4, '0')}`;
                 if (confirmDeleteBtn) confirmDeleteBtn.dataset.id = data.data.id;
                 
                 const modal = new bootstrap.Modal(getElement('#deleteResidentModal'));

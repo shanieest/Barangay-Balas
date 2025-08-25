@@ -4,7 +4,7 @@
   
   <div class="card">
     <div class="card-header">
-      <span>Request Documents</span>
+      <span>Request Documents / Reservations</span>
     </div>
     <div class="card-body">
       <div class="row">
@@ -24,13 +24,47 @@
             </div>
           </div>
         </div>
-        <!-- add more col-md-4 for other document types -->
+
+        <!-- Reservation of Service Vehicle -->
+        <div class="col-md-4 mb-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <i class="fas fa-bus fa-3x text-success mb-3"></i>
+              <h5>Service Vehicle</h5>
+              <p class="text-muted">Reserve a barangay vehicle</p>
+              <button class="btn btn-success btn-sm" 
+                      data-bs-toggle="modal" 
+                      data-bs-target="#vehicleReservationModal">
+                Reserve
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reservation of Tent -->
+        <div class="col-md-4 mb-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <i class="fas fa-campground fa-3x text-warning mb-3"></i>
+              <h5>Barangay Tent</h5>
+              <p class="text-muted">Reserve a barangay tent</p>
+              <button class="btn btn-warning btn-sm" 
+                      data-bs-toggle="modal" 
+                      data-bs-target="#tentReservationModal">
+                Reserve
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </section>
 
 <?php include 'modals/documentsModal.php'; ?>
+<?php include 'modals/vehicleReservationModal.php'; ?>
+<?php include 'modals/tentReservationModal.php'; ?>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

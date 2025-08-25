@@ -1,4 +1,3 @@
- <!-- Profile Section (Hidden by default) -->
                 <section id="profile" class="d-none">
                     <h2 class="mb-4">My Profile</h2>
                     <div class="card">
@@ -16,11 +15,11 @@
                                         <div class="row mb-3">
                                             <div class="col-md-4">
                                                 <label class="form-label">First Name</label>
-                                                <input type="text" class="form-control" value="Juan">
+                                                <input type="text" class="form-control" value="<?= htmlspecialchars($profile['first_name']) ?>">
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">Middle Name</label>
-                                                <input type="text" class="form-control" value="Protacio">
+                                                <input type="text" class="form-control" value="">
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">Last Name</label>
@@ -147,23 +146,6 @@
                                                 <button class="btn btn-sm btn-outline-danger">Remove</button>
                                             </td>
                                         </tr>
-                                        <tr>
-                                            <td>Pedro Dela Cruz</td>
-                                            <td>Son</td>
-                                            <td>2010-11-22</td>
-                                            <td>Single</td>
-                                            <td>Student</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                                <button class="btn btn-sm btn-outline-danger">Remove</button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Juanita Dela Cruz</td>
-                                            <td>Daughter</td>
-                                            <td>2015-07-30</td>
-                                            <td>Single</td>
-                                            <td>Student</td>
                                             <td>
                                                 <button class="btn btn-sm btn-outline-primary">Edit</button>
                                                 <button class="btn btn-sm btn-outline-danger">Remove</button>

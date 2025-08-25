@@ -42,12 +42,12 @@ if (isset($_SESSION['user_id'])) {
                     Residents
                 </a>
                 <a class="nav-link" href="census.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-user-people"></i></div>
+                    <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
                     Census data
                 </a>
-                <a class="nav-link" href="documentAdmin.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-file-alt"></i></div>
-                    Document Requests
+                <a class="nav-link" href="servicesAdmin.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-briefcase"></i></div>
+                    Services
                 </a>
                 <a class="nav-link" href="barangay-officials.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-user-tie"></i></div>
