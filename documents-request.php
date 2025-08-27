@@ -1,9 +1,7 @@
 <?php
 require 'includes/db.php';
 
-// Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data safely
     $first_name     = $_POST['first_name'] ?? '';
     $middle_name    = $_POST['middle_name'] ?? '';
     $last_name      = $_POST['last_name'] ?? '';
@@ -29,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         (first_name, middle_name, last_name, email, document_type, purpose, shipping_method, status, date_requested) 
         VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())");
 
-    // fixed: all strings except document_type_id (int)
     $stmt->bind_param("ssssiss", 
         $first_name, 
         $middle_name, 

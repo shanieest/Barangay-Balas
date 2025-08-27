@@ -8,7 +8,6 @@
     </div>
     <div class="card-body">
       <div class="row">
-        <!-- Certificate of Good Moral -->
         <div class="col-md-4 mb-4">
           <div class="card h-100">
             <div class="card-body text-center">

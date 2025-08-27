@@ -11,7 +11,6 @@ $response = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF protection
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         $response['message'] = "Invalid CSRF token";
         echo json_encode($response);
@@ -30,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // Get user with account status
         $stmt = $conn->prepare("SELECT r.*, a.password, a.account_status 
                               FROM residents r
                               JOIN resident_accounts a ON r.id = a.resident_id
@@ -47,33 +45,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $user = $result->fetch_assoc();
 
-        // Check account status
         if ($user['account_status'] !== 'Approved') {
             $response['message'] = "Your account is pending approval. Please contact barangay administration.";
             echo json_encode($response);
             exit();
         }
 
-        // Verify password
         if (password_verify($password, $user['password'])) {
-            // Regenerate session ID to prevent fixation
             session_regenerate_id(true);
             
-            // Set session variables
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
             $_SESSION['user_role'] = 'resident';
             $_SESSION['logged_in'] = true;
 
-            // Remember me functionality
             if ($rememberMe) {
                 $token = bin2hex(random_bytes(32));
                 $expiry = time() + 60 * 60 * 24 * 30; // 30 days
                 
                 setcookie('remember_token', $token, $expiry, '/');
                 
-                // Store token in database
                 $updateStmt = $conn->prepare("UPDATE resident_accounts 
                                              SET remember_token = ?, token_expiry = ?
                                              WHERE resident_id = ?");

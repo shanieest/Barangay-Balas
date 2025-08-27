@@ -11,7 +11,6 @@ $response = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validate required fields
     $required = [
         'firstName' => 'First name',
         'lastName' => 'Last name',

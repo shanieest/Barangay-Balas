@@ -1,17 +1,14 @@
 <?php
 session_start();
-require_once __DIR__ . '/includes/db.php'; // your mysqli connection
+require_once __DIR__ . '/includes/db.php'; 
 
-// Example: store logged-in resident id in session
 $resident_id = $_SESSION['resident_id'] ?? null;
 
 if (!$resident_id) {
     die("Unauthorized access.");
 }
 
-/**
- * 🔹 Fetch Profile Data
- */
+
 function getProfile($conn, $resident_id) {
     $sql = "SELECT * FROM residents WHERE id = ?";
     $stmt = $conn->prepare($sql);
@@ -21,9 +18,7 @@ function getProfile($conn, $resident_id) {
     return $result->fetch_assoc();
 }
 
-/**
- * 🔹 Update Profile Data
- */
+
 function updateProfile($conn, $resident_id, $data) {
     $sql = "UPDATE residents 
             SET first_name=?, middle_name=?, last_name=?, birthdate=?, sex=?, civil_status=?, 
@@ -47,7 +42,6 @@ function updateProfile($conn, $resident_id, $data) {
     return $stmt->execute();
 }
 
-// 🔹 Handle Save Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === "update_profile") {
     $data = [
         "first_name"     => $_POST['first_name'],
@@ -60,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         "email"          => $_POST['email'],
         "address"        => $_POST['address'],
         "purok"          => $_POST['purok'],
-        "photo_path"     => null // handle photo upload separately
+        "photo_path"     => null 
     ];
 
     if (updateProfile($conn, $resident_id, $data)) {

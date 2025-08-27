@@ -15,7 +15,6 @@ $sql = "SELECT dr.id, dr.purpose, dr.status,
 
 $result = $conn->query($sql);
 
-// Separate requests by status
 $pending = [];
 $approved = [];
 $disapproved = [];

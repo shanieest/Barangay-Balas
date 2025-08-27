@@ -1,7 +1,6 @@
 <?php
-require_once 'includes/db.php'; // your database connection file
+require_once 'includes/db.php'; 
 
-// Fetch latest announcements with poster info
 $sql = "SELECT a.id, a.title, a.content, a.date_posted, a.image_path, 
                CONCAT(u.first_name, ' ', u.last_name) AS posted_by
         FROM announcements a
@@ -10,7 +9,6 @@ $sql = "SELECT a.id, a.title, a.content, a.date_posted, a.image_path,
 $result = $conn->query($sql);
 ?>
 
-<!-- Announcements Section -->
 <section id="announcements" class="d-none">
     <h2 class="mb-4">Announcements</h2>
     <div class="card">

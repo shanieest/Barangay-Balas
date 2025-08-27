@@ -388,7 +388,6 @@ if (isset($_SESSION['login_error'])) {
         </div>
     </div>
 
-    <!-- Bootstrap 4 JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -397,7 +396,6 @@ if (isset($_SESSION['login_error'])) {
     <!-- Custom JS -->
     <script>
         $(document).ready(function() {
-        //login
         $('#loginForm').on('submit', function(e) {
                 e.preventDefault();
                 
@@ -423,14 +421,11 @@ if (isset($_SESSION['login_error'])) {
                     }
                 });
             });
-            // Handle form submission
             $('#registrationForm').on('submit', function(e) {
                 e.preventDefault();
                 
-                // Disable submit button
                 $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
                 
-                // Submit form via AJAX
                 $.ajax({
                     url: $(this).attr('action'),
                     type: 'POST',
@@ -439,13 +434,10 @@ if (isset($_SESSION['login_error'])) {
                     contentType: false,
                     success: function(response) {
                         if (response.success) {
-                            // Show success message
                             window.location.href = 'signup-success.php';
                         } else {
-                            // Show errors
                             alert(response.message);
                             if (response.errors) {
-                                // Highlight fields with errors
                                 $.each(response.errors, function(field, message) {
                                     $('#' + field).addClass('is-invalid');
                                     $('#' + field).after('<div class="invalid-feedback">' + message + '</div>');
@@ -463,7 +455,6 @@ if (isset($_SESSION['login_error'])) {
             });
         });
         $(document).ready(function(){
-            // Initialize datepicker
             $('.datepicker').datepicker({
                 format: 'mm/dd/yyyy',
                 autoclose: true,
@@ -471,7 +462,6 @@ if (isset($_SESSION['login_error'])) {
                 endDate: '0d'
             });
 
-            // Calculate age when birthdate changes
             $('#birthdate').on('change', function() {
                 var birthdate = new Date($(this).val());
                 var today = new Date();
@@ -483,7 +473,6 @@ if (isset($_SESSION['login_error'])) {
                 $('#age').val(age);
             });
 
-            // Show preview of uploaded ID
             $('#idUpload').change(function(){
                 var file = this.files[0];
                 if (file) {
@@ -496,7 +485,6 @@ if (isset($_SESSION['login_error'])) {
                 }
             });
 
-            // Update custom file label
             $('.custom-file-input').on('change', function() {
                 let fileName = $(this).val().split('\\').pop();
                 $(this).next('.custom-file-label').addClass("selected").html(fileName);

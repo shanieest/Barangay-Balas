@@ -159,7 +159,6 @@ function handleUpdateOfficial() {
     
     $data = json_decode(file_get_contents('php://input'), true);
     
-    // Validate required fields
     if (empty($data['id'])) {
         throw new Exception("Official ID is required");
     }
@@ -171,7 +170,6 @@ function handleUpdateOfficial() {
         }
     }
     
-    // Update official
     $stmt = $conn->prepare("UPDATE barangay_officials SET 
         first_name = ?, last_name = ?, middle_name = ?, position = ?, 
         email = ?, contact_number = ?, status = ?
@@ -216,7 +214,6 @@ function handleDeleteOfficial() {
         throw new Exception("Official ID is required");
     }
     
-    // First get official email to delete from admin_users
     $stmt = $conn->prepare("SELECT email FROM barangay_officials WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();

@@ -2,38 +2,28 @@
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
 
-// ============================
-// Dashboard Queries
-// ============================
-
-// Count new document requests (Pending)
 $docRequestsQuery = "SELECT COUNT(*) AS total FROM document_requests WHERE status='Pending'";
 $docRequestsResult = $conn->query($docRequestsQuery);
 $docRequestsCount = $docRequestsResult->fetch_assoc()['total'] ?? 0;
 
-// Fetch latest 5 document requests
 $latestRequestsQuery = "SELECT document_type_id, purpose, status, date_requested 
                         FROM document_requests 
                         ORDER BY date_requested DESC LIMIT 5";
 $latestRequests = $conn->query($latestRequestsQuery);
 
-// Count new announcements (last 7 days)
 $announcementsQuery = "SELECT COUNT(*) AS total FROM announcements WHERE date_posted >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
 $announcementsResult = $conn->query($announcementsQuery);
 $announcementsCount = $announcementsResult->fetch_assoc()['total'] ?? 0;
 
-// Fetch latest 5 announcements
 $latestAnnouncementsQuery = "SELECT title, content, date_posted 
                              FROM announcements 
                              ORDER BY date_posted DESC LIMIT 5";
 $latestAnnouncements = $conn->query($latestAnnouncementsQuery);
 
-// Count alerts (Pending / Disapproved requests)
 $alertsQuery = "SELECT COUNT(*) AS total FROM document_requests WHERE status IN ('Pending','Disapproved')";
 $alertsResult = $conn->query($alertsQuery);
 $alertsCount = $alertsResult->fetch_assoc()['total'] ?? 0;
 
-// Fetch recent activity logs
 $activityQuery = "SELECT activity, timestamp 
                   FROM activity_logs 
                   ORDER BY timestamp DESC LIMIT 5";
@@ -404,26 +394,21 @@ $activities = $conn->query($activityQuery);
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-        // Toggle sidebar
         document.getElementById('sidebarToggle').addEventListener('click', function() {
             document.querySelector('.wrapper').classList.toggle('sidebar-collapsed');
         });
         
-        // Simple navigation between sections
         document.querySelectorAll('.sidebar-menu li a').forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Hide all sections
                 document.querySelectorAll('section').forEach(section => {
                     section.classList.add('d-none');
                 });
                 
-                // Show the selected section
                 const target = this.getAttribute('href').substring(1);
                 document.getElementById(target).classList.remove('d-none');
                 
-                // Update active menu item
                 document.querySelectorAll('.sidebar-menu li').forEach(item => {
                     item.classList.remove('active');
                 });
@@ -431,7 +416,6 @@ $activities = $conn->query($activityQuery);
             });
         });
         
-        // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)

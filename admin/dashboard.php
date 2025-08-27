@@ -39,8 +39,7 @@ require_once __DIR__ . '/includes/db.php';
                     $approved_today   = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Approved' AND DATE(date_processed) = CURDATE()");
                     $announcements    = getCount($conn, "SELECT COUNT(*) AS total FROM announcements WHERE DATE(date_posted) = CURDATE()");
 
-                    // ================== CHART DATA ===================
-                    // Requests this week by type
+                  
                     $requestsData = [];
                     $labels = [];
                     $reqQuery = $conn->query("
@@ -208,7 +207,6 @@ require_once __DIR__ . '/includes/db.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Requests Chart (Dynamic)
     const requestsCtx = document.getElementById('requestsChart').getContext('2d');
     new Chart(requestsCtx, {
         type: 'bar',
@@ -226,7 +224,6 @@ document.addEventListener('DOMContentLoaded', function() {
         options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
 
-    // Residents Chart (Dynamic)
     const residentsCtx = document.getElementById('residentsChart').getContext('2d');
     new Chart(residentsCtx, {
         type: 'doughnut',

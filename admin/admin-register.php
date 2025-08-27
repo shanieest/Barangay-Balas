@@ -1,11 +1,9 @@
 <?php
-// admin-register.php
 require_once 'includes/db.php';
 
 $success = "";
 $error = "";
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $first_name = trim($_POST['first_name']);
     $last_name = trim($_POST['last_name']);
@@ -16,11 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
-    // Validation
     if ($password !== $confirm_password) {
         $error = "Passwords do not match.";
     } else {
-        // Check for duplicate username or email
         $check = $conn->prepare("SELECT id FROM admin_users WHERE username = ? OR email = ?");
         $check->bind_param("ss", $username, $email);
         $check->execute();
@@ -29,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($check->num_rows > 0) {
             $error = "Username or email already exists.";
         } else {
-            // Hash and insert
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $conn->prepare("INSERT INTO admin_users (username, password, first_name, last_name, email, position, contact_number, created_at, updated_at)
                                     VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");

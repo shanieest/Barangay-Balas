@@ -1,9 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/db.php';
 
-/**
- * Get all households with filters, search, and pagination
- */
+
 function getHouseholds($filters = [], $limit = 10, $offset = 0) {
     global $conn;
 
@@ -75,9 +73,7 @@ function getHouseholds($filters = [], $limit = 10, $offset = 0) {
     return $households;
 }
 
-/**
- * Count total households (with filters)
- */
+
 function getTotalHouseholdsCount($filters = []) {
     global $conn;
 

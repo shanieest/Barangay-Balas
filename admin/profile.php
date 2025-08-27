@@ -4,12 +4,11 @@ requireAuth();
 require_once __DIR__ . '/includes/db.php'; 
 global $conn; 
 
-// Get user data
 $user_id = getUserId();
 
 $stmt = $conn->prepare("SELECT id, username, first_name, last_name, email, position, contact_number, photo_path FROM admin_users WHERE id = ?");
 if (!$stmt) {
-    die("Prepare failed: " . $conn->error); // helpful error
+    die("Prepare failed: " . $conn->error); 
 }
 
 $stmt->bind_param("i", $user_id);
@@ -18,7 +17,6 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Set default photo if none exists
 $profile_photo = $user['photo_path'] ?? 'assets/admin-avatar.jpg';
 ?>
 
@@ -161,29 +159,24 @@ $profile_photo = $user['photo_path'] ?? 'assets/admin-avatar.jpg';
     <script src="js/script.js"></script>
     <script>
         $(document).ready(function() {
-            // Profile form submission
             $('#profileForm').on('submit', function(e) {
                 e.preventDefault();
                 updateProfile();
             });
             
-            // Password form submission
             $('#passwordForm').on('submit', function(e) {
                 e.preventDefault();
                 updatePassword();
             });
             
-            // Photo upload handling
             $('#photoInput').on('change', function() {
                 uploadPhoto();
             });
             
-            // Delete account confirmation
             $('#deleteConfirmation').on('input', function() {
                 $('#confirmDeleteBtn').prop('disabled', $(this).val() !== 'DELETE MY ACCOUNT');
             });
             
-            // Delete account button
             $('#confirmDeleteBtn').on('click', function() {
                 deleteAccount();
             });
@@ -287,7 +280,6 @@ $profile_photo = $user['photo_path'] ?? 'assets/admin-avatar.jpg';
             
             $('.container-fluid').prepend(alert);
             
-            // Auto-remove alert after 5 seconds
             setTimeout(() => {
                 $('.alert').alert('close');
             }, 5000);

@@ -3,7 +3,6 @@ require_once __DIR__ . '/includes/auth.php';
 requireAuth();
 require_once __DIR__ . '/includes/db.php';
 
-// ---------- ADD ANNOUNCEMENT ----------
 if (isset($_POST['addAnnouncement'])) {
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $content = mysqli_real_escape_string($conn, $_POST['content']);
@@ -32,7 +31,6 @@ if (isset($_POST['addAnnouncement'])) {
     exit();
 }
 
-// ---------- EDIT ANNOUNCEMENT ----------
 if (isset($_POST['editAnnouncement'])) {
     $id = intval($_POST['id']);
     $title = mysqli_real_escape_string($conn, $_POST['title']);
@@ -68,11 +66,9 @@ if (isset($_POST['editAnnouncement'])) {
     exit();
 }
 
-// ---------- DELETE ANNOUNCEMENT ----------
 if (isset($_POST['deleteAnnouncement'])) {
     $id = intval($_POST['id']);
 
-    // remove image file
     $res = mysqli_query($conn, "SELECT image_path FROM announcements WHERE id=$id");
     if ($row = mysqli_fetch_assoc($res)) {
         if (!empty($row['image_path']) && file_exists($row['image_path'])) {
@@ -87,7 +83,6 @@ if (isset($_POST['deleteAnnouncement'])) {
     exit();
 }
 
-// ---------- FETCH ANNOUNCEMENTS ----------
 $sql = "SELECT a.*, u.first_name, u.last_name 
         FROM announcements a
         JOIN admin_users u ON a.posted_by = u.id
