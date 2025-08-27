@@ -1,10 +1,6 @@
 <?php
 require_once 'includes/db.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 // Default admin name
 $adminName = "Admin";
 
@@ -43,7 +39,7 @@ if (isset($_SESSION['user_id'])) {
                 </a>
                 <a class="nav-link" href="census.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
-                    Census data
+                    Census Data
                 </a>
                 <a class="nav-link" href="servicesAdmin.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-briefcase"></i></div>

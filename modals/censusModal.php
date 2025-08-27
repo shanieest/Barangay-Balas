@@ -1,203 +1,226 @@
-<div class="modal fade" id="updateHouseholdModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+<!-- Update Household Modal -->
+<div class="modal fade" id="updateHouseholdModal" tabindex="-1" aria-labelledby="updateHouseholdModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Update Household</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="updateHouseholdModalLabel">Update Household Information</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Household No</label>
-              <input type="text" class="form-control" value="BL-2023-0456">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Purok</label>
-              <input type="text" class="form-control" value="2">
+        <!-- Household Details Form -->
+        <form id="householdForm">
+          <div class="mb-3 row">
+            <label for="householdNo" class="col-sm-3 col-form-label">Household No</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" id="householdNo" name="householdNo" value="BL-2023-0456">
             </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Address</label>
-            <input type="text" class="form-control" value="123 Balas Street">
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">House Type</label>
-              <input type="text" class="form-control" value="Single-detached">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Ownership</label>
-              <input type="text" class="form-control" value="Owned">
+          <div class="mb-3 row">
+            <label for="purok" class="col-sm-3 col-form-label">Purok</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" id="purok" name="purok" value="2">
             </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Year Built</label>
-            <input type="number" class="form-control" value="2010">
+          <div class="mb-3 row">
+            <label for="address" class="col-sm-3 col-form-label">Address</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" id="address" name="address" value="123 Balas Street">
+            </div>
           </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button class="btn btn-primary">Save changes</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Household Details Modal -->
-<div class="modal fade" id="editHouseholdDetailsModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Household Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form>
-          <!-- Fields same as Update Household -->
-          <p>Form for editing household details goes here.</p>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary">Save</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Amenities Modal -->
-<div class="modal fade" id="editAmenitiesModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Household Amenities</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form>
-          <label class="form-label">Water Source</label>
-          <input type="text" class="form-control mb-2" value="Level III (Piped)">
-          <label class="form-label">Electricity</label>
-          <input type="text" class="form-control mb-2" value="With Meter">
-          <label class="form-label">Internet</label>
-          <input type="text" class="form-control mb-2" value="DSL">
-          <label class="form-label">Toilet Facility</label>
-          <input type="text" class="form-control mb-2" value="Water-sealed">
-          <label class="form-label">Waste Disposal</label>
-          <input type="text" class="form-control mb-2" value="Garbage Collection">
-          <label class="form-label">Vehicle</label>
-          <input type="text" class="form-control" value="Motorcycle, Car">
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary">Save</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Add Member Modal -->
-<div class="modal fade" id="addMemberModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Add Household Member</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form>
-          <div class="row">
-            <div class="col-md-6 mb-2"><input type="text" class="form-control" placeholder="Full Name"></div>
-            <div class="col-md-6 mb-2"><input type="text" class="form-control" placeholder="Relationship"></div>
-            <div class="col-md-4 mb-2"><input type="number" class="form-control" placeholder="Age"></div>
-            <div class="col-md-4 mb-2"><input type="text" class="form-control" placeholder="Gender"></div>
-            <div class="col-md-4 mb-2"><input type="text" class="form-control" placeholder="Civil Status"></div>
-            <div class="col-md-6 mb-2"><input type="text" class="form-control" placeholder="Occupation"></div>
-            <div class="col-md-6 mb-2"><input type="text" class="form-control" placeholder="Education"></div>
-            <div class="col-md-6 mb-2">
-              <select class="form-select">
-                <option>Voter?</option>
-                <option>Yes</option>
-                <option>No</option>
+          <div class="mb-3 row">
+            <label for="houseType" class="col-sm-3 col-form-label">House Type</label>
+            <div class="col-sm-9">
+              <select class="form-select" id="houseType" name="houseType">
+                <option selected>Single-detached</option>
+                <option>Duplex</option>
+                <option>Apartment</option>
               </select>
             </div>
           </div>
+          <div class="mb-3 row">
+            <label for="ownership" class="col-sm-3 col-form-label">Ownership</label>
+            <div class="col-sm-9">
+              <select class="form-select" id="ownership" name="ownership">
+                <option selected>Owned</option>
+                <option>Rented</option>
+                <option>Leased</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label for="yearBuilt" class="col-sm-3 col-form-label">Year Built</label>
+            <div class="col-sm-9">
+              <input type="number" class="form-control" id="yearBuilt" name="yearBuilt" value="2010">
+            </div>
+          </div>
+
+          <!-- Household Amenities -->
+          <h6 class="mt-4">Household Amenities</h6>
+          <div class="mb-3 row">
+            <label for="waterSource" class="col-sm-3 col-form-label">Water Source</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" id="waterSource" name="waterSource" value="Level III (Piped)">
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label for="electricity" class="col-sm-3 col-form-label">Electricity</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" id="electricity" name="electricity" value="With Meter">
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label for="toilet" class="col-sm-3 col-form-label">Toilet Facility</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" id="toilet" name="toilet" value="Water-sealed">
+            </div>
+          </div>
+
+          <!-- Household Members -->
+          <h6 class="mt-4">Household Members</h6>
+          <button type="button" class="btn btn-sm btn-success mb-2" id="addMemberBtn">Add Member</button>
+          <div class="table-responsive">
+            <table class="table table-bordered" id="membersTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Name</th>
+                  <th>Relationship</th>
+                  <th>Age</th>
+                  <th>Gender</th>
+                  <th>Civil Status</th>
+                  <th>Occupation</th>
+                  <th>Education</th>
+                  <th>Voter</th>
+                  <th>PhilHealth</th>
+                  <th>4Ps</th>
+                  <th>Indigent</th>
+                  <th>Medical History</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Start with one empty row -->
+                <tr>
+                  <td><input type="text" class="form-control" name="name[]"></td>
+                  <td><input type="text" class="form-control" name="relationship[]"></td>
+                  <td><input type="number" class="form-control" name="age[]"></td>
+                  <td>
+                    <select class="form-select" name="gender[]">
+                      <option>Male</option>
+                      <option>Female</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-select" name="civil_status[]">
+                      <option>Single</option>
+                      <option>Married</option>
+                      <option>Widowed</option>
+                    </select>
+                  </td>
+                  <td><input type="text" class="form-control" name="occupation[]"></td>
+                  <td><input type="text" class="form-control" name="education[]"></td>
+                  <td>
+                    <select class="form-select" name="voter[]">
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-select" name="philhealth[]">
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-select" name="4ps[]">
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-select" name="indigent[]">
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+                  </td>
+                  <td><input type="text" class="form-control" name="medical_history[]"></td>
+                  <td><button type="button" class="btn btn-sm btn-danger removeMember">Remove</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-success">Add Member</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Edit Member Modal -->
-<div class="modal fade" id="editMemberModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Household Member</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form>
-          <p>Form for editing member details goes here.</p>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary">Save Changes</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- JavaScript for adding/removing members -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const addMemberBtn = document.getElementById('addMemberBtn');
+  const membersTable = document.getElementById('membersTable').querySelector('tbody');
 
-<!-- Edit Livelihood Modal -->
-<div class="modal fade" id="editLivelihoodModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Livelihood</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form>
-          <textarea class="form-control" rows="5">Teaching (Public School)
-Nursing (Private Hospital)
-Sari-sari Store</textarea>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary">Save</button>
-      </div>
-    </div>
-  </div>
-</div>
+  // Add new member row
+  addMemberBtn.addEventListener('click', function () {
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+      <td><input type="text" class="form-control" name="name[]"></td>
+      <td><input type="text" class="form-control" name="relationship[]"></td>
+      <td><input type="number" class="form-control" name="age[]"></td>
+      <td>
+        <select class="form-select" name="gender[]">
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select" name="civil_status[]">
+          <option>Single</option>
+          <option>Married</option>
+          <option>Widowed</option>
+        </select>
+      </td>
+      <td><input type="text" class="form-control" name="occupation[]"></td>
+      <td><input type="text" class="form-control" name="education[]"></td>
+      <td>
+        <select class="form-select" name="voter[]">
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select" name="philhealth[]">
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select" name="4ps[]">
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select" name="indigent[]">
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </td>
+      <td><input type="text" class="form-control" name="medical_history[]"></td>
+      <td><button type="button" class="btn btn-sm btn-danger removeMember">Remove</button></td>
+    `;
+    membersTable.appendChild(newRow);
+  });
 
-<!-- Edit Government Assistance Modal -->
-<div class="modal fade" id="editGovAssistModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Government Assistance</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form>
-          <textarea class="form-control" rows="5">4Ps Beneficiary (2018-2022)
-TUPAD (2021)
-DSWD Educational Assistance (2022)</textarea>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary">Save</button>
-      </div>
-    </div>
-  </div>
-</div>
+  // Remove member row
+  membersTable.addEventListener('click', function(e){
+    if(e.target && e.target.classList.contains('removeMember')){
+      e.target.closest('tr').remove();
+    }
+  });
+});
+</script>

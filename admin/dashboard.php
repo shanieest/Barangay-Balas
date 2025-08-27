@@ -1,7 +1,7 @@
 <?php 
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();
-require_once __DIR__ . '/includes/db.php'; // $conn = mysqli connection
+require_once __DIR__ . '/includes/db.php';
 ?>
 
 <!DOCTYPE html>
@@ -29,13 +29,12 @@ require_once __DIR__ . '/includes/db.php'; // $conn = mysqli connection
                     </ol>
 
                     <?php
-                    // ================== STATISTICS ===================
                     function getCount($conn, $query) {
                         $result = $conn->query($query);
                         return ($result && $row = $result->fetch_assoc()) ? (int)$row['total'] : 0;
                     }
 
-                    $residents_count  = getCount($conn, "SELECT COUNT(*) AS total FROM residents");
+                    $residents_count  = getCount($conn, "SELECT COUNT(*) AS total FROM resident_accounts WHERE account_status = 'approved'");
                     $pending_requests = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Pending'");
                     $approved_today   = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Approved' AND DATE(date_processed) = CURDATE()");
                     $announcements    = getCount($conn, "SELECT COUNT(*) AS total FROM announcements WHERE DATE(date_posted) = CURDATE()");
@@ -58,7 +57,6 @@ require_once __DIR__ . '/includes/db.php'; // $conn = mysqli connection
                         }
                     }
 
-                    // Residents by account status
                     $residentLabels = ['Verified', 'Pending', 'Rejected'];
                     $residentData = [0, 0, 0];
                     $resQuery = $conn->query("
@@ -77,12 +75,11 @@ require_once __DIR__ . '/includes/db.php'; // $conn = mysqli connection
                     ?>
 
                     <div class="row">
-                        <!-- Total Residents -->
                         <div class="col-xl-3 col-md-6">
                             <div class="card bg-primary text-white mb-4">
                                 <div class="card-body d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="fw-normal">Total Residents</h6>
+                                        <h6 class="fw-normal">Total Approved Residents</h6>
                                         <h3 class="mb-0"><?= $residents_count ?></h3>
                                     </div>
                                     <i class="fas fa-users fa-2x"></i>
@@ -94,7 +91,6 @@ require_once __DIR__ . '/includes/db.php'; // $conn = mysqli connection
                             </div>
                         </div>
 
-                        <!-- Pending Requests -->
                         <div class="col-xl-3 col-md-6">
                             <div class="card bg-warning text-white mb-4">
                                 <div class="card-body d-flex justify-content-between align-items-center">
@@ -238,8 +234,8 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: <?= json_encode($residentLabels) ?>,
             datasets: [{
                 data: <?= json_encode($residentData) ?>,
-                backgroundColor: ['#1D3557','#FFD166','#E63946'],
-                hoverBackgroundColor: ['#457B9D','#F4A261','#C1121F']
+                backgroundColor: ['#29ac55ff','#FFD166','#E63946'],
+                hoverBackgroundColor: ['#29ac55ff','#C1121F']
             }]
         },
         options: {

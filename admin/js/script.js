@@ -1,4 +1,3 @@
-// script.js
 
 document.addEventListener('DOMContentLoaded', function () {
     // Toggle the side navigation
