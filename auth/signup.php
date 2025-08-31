@@ -172,7 +172,7 @@ if (isset($_SESSION['login_error'])) {
     <div class="container">
         <div class="auth-container">
             <div class="auth-header">
-                <img src="assets\img\balas-logo.png" alt="Barangay Balas Logo" class="auth-logo">
+                <img src="\barangay-balas\assets\img\balas-logo.png" alt="Barangay Balas Logo" class="auth-logo">
                 <h2>Barangay Balas Portal</h2>
                 <p class="text-muted">Secure online services for residents</p>
             </div>
@@ -225,7 +225,7 @@ if (isset($_SESSION['login_error'])) {
 
                 <!-- Registration Form -->
                 <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-                    <form id="registrationForm" action="signup-backend.php" method="POST" enctype="multipart/form-data">
+                    <form id="registrationForm" action="\auth\signup-backend.php" method="POST" enctype="multipart/form-data">
                         <div class="form-section">
                             <h5 class="form-section-title"><i class="fas fa-user"></i> Personal Information</h5>
                             <div class="form-row">

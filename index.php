@@ -62,7 +62,7 @@
     <h2 class="section-title">Latest News & Announcements</h2>
 
     <?php
-      require_once __DIR__ . '/includes/db.php';
+      require_once __DIR__ . '/config/db.php';
 
       // Pull latest 5 announcements
       $q = $conn->prepare("SELECT a.id, a.title, a.content, a.image_path, a.date_posted, au.first_name, au.last_name

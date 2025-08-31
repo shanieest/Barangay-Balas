@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/db.php';
-require_once 'includes/auth.php';
+require_once '../../config/db.php';
+require_once '../../auth/auth.php';
 
 $userId = $_SESSION['user_id'] ?? null;
 $user = null;

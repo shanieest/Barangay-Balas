@@ -61,9 +61,9 @@
   </div>
 </section>
 
-<?php include 'modals/documentsModal.php'; ?>
-<?php include 'modals/vehicleReservationModal.php'; ?>
-<?php include 'modals/tentReservationModal.php'; ?>
+<?php include '../../pages/modals/documentsModal.php'; ?>
+<?php include '../../pages/modals/vehicleReservationModal.php'; ?>
+<?php include '../../pages/modals/tentReservationModal.php'; ?>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

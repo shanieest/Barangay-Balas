@@ -134,4 +134,4 @@
     </div>
 </section>
 
-<?php include "modals/censusModal.php"; ?>
+<?php include "../../pages/modals/censusModal.php"; ?>

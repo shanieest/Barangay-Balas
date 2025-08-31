@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth.php';
-require_once 'includes/db.php';
+require_once '../../auth/auth.php';
+require_once '../../config/db.php';
 
 $docRequestsQuery = "SELECT COUNT(*) AS total FROM document_requests WHERE status='Pending'";
 $docRequestsResult = $conn->query($docRequestsQuery);
@@ -251,11 +251,11 @@ $activities = $conn->query($activityQuery);
 <body>
 <div class="wrapper">
     <!-- Sidebar -->
-    <?php include 'includes/sidebar.php'?>
+    <?php include '../../includes/sidebar.php'?>
 
     <!-- Main Content -->
     <div class="main-content">
-        <?php include 'includes/navbar.php'?>
+        <?php include '../../includes/navbar.php'?>
 
         <div class="content-area">
             <section id="dashboard">

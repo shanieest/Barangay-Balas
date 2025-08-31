@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/db.php'; 
+require_once '../../config/db.php'; 
 
 $sql = "SELECT a.id, a.title, a.content, a.date_posted, a.image_path, 
                CONCAT(u.first_name, ' ', u.last_name) AS posted_by

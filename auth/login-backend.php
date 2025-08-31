@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'includes/db.php';
+require_once '../config/db.php';
 
 header('Content-Type: application/json');
 
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $response['success'] = true;
             $response['message'] = "Login successful";
-            $response['redirect'] = "dashboard.php";
+            $response['redirect'] = "../pages/residents/dashboard.php";
         } else {
             $response['message'] = "Invalid email or password";
         }

@@ -63,7 +63,7 @@
     <span class="navbar-brand mb-0 font-weight-bold"></span>
     <div class="d-flex align-items-center">
       <span class="mr-2 navbar-brand mb">Don't have an account?</span>
-      <a class="btn btn-primary btn-sm" href="\balas-2.0\signup.php">Sign up</a>
+      <a class="btn btn-primary btn-sm" href="\Barangay-Balas\auth\signup.php">Sign up</a>
     </div>
   </div>
 </nav>
@@ -75,9 +75,9 @@
 
     <!-- Left Side: Barangay Balas Logo + Text -->
     <a class="navbar-brand d-flex align-items-center" href="/balas 2.0/index.php">
-      <img src="\balas-2.0\assets\img\pampangalogo.png" alt="Pampanga Logo" width="80" height="80" class="d-inline-block align-top mr-2">
-      <img src="\balas-2.0\assets\img\Mexico_Pampanga.png" alt="Mexico Logo" width="80" height="80" class="d-inline-block align-top mr-2">
-      <img src="\balas-2.0\assets\img\balas-logo.png" alt="Balas Logo" width="80" height="80" class="d-inline-block align-top mr-2">
+      <img src="\barangay-balas\assets\img\pampangalogo.png" alt="Pampanga Logo" width="80" height="80" class="d-inline-block align-top mr-2">
+      <img src="\barangay-balas\assets\img\Mexico_Pampanga.png" alt="Mexico Logo" width="80" height="80" class="d-inline-block align-top mr-2">
+      <img src="\barangay-balas\assets\img\balas-logo.png" alt="Balas Logo" width="80" height="80" class="d-inline-block align-top mr-2">
       <span class="font-weight-bold">Barangay Balas<br><small>Mexico, Pampanga</small></span>
     </a>
 
