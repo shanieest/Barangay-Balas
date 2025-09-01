@@ -28,6 +28,8 @@ $activityQuery = "SELECT activity, timestamp
                   FROM activity_logs 
                   ORDER BY timestamp DESC LIMIT 5";
 $activities = $conn->query($activityQuery);
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">

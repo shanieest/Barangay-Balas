@@ -67,7 +67,6 @@ if (isset($_POST['editAnnouncement'])) {
         $targetFile = $targetDir . $fileName;
 
         if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
-            // delete old file if exists
             if ($currentImage && file_exists($currentImage)) {
                 unlink($currentImage);
             }
@@ -118,7 +117,7 @@ $announcements = mysqli_query($conn, $sql);
     <title>Announcements | Barangay Balas Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="sb-nav-fixed">
     <?php include 'includes/navbar.php'; ?>
@@ -302,5 +301,7 @@ $announcements = mysqli_query($conn, $sql);
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="assets/js/script.js"></script>
+
 </body>
 </html>

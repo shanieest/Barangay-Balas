@@ -51,12 +51,10 @@ function login($username, $password) {
 }
 
 function logout() {
-    if (isLoggedIn()) {
-        logActivity($_SESSION['user_id'], "Logged out");
-    }
-    
     session_unset();
     session_destroy();
+    header("Location: index.php");
+    exit();
 }
 
 function logActivity($userId, $activity) {

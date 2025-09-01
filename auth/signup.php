@@ -225,7 +225,7 @@ if (isset($_SESSION['login_error'])) {
 
                 <!-- Registration Form -->
                 <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-                    <form id="registrationForm" action="\auth\signup-backend.php" method="POST" enctype="multipart/form-data">
+                    <form id="registrationForm" action="signup-backend.php" method="POST" enctype="multipart/form-data">
                         <div class="form-section">
                             <h5 class="form-section-title"><i class="fas fa-user"></i> Personal Information</h5>
                             <div class="form-row">
