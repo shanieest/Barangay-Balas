@@ -59,16 +59,16 @@ require_once __DIR__ . '/includes/db.php';
                     $residentLabels = ['Verified', 'Pending', 'Rejected'];
                     $residentData = [0, 0, 0];
                     $resQuery = $conn->query("
-                        SELECT ra.status, COUNT(*) as total
+                        SELECT ra.account_status, COUNT(*) as total
                         FROM resident_accounts ra
                         JOIN residents r ON ra.resident_id = r.id
-                        GROUP BY ra.status
+                        GROUP BY ra.account_status
                     ");
                     if ($resQuery) {
                         while ($row = $resQuery->fetch_assoc()) {
-                            if ($row['status'] === 'Verified') $residentData[0] = $row['total'];
-                            if ($row['status'] === 'Pending')  $residentData[1] = $row['total'];
-                            if ($row['status'] === 'Rejected') $residentData[2] = $row['total'];
+                            if ($row['account_status'] === 'Approved') $residentData[0] = $row['total'];
+                            if ($row['account_status'] === 'Pending')  $residentData[1] = $row['total'];
+                            if ($row['account_status'] === 'Disapproved') $residentData[2] = $row['total'];
                         }
                     }
                     ?>

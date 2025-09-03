@@ -3,7 +3,6 @@ require_once '../../config/db.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get household data
     $household_id = $_POST['household_id'] ?? null;
     $house_number = $_POST['householdNo'] ?? '';
     $purok = $_POST['purok'] ?? '';
@@ -130,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 } else {
-    header("Location: census.php");
+    header("Location: dashboard.php");
     exit();
 }
 ?>

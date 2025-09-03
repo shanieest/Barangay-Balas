@@ -59,21 +59,6 @@
             <!-- Household Members -->
             <h6 class="mt-4">Household Members</h6>
             
-            <!-- Existing Residents Selection -->
-            <div class="mb-3">
-                <label class="form-label">Select Existing Residents</label>
-                <select class="form-select" id="existingResidents">
-                    <option value="">-- Select resident to add --</option>
-                    <?php foreach ($all_residents as $resident): ?>
-                        <option value="<?= $resident['id'] ?>" 
-                                data-firstname="<?= htmlspecialchars($resident['first_name']) ?>"
-                                data-lastname="<?= htmlspecialchars($resident['last_name']) ?>">
-                            <?= htmlspecialchars($resident['first_name'] . ' ' . $resident['last_name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
             <button type="button" class="btn btn-sm btn-success mb-2" id="addMemberBtn">Add New Member</button>
 
             <!-- Members table -->

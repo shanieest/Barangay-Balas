@@ -5,11 +5,9 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 $household_data = [];
 $residents = [];
 
-// Decide where your household id comes from (session or GET param)
 $householdId = $_SESSION['household_id'] ?? ($_GET['household_id'] ?? null);
 
 if ($householdId) {
-    // Fetch household details
     $stmt = $conn->prepare("
         SELECT id, house_number, purok, type_of_water_source, type_of_toilet_facility
         FROM households
@@ -21,7 +19,6 @@ if ($householdId) {
     $household_data = $result ? ($result->fetch_assoc() ?? []) : [];
     $stmt->close();
 
-    // Fetch household members
     $stmt = $conn->prepare("
         SELECT 
             r.id, r.first_name, r.last_name, r.relationship_to_head, r.sex, r.civil_status,
@@ -43,7 +40,6 @@ if ($householdId) {
     $stmt->close();
 }
 
-// Fetch all verified residents for selection
 $all_residents = [];
 $res_stmt = $conn->prepare("SELECT id, first_name, last_name FROM residents WHERE verification_status = 'Verified' ORDER BY last_name, first_name");
 if ($res_stmt) {
@@ -53,7 +49,6 @@ if ($res_stmt) {
     $res_stmt->close();
 }
 ?>
-<!-- Census Data Section (Hidden by default) -->
 <section id="census" class="d-none">
     <h2 class="mb-4">Census Data</h2>
     
@@ -80,7 +75,6 @@ if ($res_stmt) {
         </div>
         <div class="card-body">
             <div class="row mb-4">
-                <!-- Household Details -->
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light">
@@ -96,7 +90,6 @@ if ($res_stmt) {
                         </div>
                     </div>
                 </div>
-                <!-- Household Amenities -->
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light">
@@ -116,7 +109,6 @@ if ($res_stmt) {
                 </div>
             </div>
 
-            <!-- Household Members -->
             <h5 class="mb-3">Household Members</h5>
             <div class="table-responsive">
                 <table class="table table-bordered">

@@ -28,3 +28,10 @@ Stack trace:
 Stack trace:
 #0 {main}
   thrown in C:\xampp\htdocs\balas-2.0\admin\residents-backend.php on line 38
+[03-Sep-2025 04:18:09 Europe/Berlin] PHP Warning:  Undefined variable $params in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 124
+[03-Sep-2025 04:18:09 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: array_merge(): Argument #1 must be of type array, null given in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php:124
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(124): array_merge(NULL, Array)
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(34): handleListResidents()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 124

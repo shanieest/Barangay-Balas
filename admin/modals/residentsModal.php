@@ -323,8 +323,14 @@
                                             <p class="text-muted mb-0 resident-sex"></p>
                                         </div>
                                     </div>
-                                    
-                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-5">
+                                            <p class="mb-0"><strong>Civil Status:</strong></p>
+                                        </div>
+                                        <div class="col-sm-7">
+                                            <p class="text-muted mb-0 resident-civil-status"></p>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="row mb-3">
@@ -341,6 +347,14 @@
                                         </div>
                                         <div class="col-sm-7">
                                             <p class="text-muted mb-0 resident-email"></p>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-5">
+                                            <p class="mb-0"><strong>Age:</strong></p>
+                                        </div>
+                                        <div class="col-sm-7">
+                                            <p class="text-muted mb-0 resident-age"></p>
                                         </div>
                                     </div>
                                 </div>
@@ -516,7 +530,7 @@
                                     <div class="col-md-6">
                                         <div class="row mb-2">
                                             <div class="col-sm-4">
-                                                <p class="mb-0"><strong>Status:</strong></p>
+                                                <p class="mb-0"><strong>Status: <span id="ac"></span></strong></p>
                                             </div>
                                             <div class="col-sm-8">
                                                 <span class="badge request-status-badge"></span>

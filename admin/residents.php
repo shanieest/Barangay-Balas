@@ -238,7 +238,7 @@ requireAuth();
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="assets/js/script.js"></script>
- <script>
+<script>
     // Global variables
 let currentResidentId = null;
 let currentRequestId = null;
@@ -591,17 +591,44 @@ function addRequestButtonEventListeners() {
 
 // View resident function
 function viewResident(id) {
+    if (!id) {
+        showToast('Invalid resident ID', 'danger');
+        return;
+    }
+
+    // Show loading state
+    showToast('Loading resident details...', 'info');
+    
     fetch(`residents-backend.php?action=list&id=${id}`)
-        .then(handleResponse)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(text => {
+            console.log('Raw response:', text); // Debug log
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                console.error('Response text:', text);
+                throw new Error('Invalid JSON response from server');
+            }
+        })
         .then(data => {
-            if (data.success && data.data) {
-                displayResidentModal(data.data);
+            console.log('Parsed data:', data); // Debug log
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Get the first resident from the array
+                const resident = data.data[0];
+                displayResidentModal(resident);
             } else {
-                showToast('Resident not found', 'danger');
+                throw new Error('No resident data received or empty data array');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading resident:', error);
             showToast('Failed to load resident details: ' + error.message, 'danger');
         });
 }
@@ -610,76 +637,148 @@ function viewResident(id) {
 function displayResidentModal(resident) {
     const viewModal = getElement('#viewResidentModal');
     if (!viewModal) return;
-    
-    // Format birthdate
-    const birthdate = new Date(resident.birthdate);
-    const formattedBirthdate = birthdate.toLocaleDateString('en-US', { 
-        year: 'numeric', month: 'long', day: 'numeric' 
-    }) + ` (${resident.age} years old)`;
-    
-    // Set verification badge class
-    const verificationClass = resident.verification_status === 'Verified' ? 'bg-success' : 
-                           resident.verification_status === 'Pending' ? 'bg-warning' : 'bg-secondary';
-    
-    // Set resident status badge class
-    const statusClass = resident.resident_status === 'Active' ? 'bg-primary' : 
-                       resident.resident_status === 'Inactive' ? 'bg-secondary' :
-                       resident.resident_status === 'Deceased' ? 'bg-dark' : 'bg-info';
-    
-    // Update modal content
-    updateModalField(viewModal, '.verification-badge', verificationClass, resident.verification_status);
-    updateModalField(viewModal, '.resident-status-badge', statusClass, resident.resident_status);
-    
-    // Update other fields
-    updateModalText(viewModal, '.resident-name', `${resident.first_name} ${resident.last_name}`);
-    updateModalText(viewModal, '.resident-birthdate', formattedBirthdate);
-    updateModalText(viewModal, '.resident-sex', resident.sex === 'male' ? 'Male' : 'Female');
-    updateModalText(viewModal, '.resident-contact', resident.contact_number);
-    updateModalText(viewModal, '.resident-email', resident.email);
-    updateModalText(viewModal, '.resident-address', resident.address || 'N/A');
-    updateModalImage(viewModal, '.resident-photo', resident.photo_path || 'img/default-profile.jpg');
-    updateModalImage(viewModal, '.resident-valid-id', resident.valid_id_path || 'img/default-id.jpg');
 
-    // Account information
+    console.log('Displaying resident data:', resident); // Debug log
+
+    // Helper function to safely get value or return 'N/A'
+    const safeValue = (value) => {
+        if (value === null || value === undefined || value === '' || value === 'null') {
+            return 'N/A';
+        }
+        return value;
+    };
+
+    // Format full name
+    const fullName = [
+        safeValue(resident.first_name),
+        safeValue(resident.middle_name),
+        safeValue(resident.last_name),
+        safeValue(resident.suffix)
+    ].filter(part => part !== 'N/A' && part.trim()).join(' ') || 'N/A';
+
+    // Format birthdate and calculate age
+    let formattedBirthdate = 'N/A';
+    let calculatedAge = 'N/A';
+    
+    if (resident.birthdate && resident.birthdate !== '0000-00-00') {
+        const birthdate = new Date(resident.birthdate);
+        if (!isNaN(birthdate.getTime())) {
+            formattedBirthdate = birthdate.toLocaleDateString('en-US', {
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric'
+            });
+            
+            // Use provided age or calculate it
+            if (resident.age && resident.age > 0) {
+                calculatedAge = resident.age + ' years old';
+            } else {
+                const today = new Date();
+                let age = today.getFullYear() - birthdate.getFullYear();
+                const monthDiff = today.getMonth() - birthdate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+                    age--;
+                }
+                calculatedAge = age + ' years old';
+            }
+        }
+    }
+
+    // Format address
+    const address = safeValue(resident.address);
+
+    // Update basic information
+    updateModalText(viewModal, '.resident-name', fullName);
+    updateModalText(viewModal, '.resident-id', resident.id ? `Resident ID: ${resident.id}` : 'N/A');
+    updateModalText(viewModal, '.resident-birthdate', formattedBirthdate);
+    
+    // Fix sex display
+    const sex = resident.sex ? 
+        (resident.sex.toLowerCase() === 'male' ? 'Male' : 
+         resident.sex.toLowerCase() === 'female' ? 'Female' : 
+         resident.sex) : 'N/A';
+    updateModalText(viewModal, '.resident-sex', sex);
+    
+    updateModalText(viewModal, '.resident-civil-status', safeValue(resident.civil_status));
+    updateModalText(viewModal, '.resident-contact', safeValue(resident.contact_number));
+    updateModalText(viewModal, '.resident-email', safeValue(resident.email));
+    updateModalText(viewModal, '.resident-age', calculatedAge);
+    updateModalText(viewModal, '.resident-address', address);
+
+    // Update verification status badge
+    const verificationStatus = resident.verification_status || 'Unverified';
+    const verificationClass = verificationStatus === 'Verified' ? 'bg-success' : 
+                             verificationStatus === 'Pending' ? 'bg-warning' : 'bg-secondary';
+    updateModalField(viewModal, '.verification-badge', `badge ${verificationClass}`, verificationStatus);
+
+    // Update resident status badge  
+    const residentStatus = resident.resident_status || 'Active';
+    const statusClass = residentStatus === 'Active' ? 'bg-primary' :
+                       residentStatus === 'Inactive' ? 'bg-secondary' :
+                       residentStatus === 'Deceased' ? 'bg-dark' : 'bg-info';
+    updateModalField(viewModal, '.resident-status-badge', `badge ${statusClass}`, residentStatus);
+
+    // Update images with proper error handling
+    const photoPath = resident.photo_path || resident.photo || 'img/default-profile.jpg';
+    const idPath = resident.valid_id_path || resident.valid_id || 'img/default-id.jpg';
+    
+    updateModalImage(viewModal, '.resident-photo', photoPath);
+    updateModalImage(viewModal, '.resident-valid-id', idPath);
+
+    // Handle account information section
     const accountSection = viewModal.querySelector('.account-details');
     if (accountSection) {
-        if (resident.account_status) {
+        const accountStatus = resident.account_status;
+        
+        if (accountStatus && accountStatus !== 'null') {
             accountSection.style.display = 'block';
             
-            // Set account status badge
+            // Update account status badge
             const accountStatusBadge = accountSection.querySelector('.account-status-badge');
             if (accountStatusBadge) {
                 accountStatusBadge.className = 'badge account-status-badge';
-                if (resident.account_status === 'Approved') {
+                
+                if (accountStatus === 'Approved') {
                     accountStatusBadge.classList.add('account-approved');
-                } else if (resident.account_status === 'Pending') {
+                } else if (accountStatus === 'Pending') {
                     accountStatusBadge.classList.add('account-pending');
-                } else if (resident.account_status === 'Disapproved') {
+                } else if (accountStatus === 'Disapproved') {
                     accountStatusBadge.classList.add('account-disapproved');
+                } else {
+                    accountStatusBadge.classList.add('bg-secondary');
                 }
-                accountStatusBadge.textContent = resident.account_status;
+                
+                accountStatusBadge.textContent = accountStatus;
             }
             
-            updateModalText(viewModal, '.resident-processed-by', resident.account_processed_by || 'N/A');
-            updateModalText(viewModal, '.resident-date-processed', resident.account_date_processed || 'N/A');
-            updateModalText(viewModal, '.resident-account-notes', resident.account_notes || 'N/A');
+            // Update processed information
+            updateModalText(viewModal, '.resident-processed-by', 
+                safeValue(resident.account_processed_by));
+            
+            const processedDate = resident.account_date_processed;
+            updateModalText(viewModal, '.resident-date-processed', 
+                processedDate && processedDate !== '0000-00-00 00:00:00' ? 
+                new Date(processedDate).toLocaleDateString() : 'N/A');
+            
+            updateModalText(viewModal, '.resident-account-notes', 
+                safeValue(resident.account_notes));
         } else {
             accountSection.style.display = 'none';
         }
     }
 
-    // Set verify button state
+    // Update verify button state
     const verifyBtn = getElement('#verifyResidentBtn');
     if (verifyBtn) {
         verifyBtn.dataset.id = resident.id;
-        verifyBtn.disabled = resident.verification_status === 'Verified';
-        verifyBtn.textContent = resident.verification_status === 'Verified' ? 'Verified' : 'Verify';
+        const isVerified = verificationStatus === 'Verified';
+        verifyBtn.disabled = isVerified;
+        verifyBtn.textContent = isVerified ? 'Verified' : 'Verify';
+        verifyBtn.className = isVerified ? 'btn btn-success' : 'btn btn-info text-white';
     }
 
-    // Store current resident ID
+    // Store current resident ID and show modal
     currentResidentId = resident.id;
-    
-    // Show the modal
     const modal = new bootstrap.Modal(viewModal);
     modal.show();
 }
@@ -687,35 +786,97 @@ function displayResidentModal(resident) {
 // Helper functions for updating modal fields
 function updateModalText(modal, selector, value) {
     const element = modal.querySelector(selector);
-    if (element) element.textContent = value || 'N/A';
+    if (element) {
+        // Handle various falsy values more carefully
+        if (value === null || value === undefined || value === '' || 
+            value === 'null' || value === 'undefined' || 
+            (typeof value === 'string' && value.trim() === '')) {
+            element.textContent = 'N/A';
+        } else {
+            element.textContent = value;
+        }
+    } else {
+        console.warn(`Modal element not found: ${selector}`);
+    }
 }
 
 function updateModalField(modal, selector, className, value) {
     const element = modal.querySelector(selector);
     if (element) {
         element.className = className;
-        element.textContent = value || 'N/A';
+        
+        // Handle various falsy values more carefully
+        if (value === null || value === undefined || value === '' || 
+            value === 'null' || value === 'undefined' || 
+            (typeof value === 'string' && value.trim() === '')) {
+            element.textContent = 'N/A';
+        } else {
+            element.textContent = value;
+        }
+    } else {
+        console.warn(`Modal element not found: ${selector}`);
     }
 }
 
 function updateModalImage(modal, selector, src) {
     const element = modal.querySelector(selector);
-    if (element) element.src = src;
+    if (element) {
+        // Set src even if it might be empty - let the onerror handle it
+        element.src = src || 'img/default-profile.jpg';
+        
+        // Add error handling for broken images
+        element.onerror = function() {
+            if (selector.includes('photo') || selector.includes('profile')) {
+                this.src = 'img/default-profile.jpg';
+            } else if (selector.includes('id')) {
+                this.src = 'img/default-id.jpg';
+            }
+        };
+    } else {
+        console.warn(`Modal image element not found: ${selector}`);
+    }
 }
 
 // View request function
 function viewRequest(id) {
+    if (!id) {
+        showToast('Invalid request ID', 'danger');
+        return;
+    }
+
+    // Show loading state
+    showToast('Loading request details...', 'info');
+    
     fetch(`residents-backend.php?action=account_requests&id=${id}`)
-        .then(handleResponse)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(text => {
+            console.log('Raw response:', text); // Debug log
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                console.error('Response text:', text);
+                throw new Error('Invalid JSON response from server');
+            }
+        })
         .then(data => {
-            if (data.success && data.data) {
-                displayRequestModal(data.data);
+            console.log('Parsed data:', data); // Debug log
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Get the first request from the array
+                const request = data.data[0];
+                displayRequestModal(request);
             } else {
-                showToast(data.message || 'Request not found', 'danger');
+                throw new Error('No request data received or empty data array');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading request:', error);
             showToast('Failed to load request details: ' + error.message, 'danger');
         });
 }
@@ -724,174 +885,129 @@ function viewRequest(id) {
 function displayRequestModal(request) {
     const viewModal = getElement('#viewRequestModal');
     if (!viewModal) return;
-    
-    // Format birthdate safely
-    let formattedBirthdate = 'N/A';
-    if (request.birthdate) {
-        try {
-            const birthdate = new Date(request.birthdate);
-            if (!isNaN(birthdate.getTime())) {
-                formattedBirthdate = birthdate.toLocaleDateString('en-US', { 
-                    year: 'numeric', month: 'long', day: 'numeric' 
-                }) + (request.age ? ` (${request.age} years old)` : '');
-            }
-        } catch (e) {
-            console.error('Error parsing birthdate:', e);
+
+    console.log('Displaying request data:', request); // Debug log
+
+    // Helper function to safely get value or return 'N/A'
+    const safeValue = (value) => {
+        if (value === null || value === undefined || value === '' || value === 'null') {
+            return 'N/A';
         }
-    }
-    
-    // Set status badge class
-    let statusClass = '';
-    if (request.account_status === 'Approved') {
-        statusClass = 'account-approved';
-    } else if (request.account_status === 'Pending') {
-        statusClass = 'account-pending';
-    } else if (request.account_status === 'Disapproved') {
-        statusClass = 'account-disapproved';
-    }
-    
-    // Safely generate request ID - handle cases where request.id might be undefined
-    const requestId = request.id ? `BRGY-REQ-${request.id.toString().padStart(4, '0')}` : 'N/A';
-    
-    // Safely get name
-    const requestName = request.first_name && request.last_name ? 
-        `${request.first_name} ${request.last_name}` : 'N/A';
-    
-    // Update modal content
-    updateModalField(viewModal, '.request-status-badge', `badge ${statusClass}`, request.account_status || 'N/A');
-    updateModalText(viewModal, '.request-name', requestName);
-    updateModalText(viewModal, '.request-id', `Request ID: ${requestId}`);
-    updateModalText(viewModal, '.request-birthdate', formattedBirthdate);
-    updateModalText(viewModal, '.request-sex', request.sex ? 
-        (request.sex === 'male' ? 'Male' : 'Female') : 'N/A');
-    updateModalText(viewModal, '.request-contact', request.contact_number || 'N/A');
-    updateModalText(viewModal, '.request-email', request.email || 'N/A');
-    updateModalImage(viewModal, '.request-photo', request.photo_path || 'img/default-profile.jpg');
-    updateModalImage(viewModal, '.request-valid-id', request.valid_id_path || 'img/default-id.jpg');
-    updateModalText(viewModal, '.request-date-requested', request.date_requested || 'N/A');
-    updateModalText(viewModal, '.request-processed-by', request.processed_by || 'N/A');
-    updateModalText(viewModal, '.request-date-processed', request.date_processed || 'N/A');
-    updateModalText(viewModal, '.request-notes', request.notes || 'N/A');
+        return value;
+    };
 
-    // Show/hide processed info section
-    const processedInfo = viewModal.querySelector('#requestProcessedInfo');
-    if (processedInfo) {
-        processedInfo.style.display = request.account_status !== 'Pending' ? 'block' : 'none';
-    }
+    // Format full name
+    const fullName = [
+        safeValue(request.first_name),
+        safeValue(request.middle_name),
+        safeValue(request.last_name),
+        safeValue(request.suffix)
+    ].filter(part => part !== 'N/A' && part.trim()).join(' ') || 'N/A';
 
-    // Set buttons state
-    const approveBtn = getElement('#approveRequestBtn');
-    const rejectBtn = getElement('#rejectRequestBtn');
-    if (approveBtn && rejectBtn) {
-        approveBtn.dataset.id = request.id || '';
-        rejectBtn.dataset.id = request.id || '';
-        
-        if (request.account_status !== 'Pending') {
-            approveBtn.style.display = 'none';
-            rejectBtn.style.display = 'none';
-        } else {
-            approveBtn.style.display = 'inline-block';
-            rejectBtn.style.display = 'inline-block';
-        }
-    }
-
-    // Store current request ID
-    currentRequestId = request.id;
-    
-    // Show the modal
-    const modal = new bootstrap.Modal(viewModal);
-    modal.show();
-}
-
-function displayRequestModal(request) {
-    const viewModal = getElement('#viewRequestModal');
-    if (!viewModal) return;
-    
     // Format birthdate
-    const birthdate = request.birthdate ? new Date(request.birthdate) : null;
-    const formattedBirthdate = birthdate ? 
-        birthdate.toLocaleDateString('en-US', { 
-            year: 'numeric', month: 'long', day: 'numeric' 
-        }) + (request.age ? ` (${request.age} years old)` : '') : 
-        'N/A';
-    
-    // Set status badge class
-    let statusClass = '';
-    if (request.account_status === 'Approved') {
-        statusClass = 'account-approved';
-    } else if (request.account_status === 'Pending') {
-        statusClass = 'account-pending';
-    } else if (request.account_status === 'Disapproved') {
-        statusClass = 'account-disapproved';
-    }
-    
-    // Safely generate request ID
-    const requestId = request.id ? `BRGY-REQ-${request.id.toString().padStart(4, '0')}` : 'N/A';
-    
-    // Update modal content
-    updateModalField(viewModal, '.request-status-badge', `badge ${statusClass}`, request.account_status || 'N/A');
-    updateModalText(viewModal, '.request-name', request.first_name && request.last_name ? 
-        `${request.first_name} ${request.last_name}` : 'N/A');
-    updateModalText(viewModal, '.request-id', `Request ID: ${requestId}`);
-    updateModalText(viewModal, '.request-birthdate', formattedBirthdate);
-    updateModalText(viewModal, '.request-sex', request.sex ? 
-        (request.sex === 'male' ? 'Male' : 'Female') : 'N/A');
-    updateModalText(viewModal, '.request-contact', request.contact_number || 'N/A');
-    updateModalText(viewModal, '.request-email', request.email || 'N/A');
-    updateModalImage(viewModal, '.request-photo', request.photo_path || 'img/default-profile.jpg');
-    updateModalImage(viewModal, '.request-valid-id', request.valid_id_path || 'img/default-id.jpg');
-    updateModalText(viewModal, '.request-date-requested', request.date_requested || 'N/A');
-    updateModalText(viewModal, '.request-processed-by', request.processed_by || 'N/A');
-    updateModalText(viewModal, '.request-date-processed', request.date_processed || 'N/A');
-    updateModalText(viewModal, '.request-notes', request.notes || 'N/A');
-
-    // Show/hide processed info section
-    const processedInfo = viewModal.querySelector('#requestProcessedInfo');
-    if (processedInfo) {
-        processedInfo.style.display = request.account_status !== 'Pending' ? 'block' : 'none';
-    }
-
-    // Set buttons state
-    const approveBtn = getElement('#approveRequestBtn');
-    const rejectBtn = getElement('#rejectRequestBtn');
-    if (approveBtn && rejectBtn) {
-        approveBtn.dataset.id = request.id || '';
-        rejectBtn.dataset.id = request.id || '';
-        
-        if (request.account_status !== 'Pending') {
-            approveBtn.style.display = 'none';
-            rejectBtn.style.display = 'none';
-        } else {
-            approveBtn.style.display = 'inline-block';
-            rejectBtn.style.display = 'inline-block';
+    let formattedBirthdate = 'N/A';
+    if (request.birthdate && request.birthdate !== '0000-00-00') {
+        const birthdate = new Date(request.birthdate);
+        if (!isNaN(birthdate.getTime())) {
+            formattedBirthdate = birthdate.toLocaleDateString('en-US', {
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric'
+            });
+            
+            // Add age if available
+            if (request.age && request.age > 0) {
+                formattedBirthdate += ` (${request.age} years old)`;
+            }
         }
     }
 
-    // Store current request ID
-    currentRequestId = request.id;
+    // Format request ID
+    const requestId = request.account_id || request.id;
+    const formattedRequestId = requestId ? `BRGY-REQ-${requestId.toString().padStart(4, '0')}` : 'N/A';
+
+    // Format address
+    const address = safeValue(request.address);
+
+    // Update basic information
+    updateModalText(viewModal, '.request-name', fullName);
+    updateModalText(viewModal, '.request-id', `Request ID: ${formattedRequestId}`);
+    updateModalText(viewModal, '.request-birthdate', formattedBirthdate);
     
-    // Show the modal
+    // Fix sex display
+    const sex = request.sex ? 
+        (request.sex.toLowerCase() === 'male' ? 'Male' : 
+         request.sex.toLowerCase() === 'female' ? 'Female' : 
+         request.sex) : 'N/A';
+    updateModalText(viewModal, '.request-sex', sex);
+    
+    updateModalText(viewModal, '.request-contact', safeValue(request.contact_number));
+    updateModalText(viewModal, '.request-email', safeValue(request.email));
+    updateModalText(viewModal, '.request-address', address);
+
+    // Update status badge
+    const accountStatus = request.account_status || 'Pending';
+    let statusClass = 'bg-secondary';
+    if (accountStatus === 'Approved') {
+        statusClass = 'account-approved';
+    } else if (accountStatus === 'Pending') {
+        statusClass = 'account-pending';
+    } else if (accountStatus === 'Disapproved') {
+        statusClass = 'account-disapproved';
+    }
+    updateModalField(viewModal, '.request-status-badge', `badge ${statusClass}`, accountStatus);
+
+    // Update images
+    const photoPath = request.photo_path || request.photo || 'img/default-profile.jpg';
+    const idPath = request.valid_id_path || request.valid_id || 'img/default-id.jpg';
+    
+    updateModalImage(viewModal, '.request-photo', photoPath);
+    updateModalImage(viewModal, '.request-valid-id', idPath);
+
+    // Update request information
+    const dateRequested = request.date_requested;
+    updateModalText(viewModal, '.request-date-requested', 
+        dateRequested && dateRequested !== '0000-00-00 00:00:00' ? 
+        new Date(dateRequested).toLocaleDateString() : 'N/A');
+
+    // Update processed information
+    const processedBy = request.processed_by;
+    const dateProcessed = request.date_processed;
+    const notes = request.notes;
+
+    updateModalText(viewModal, '.request-processed-by', safeValue(processedBy));
+    updateModalText(viewModal, '.request-date-processed', 
+        dateProcessed && dateProcessed !== '0000-00-00 00:00:00' ? 
+        new Date(dateProcessed).toLocaleDateString() : 'N/A');
+    updateModalText(viewModal, '.request-notes', safeValue(notes));
+
+    // Show/hide processed info based on status
+    const processedInfo = viewModal.querySelector('#requestProcessedInfo');
+    if (processedInfo) {
+        const isPending = accountStatus === 'Pending';
+        processedInfo.style.display = isPending ? 'none' : 'block';
+    }
+
+    // Update action buttons
+    const approveBtn = getElement('#approveRequestBtn');
+    const rejectBtn = getElement('#rejectRequestBtn');
+    
+    if (approveBtn && rejectBtn) {
+        const isPending = accountStatus === 'Pending';
+        const buttonRequestId = request.account_id || request.id;
+        
+        approveBtn.dataset.id = buttonRequestId;
+        rejectBtn.dataset.id = buttonRequestId;
+        
+        approveBtn.style.display = isPending ? 'inline-block' : 'none';
+        rejectBtn.style.display = isPending ? 'inline-block' : 'none';
+    }
+
+    // Store current request ID and show modal
+    currentRequestId = request.account_id || request.id;
     const modal = new bootstrap.Modal(viewModal);
     modal.show();
 }
-
-// Edit resident function
-function editResident(id) {
-    fetch(`residents-backend.php?action=list&id=${id}`)
-        .then(handleResponse)
-        .then(data => {
-            if (data.success && data.data) {
-                populateEditForm(data.data);
-            } else {
-                showToast('Resident not found', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('Failed to load resident details: ' + error.message, 'danger');
-        });
-}
-
 // Populate edit form with resident data
 function populateEditForm(resident) {
     const editModal = getElement('#editResidentModal');
