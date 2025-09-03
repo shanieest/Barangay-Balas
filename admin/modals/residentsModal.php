@@ -527,16 +527,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="row mb-2">
-                                            <div class="col-sm-4">
-                                                <p class="mb-0"><strong>Status: <span id="ac"></span></strong></p>
-                                            </div>
-                                            <div class="col-sm-8">
-                                                <span class="badge request-status-badge"></span>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                                 
                                 <!-- Only show if processed -->

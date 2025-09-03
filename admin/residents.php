@@ -596,8 +596,18 @@ function viewResident(id) {
         return;
     }
 
-    // Show loading state
-    showToast('Loading resident details...', 'info');
+    currentResidentId = id;
+    
+    const viewModal = getElement('#viewResidentModal');
+    if (viewModal) {
+        viewModal.querySelectorAll('.resident-data').forEach(el => {
+            el.textContent = 'Loading...';
+        });
+        viewModal.querySelectorAll('img').forEach(img => {
+            img.src = 'img/default-profile.jpg';
+        });
+    }
+
     
     fetch(`residents-backend.php?action=list&id=${id}`)
         .then(response => {
@@ -607,7 +617,6 @@ function viewResident(id) {
             return response.text();
         })
         .then(text => {
-            console.log('Raw response:', text); // Debug log
             try {
                 return JSON.parse(text);
             } catch (e) {
@@ -617,19 +626,27 @@ function viewResident(id) {
             }
         })
         .then(data => {
-            console.log('Parsed data:', data); // Debug log
-            
-            if (data.success && data.data && data.data.length > 0) {
-                // Get the first resident from the array
-                const resident = data.data[0];
-                displayResidentModal(resident);
+            if (data.success && data.data) {
+                // Handle both array and object cases
+                const resident = Array.isArray(data.data) ? data.data[0] : data.data;
+                
+                if (resident) {
+                    displayResidentModal(resident);
+                } else {
+                    throw new Error('Resident not found');
+                }
             } else {
-                throw new Error('No resident data received or empty data array');
+                throw new Error('No resident data received');
             }
         })
         .catch(error => {
             console.error('Error loading resident:', error);
             showToast('Failed to load resident details: ' + error.message, 'danger');
+            
+            const modalInstance = bootstrap.Modal.getInstance(viewModal);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
         });
 }
 
@@ -784,17 +801,22 @@ function displayResidentModal(resident) {
 }
 
 // Helper functions for updating modal fields
+function safeValue(value) {
+    if (
+        value === null || value === undefined ||
+        value === '' ||
+        value === 'null' || value === 'undefined' ||
+        (typeof value === 'string' && value.trim() === '')
+    ) {
+        return 'N/A';
+    }
+    return value;
+}
+
 function updateModalText(modal, selector, value) {
     const element = modal.querySelector(selector);
     if (element) {
-        // Handle various falsy values more carefully
-        if (value === null || value === undefined || value === '' || 
-            value === 'null' || value === 'undefined' || 
-            (typeof value === 'string' && value.trim() === '')) {
-            element.textContent = 'N/A';
-        } else {
-            element.textContent = value;
-        }
+        element.textContent = safeValue(value);
     } else {
         console.warn(`Modal element not found: ${selector}`);
     }
@@ -803,16 +825,10 @@ function updateModalText(modal, selector, value) {
 function updateModalField(modal, selector, className, value) {
     const element = modal.querySelector(selector);
     if (element) {
-        element.className = className;
-        
-        // Handle various falsy values more carefully
-        if (value === null || value === undefined || value === '' || 
-            value === 'null' || value === 'undefined' || 
-            (typeof value === 'string' && value.trim() === '')) {
-            element.textContent = 'N/A';
-        } else {
-            element.textContent = value;
+        if (className) {
+            element.classList.add(...className.split(' ')); // safer
         }
+        element.textContent = safeValue(value);
     } else {
         console.warn(`Modal element not found: ${selector}`);
     }
@@ -821,16 +837,19 @@ function updateModalField(modal, selector, className, value) {
 function updateModalImage(modal, selector, src) {
     const element = modal.querySelector(selector);
     if (element) {
-        // Set src even if it might be empty - let the onerror handle it
-        element.src = src || 'img/default-profile.jpg';
-        
-        // Add error handling for broken images
-        element.onerror = function() {
-            if (selector.includes('photo') || selector.includes('profile')) {
-                this.src = 'img/default-profile.jpg';
-            } else if (selector.includes('id')) {
-                this.src = 'img/default-id.jpg';
-            }
+        if (src) {
+            element.src = src;
+        } else {
+            element.src = selector.includes('id')
+                ? 'img/default-id.jpg'
+                : 'img/default-profile.jpg';
+        }
+
+        element.onerror = function () {
+            this.onerror = null; // stop loops
+            this.src = selector.includes('id')
+                ? 'img/default-id.jpg'
+                : 'img/default-profile.jpg';
         };
     } else {
         console.warn(`Modal image element not found: ${selector}`);
@@ -844,8 +863,6 @@ function viewRequest(id) {
         return;
     }
 
-    // Show loading state
-    showToast('Loading request details...', 'info');
     
     fetch(`residents-backend.php?action=account_requests&id=${id}`)
         .then(response => {
@@ -1008,6 +1025,7 @@ function displayRequestModal(request) {
     const modal = new bootstrap.Modal(viewModal);
     modal.show();
 }
+
 // Populate edit form with resident data
 function populateEditForm(resident) {
     const editModal = getElement('#editResidentModal');
@@ -1138,12 +1156,12 @@ function showDeleteModal(id) {
         .then(handleResponse)
         .then(data => {
             if (data.success && data.data) {
+                const resident = data.data; // now a single object
                 const deleteResidentName = getElement('#deleteResidentName');
-                const deleteResidentId = getElement('#deleteResidentId');
                 const confirmDeleteBtn = getElement('#confirmDeleteBtn');
                 
-                if (deleteResidentName) deleteResidentName.textContent = `${data.data.first_name} ${data.data.last_name}`;
-                if (confirmDeleteBtn) confirmDeleteBtn.dataset.id = data.data.id;
+                if (deleteResidentName) deleteResidentName.textContent = `${resident.first_name} ${resident.last_name}`;
+                if (confirmDeleteBtn) confirmDeleteBtn.dataset.id = resident.id;
                 
                 const modal = new bootstrap.Modal(getElement('#deleteResidentModal'));
                 modal.show();
@@ -1155,16 +1173,16 @@ function showDeleteModal(id) {
             console.error('Error:', error);
             showToast('Failed to load resident details: ' + error.message, 'danger');
         });
-}
+ }
 
-// Delete resident function
+ // Delete resident function
 function deleteResident(id) {
     fetch('residents-backend.php?action=delete', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `id=${id}`
+        body: `id=${encodeURIComponent(id)}`
     })
     .then(handleResponse)
     .then(data => {

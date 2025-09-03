@@ -149,7 +149,7 @@ function handleListResidents() {
     }
 
     $response['success'] = true;
-    $response['data'] = $residents;
+    $response['data'] = $id ? ($residents[0] ?? null) : $residents;
     $response['pagination'] = [
         'total' => $total,
         'page' => $page,
@@ -462,24 +462,29 @@ function handleEditResident() {
 
 function handleDeleteResident() {
     global $conn, $response;
-    
+
+    // Accept JSON or form-data
     $data = json_decode(file_get_contents('php://input'), true);
-    
+    if (!$data) {
+        $data = $_POST; // fallback if form-urlencoded
+    }
+
     if (empty($data['id'])) {
         throw new Exception("Resident ID is required");
     }
-    
+
     $stmt = $conn->prepare("DELETE FROM residents WHERE id = ?");
     $stmt->bind_param("i", $data['id']);
-    
+
     if (!$stmt->execute()) {
         throw new Exception("Failed to delete resident: " . $stmt->error);
     }
-    
+
     $response['success'] = true;
     $response['message'] = 'Resident deleted successfully';
     echo json_encode($response);
 }
+
 
 function handleVerifyResident() {
     global $conn, $response;
