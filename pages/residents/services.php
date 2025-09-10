@@ -1,12 +1,19 @@
 <!-- Request Documents Section -->
 <section id="documents" class="d-none">
   <h2 class="mb-4">Services</h2>
-  
-  <div class="card">
-    <div class="card-header">
-      <span>Request Documents / Reservations</span>
-    </div>
+
     <div class="card-body">
+      <button id="openScannerBtn" class="btn btn-outline-primary">
+        <i class="fas fa-camera"></i> Scan Document QR
+      </button>
+
+      <script>
+      document.getElementById('openScannerBtn').addEventListener('click', function(){
+        // open scanner in new window or modal
+        window.open('scanner.php', '_blank', 'width=420,height=720');
+      });
+      </script>
+
       <div class="row">
         <div class="col-md-4 mb-4">
           <div class="card h-100">
@@ -17,7 +24,7 @@
               <button class="btn btn-primary btn-sm request-btn" 
                       data-bs-toggle="modal" 
                       data-bs-target="#documentRequestModal" 
-                      data-document="Certificate of Good Moral">
+                      data-document="Documents">
                 Request
               </button>
             </div>

@@ -33,10 +33,16 @@ while ($row = $result->fetch_assoc()) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Document Requests | Barangay Balas Admin</title>
+  <title>Services | Barangay Balas Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .service-badge {
+      font-size: 0.8rem;
+      margin-left: 5px;
+    }
+  </style>
 </head>
 <body class="sb-nav-fixed">
 <?php include 'includes/navbar.php'; ?>
@@ -45,10 +51,10 @@ while ($row = $result->fetch_assoc()) {
   <div id="layoutSidenav_content">
     <main>
       <div class="container-fluid px-4">
-        <h1 class="mt-4">Document Requests</h1>
+        <h1 class="mt-4">Services</h1>
         <ol class="breadcrumb mb-4">
           <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
-          <li class="breadcrumb-item active">Document Requests</li>
+          <li class="breadcrumb-item active">Services</li>
         </ol>
 
         <div class="card mb-4">
@@ -184,6 +190,242 @@ while ($row = $result->fetch_assoc()) {
             </div>
           </div>
         </div>
+
+        <!-- Service Reservations Section -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-concierge-bell me-1"></i> Service Reservations
+          </div>
+          <div class="card-body">
+            <ul class="nav nav-tabs mb-4" id="servicesTab" role="tablist">
+              <li class="nav-item">
+                <button class="nav-link active" id="pending-services-tab" data-bs-toggle="tab" data-bs-target="#pending-services" type="button">
+                  Pending Reservations <span class="badge bg-warning ms-1">3</span>
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" id="approved-services-tab" data-bs-toggle="tab" data-bs-target="#approved-services" type="button">
+                  Approved Reservations <span class="badge bg-success ms-1">5</span>
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" id="completed-services-tab" data-bs-toggle="tab" data-bs-target="#completed-services" type="button">
+                  Completed <span class="badge bg-info ms-1">2</span>
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" id="cancelled-services-tab" data-bs-toggle="tab" data-bs-target="#cancelled-services" type="button">
+                  Cancelled <span class="badge bg-danger ms-1">1</span>
+                </button>
+              </li>
+            </ul>
+
+            <div class="tab-content" id="servicesTabContent">
+              <!-- Pending Services -->
+              <div class="tab-pane fade show active" id="pending-services">
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Reservation ID</th>
+                        <th>Resident</th>
+                        <th>Service Type</th>
+                        <th>Reservation Date</th>
+                        <th>Duration</th>
+                        <th>Purpose</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>SR-001</td>
+                        <td>Juan Dela Cruz</td>
+                        <td><span class="badge bg-primary">Tent</span></td>
+                        <td>2023-10-15 to 2023-10-17</td>
+                        <td>3 days</td>
+                        <td>Family gathering</td>
+                        <td>
+                          <button class="btn btn-sm btn-success me-1">
+                            <i class="fas fa-check"></i> Approve
+                          </button>
+                          <button class="btn btn-sm btn-danger">
+                            <i class="fas fa-times"></i> Reject
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>SR-002</td>
+                        <td>Maria Santos</td>
+                        <td><span class="badge bg-info">Vehicle</span></td>
+                        <td>2023-10-20</td>
+                        <td>1 day</td>
+                        <td>Transportation for medical appointment</td>
+                        <td>
+                          <button class="btn btn-sm btn-success me-1">
+                            <i class="fas fa-check"></i> Approve
+                          </button>
+                          <button class="btn btn-sm btn-danger">
+                            <i class="fas fa-times"></i> Reject
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>SR-003</td>
+                        <td>Pedro Reyes</td>
+                        <td><span class="badge bg-primary">Tent</span> + <span class="badge bg-info">Vehicle</span></td>
+                        <td>2023-10-25 to 2023-10-26</td>
+                        <td>2 days</td>
+                        <td>Community event</td>
+                        <td>
+                          <button class="btn btn-sm btn-success me-1">
+                            <i class="fas fa-check"></i> Approve
+                          </button>
+                          <button class="btn btn-sm btn-danger">
+                            <i class="fas fa-times"></i> Reject
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Approved Services -->
+              <div class="tab-pane fade" id="approved-services">
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Reservation ID</th>
+                        <th>Resident</th>
+                        <th>Service Type</th>
+                        <th>Reservation Date</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>SR-004</td>
+                        <td>Ana Lopez</td>
+                        <td><span class="badge bg-primary">Tent</span></td>
+                        <td>2023-10-05 to 2023-10-06</td>
+                        <td>2 days</td>
+                        <td><span class="badge bg-success">Approved</span></td>
+                        <td>
+                          <button class="btn btn-sm btn-info me-1">
+                            <i class="fas fa-eye"></i> View
+                          </button>
+                          <button class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Update
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>SR-005</td>
+                        <td>Carlos Garcia</td>
+                        <td><span class="badge bg-info">Vehicle</span></td>
+                        <td>2023-10-08</td>
+                        <td>1 day</td>
+                        <td><span class="badge bg-success">Approved</span></td>
+                        <td>
+                          <button class="btn btn-sm btn-info me-1">
+                            <i class="fas fa-eye"></i> View
+                          </button>
+                          <button class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Update
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Completed Services -->
+              <div class="tab-pane fade" id="completed-services">
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Reservation ID</th>
+                        <th>Resident</th>
+                        <th>Service Type</th>
+                        <th>Reservation Date</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>SR-006</td>
+                        <td>Elena Rodriguez</td>
+                        <td><span class="badge bg-primary">Tent</span></td>
+                        <td>2023-09-20 to 2023-09-21</td>
+                        <td>2 days</td>
+                        <td><span class="badge bg-info">Completed</span></td>
+                        <td>
+                          <button class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i> View
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>SR-007</td>
+                        <td>Miguel Torres</td>
+                        <td><span class="badge bg-info">Vehicle</span></td>
+                        <td>2023-09-25</td>
+                        <td>1 day</td>
+                        <td><span class="badge bg-info">Completed</span></td>
+                        <td>
+                          <button class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i> View
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Cancelled Services -->
+              <div class="tab-pane fade" id="cancelled-services">
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Reservation ID</th>
+                        <th>Resident</th>
+                        <th>Service Type</th>
+                        <th>Reservation Date</th>
+                        <th>Duration</th>
+                        <th>Reason</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>SR-008</td>
+                        <td>Lorna Diaz</td>
+                        <td><span class="badge bg-primary">Tent</span></td>
+                        <td>2023-09-28 to 2023-09-29</td>
+                        <td>2 days</td>
+                        <td>Bad weather conditions</td>
+                        <td>
+                          <button class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i> View
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
     <?php include 'includes/footer.php'; ?>
@@ -193,7 +435,7 @@ while ($row = $result->fetch_assoc()) {
 <?php include 'modals/documentsModal.php'; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/script.js"></script>
+<script src="assets/js/script.js"></script>
 
 </body>
 </html>

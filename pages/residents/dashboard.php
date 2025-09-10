@@ -281,7 +281,7 @@ $activities = $conn->query($activityQuery);
                                     <?php while($row = $latestRequests->fetch_assoc()): ?>
                                         <a href="#" class="list-group-item list-group-item-action">
                                             <div class="d-flex justify-content-between">
-                                                <div><?= htmlspecialchars($row['document_type']) ?></div>
+                                                <div><?= htmlspecialchars($row['document_type_id']) ?></div>
                                                 <small class="<?= $row['status']=='Pending' ? 'text-warning' : 'text-success' ?>">
                                                     <?= htmlspecialchars($row['status']) ?>
                                                 </small>
