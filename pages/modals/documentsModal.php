@@ -132,24 +132,4 @@ if ($resident_id) {
   </div>
 </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const birthdateInput = document.getElementById("birthdate");
-  const ageInput = document.getElementById("age");
-
-  birthdateInput.addEventListener("change", function () {
-    const birthdate = new Date(this.value);
-    if (!isNaN(birthdate)) {
-      const today = new Date();
-      let age = today.getFullYear() - birthdate.getFullYear();
-      const monthDiff = today.getMonth() - birthdate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
-        age--;
-      }
-      ageInput.value = age >= 0 ? age : "";
-    } else {
-      ageInput.value = "";
-    }
-  });
-});
-</script>
+<script src="/assets/js/services.js"></script>

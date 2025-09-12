@@ -1,12 +1,10 @@
 <?php
 require 'includes/db.php';
-
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();
 
-$sql = "SELECT dr.id, dr.purpose, dr.status, 
-               dr.date_requested, dr.date_processed, dr.notes, 
-               dt.document_type, 
+$sql = "SELECT dr.id, dr.purpose, dr.status, dr.date_requested, dr.date_processed, dr.notes, 
+               dr.document_file_path, dt.document_type, 
                CONCAT(r.first_name, ' ', r.last_name) AS resident_name
         FROM document_requests dr
         LEFT JOIN document_types dt ON dr.document_type_id = dt.id
@@ -38,10 +36,7 @@ while ($row = $result->fetch_assoc()) {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
   <style>
-    .service-badge {
-      font-size: 0.8rem;
-      margin-left: 5px;
-    }
+    .service-badge { font-size: 0.8rem; margin-left: 5px; }
   </style>
 </head>
 <body class="sb-nav-fixed">
@@ -57,10 +52,9 @@ while ($row = $result->fetch_assoc()) {
           <li class="breadcrumb-item active">Services</li>
         </ol>
 
+        <!-- Document Requests Section -->
         <div class="card mb-4">
-          <div class="card-header">
-            <i class="fas fa-table me-1"></i> Manage Document Requests
-          </div>
+          <div class="card-header"><i class="fas fa-table me-1"></i> Manage Document Requests</div>
           <div class="card-body">
             <ul class="nav nav-tabs mb-4" id="requestsTab" role="tablist">
               <li class="nav-item"><button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button">Pending <span class="badge bg-warning ms-1"><?= count($pending) ?></span></button></li>
@@ -134,9 +128,16 @@ while ($row = $result->fetch_assoc()) {
                             <td><?= htmlspecialchars($row['date_requested']) ?></td>
                             <td><?= htmlspecialchars($row['date_processed']) ?></td>
                             <td>
-                              <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewRequestModal" data-id="<?= $row['id'] ?>">
+                              <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewRequestModal" data-id="<?= $row['id'] ?>">
                                 <i class="fas fa-eye"></i> View
                               </button>
+                              <?php if (!empty($row['document_file_path'])): ?>
+                                <a href="download-document.php?file=<?= htmlspecialchars($row['document_file_path']) ?>" class="btn btn-sm btn-primary" download>
+                                  <i class="fas fa-download"></i> Download
+                                </a>
+                              <?php else: ?>
+                                <span class="text-muted">No file</span>
+                              <?php endif; ?>
                             </td>
                           </tr>
                         <?php endforeach; ?>

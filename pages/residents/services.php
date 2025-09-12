@@ -1,19 +1,10 @@
 <!-- Request Documents Section -->
+ <!-- services.php -->
+
 <section id="documents" class="d-none">
   <h2 class="mb-4">Services</h2>
 
     <div class="card-body">
-      <button id="openScannerBtn" class="btn btn-outline-primary">
-        <i class="fas fa-camera"></i> Scan Document QR
-      </button>
-
-      <script>
-      document.getElementById('openScannerBtn').addEventListener('click', function(){
-        // open scanner in new window or modal
-        window.open('scanner.php', '_blank', 'width=420,height=720');
-      });
-      </script>
-
       <div class="row">
         <div class="col-md-4 mb-4">
           <div class="card h-100">
@@ -73,17 +64,5 @@
 <?php include '../../pages/modals/tentReservationModal.php'; ?>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const requestButtons = document.querySelectorAll(".request-btn");
-  const documentTypeInput = document.getElementById("document_type");
-  const modalTitle = document.getElementById("documentRequestModalLabel");
 
-  requestButtons.forEach(button => {
-    button.addEventListener("click", function () {
-      const docType = this.getAttribute("data-document");
-      documentTypeInput.value = docType;
-      modalTitle.textContent = "Request " + docType;
-    });
-  });
-});
 </script>

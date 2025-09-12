@@ -1,11 +1,10 @@
 <?php
+// process_request.php
 require '../config/db.php';
 require '../vendor/autoload.php';
 require_once __DIR__ . '/../lib/phpqrcode/qrlib.php';
 
 use PhpOffice\PhpWord\TemplateProcessor;
-use PhpOffice\PhpWord\IOFactory;
-use PhpOffice\PhpWord\Settings;
 
 header('Content-Type: application/json');
 
@@ -19,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
     $request_id   = (int) $_POST['request_id'];
     $action       = $_POST['action'];
     $notes        = $_POST['notes'] ?? null;
-    $autoDownload = isset($_POST['auto_download']) ? true : false;
 
     try {
         $conn->begin_transaction();
@@ -62,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             // Generate QR
             $qr_code = bin2hex(random_bytes(8));
             $qrPath  = $qrDir . "/qr_{$request_id}_{$timestamp}.png";
-            $verifyUrl = "https://yourdomain.com/verify.php?code={$qr_code}";
+            $verifyUrl = "https://thedomain.com/verify.php?code={$qr_code}";
             QRcode::png($verifyUrl, $qrPath, QR_ECLEVEL_L, 4);
 
             // Insert QR into DB
@@ -86,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $docxPath = $outDir . "/request_{$request_id}_{$timestamp}.docx";
             $templateProcessor->saveAs($docxPath);
 
-            // Convert DOCX → PDF via LibreOffice (Windows)
+            // Convert DOCX → PDF
             $pdfPath = $outDir . "/request_{$request_id}_{$timestamp}.pdf";
             $libreOfficePath = '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"';
             $cmd = "$libreOfficePath --headless --convert-to pdf --outdir \"" . $outDir . "\" \"" . $docxPath . "\"";
@@ -104,20 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $response['success'] = true;
             $response['message'] = 'Request approved and document generated successfully.';
             $response['file_path'] = $relativePdfPath;
-            $response['auto_download'] = $autoDownload;
-
-            // Auto-download
-            if ($autoDownload) {
-                header('Content-Description: File Transfer');
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: attachment; filename="'.basename($pdfPath).'"');
-                header('Expires: 0');
-                header('Cache-Control: must-revalidate');
-                header('Pragma: public');
-                header('Content-Length: ' . filesize($pdfPath));
-                readfile($pdfPath);
-                exit;
-            }
         } else {
             $response['success'] = true;
             $response['message'] = 'Request disapproved successfully.';
