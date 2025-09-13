@@ -1,6 +1,6 @@
 <?php
 // get-request-details.php
-require_once '/includes/db.php';
+require_once 'includes/db.php'; // Fixed path - should match your actual config path
 
 if (!isset($_GET['id'])) {
     http_response_code(400);
@@ -42,7 +42,7 @@ $response = [
     'document_type' => $request['document_type'],
     'date_requested' => date('F j, Y, g:i a', strtotime($request['date_requested'])),
     'status' => $request['status'],
-    'full_name' => trim($request['first_name'] . ' ' . $request['middle_name'] . ' ' . $request['last_name']),
+    'full_name' => trim($request['first_name'] . ' ' . ($request['middle_name'] ? $request['middle_name'] . ' ' : '') . $request['last_name']),
     'address' => $request['address'],
     'purok' => $request['purok'],
     'contact_number' => $request['contact_number'],
@@ -50,7 +50,8 @@ $response = [
     'notes' => $request['notes'],
     'resident_email' => $request['resident_email'],
     'account_status' => $request['account_status'],
-    'processed_by' => $request['processed_by_name'] ? $request['processed_by_name'] . ' (' . $request['processed_by_username'] . ')' : 'Not processed yet'
+    'processed_by' => $request['processed_by_name'] ? $request['processed_by_name'] . ' (' . $request['processed_by_username'] . ')' : 'Not processed yet',
+    'document_path' => $request['document_file_path'] ?? null // Add this for download functionality
 ];
 
 header('Content-Type: application/json');

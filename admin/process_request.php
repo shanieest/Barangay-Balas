@@ -1,6 +1,6 @@
 <?php
 // process_request.php
-require '../config/db.php';
+require 'includes/db.php';
 require '../vendor/autoload.php';
 require_once __DIR__ . '/../lib/phpqrcode/qrlib.php';
 

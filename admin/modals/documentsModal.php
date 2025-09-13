@@ -67,7 +67,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a href="#" class="btn btn-primary" id="downloadDocumentBtn" style="display:none;">
+                <a href="download-document.php" class="btn btn-primary" id="downloadDocumentBtn" style="display:none;">
                     <i class="fas fa-download me-1"></i> Download Document
                 </a>
             </div>
@@ -76,56 +76,66 @@
 </div>
 
 <!-- Approve Request Modal -->
-<div class="modal fade" id="approveRequestModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="approveRequestModal" tabindex="-1" aria-labelledby="approveRequestModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form id="approveForm" class="modal-content">
       <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">Approve Request</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="approveRequestModalLabel">Approve Request</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <input type="hidden" name="request_id" id="approveRequestId">
         <input type="hidden" name="action" value="approve">
 
         <div class="mb-3">
-          <label class="form-label">Notes (optional)</label>
-          <textarea name="notes" id="approveNotes" class="form-control"></textarea>
+          <label for="approveNotes" class="form-label">Notes (optional)</label>
+          <textarea name="notes" id="approveNotes" class="form-control" rows="3" placeholder="Add any additional notes..."></textarea>
         </div>
 
         <div class="form-check">
           <input class="form-check-input" type="checkbox" name="auto_download" id="autoDownload" value="1">
-          <label class="form-check-label" for="autoDownload">Auto-download document after approval</label>
+          <label class="form-check-label" for="autoDownload">
+            Auto-download document after approval
+          </label>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-success">Confirm Approve</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-success">
+          <i class="fas fa-check me-1"></i> Confirm Approve
+        </button>
       </div>
     </form>
   </div>
 </div>
 
 <!-- Disapprove Request Modal -->
-<div class="modal fade" id="disapproveRequestModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="disapproveRequestModal" tabindex="-1" aria-labelledby="disapproveRequestModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form id="disapproveForm" class="modal-content">
       <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title">Disapprove Request</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="disapproveRequestModalLabel">Disapprove Request</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <input type="hidden" name="request_id" id="disapproveRequestId">
         <input type="hidden" name="action" value="disapprove">
 
         <div class="mb-3">
-          <label class="form-label">Reason for Disapproval</label>
-          <textarea name="notes" id="disapproveNotes" class="form-control" required></textarea>
+          <label for="disapproveNotes" class="form-label">Reason for Disapproval <span class="text-danger">*</span></label>
+          <textarea name="notes" id="disapproveNotes" class="form-control" rows="3" required 
+                    placeholder="Please provide a reason for disapproving this request..."></textarea>
+          <div class="form-text">This reason will be visible to the resident.</div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-danger">Confirm Disapprove</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-times me-1"></i> Confirm Disapprove
+        </button>
       </div>
     </form>
   </div>
 </div>
 
-<script src="/assets/js/services.js"></script>
+<script src="assets/js/services.js"></script>
