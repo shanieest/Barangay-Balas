@@ -56,7 +56,7 @@ require_once __DIR__ . '/includes/db.php';
                         }
                     }
 
-                    $residentLabels = ['Verified', 'Pending', 'Rejected'];
+                    $residentLabels = ['Approved', 'Pending', 'Disapproved'];
                     $residentData = [0, 0, 0];
                     $resQuery = $conn->query("
                         SELECT ra.account_status, COUNT(*) as total

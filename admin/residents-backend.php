@@ -45,9 +45,6 @@ try {
         case 'delete':
             handleDeleteResident();
             break;
-        case 'verify':
-            handleVerifyResident();
-            break;
         case 'process_request':
             handleProcessRequest();
             break;
@@ -145,6 +142,8 @@ function handleListResidents() {
         } else {
             $row['age'] = null;
         }
+        // Remove verification_status from output
+        unset($row['verification_status']);
         $residents[] = $row;
     }
 
@@ -264,6 +263,9 @@ function handleAddResident() {
         // Get input data
         $data = $_POST;
 
+        // DEBUG: Log received data
+        error_log('Received POST data: ' . print_r($data, true));
+
         // Validate required fields
         $required = [
             'firstName' => 'First name',
@@ -286,18 +288,20 @@ function handleAddResident() {
             throw new Exception('Missing required fields: ' . implode(', ', $missingFields));
         }
         
-        // Process birthdate - ensure proper format
+        // Process birthdate
         $birthdateInput = trim($data['birthdate']);
         
-        // If only year is provided (e.g., "2003")
         if (preg_match('/^\d{4}$/', $birthdateInput)) {
-            $birthdate = $birthdateInput . '-01-01'; // Default to January 1st of that year
+            $birthdate = $birthdateInput . '-01-01';
         }
-        // If full date is provided in YYYY-MM-DD format
         elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthdateInput)) {
+            // Validate the date is real
+            $dateParts = explode('-', $birthdateInput);
+            if (!checkdate($dateParts[1], $dateParts[2], $dateParts[0])) {
+                throw new Exception('Invalid birthdate. Please enter a valid date.');
+            }
             $birthdate = $birthdateInput;
         }
-        // If date is in another format, try to parse it
         else {
             $timestamp = strtotime($birthdateInput);
             if ($timestamp === false) {
@@ -306,29 +310,42 @@ function handleAddResident() {
             $birthdate = date('Y-m-d', $timestamp);
         }
 
-        // Validate the final date
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthdate)) {
-            throw new Exception('Invalid birthdate format after conversion. Please use YYYY-MM-DD.');
+        // Calculate age in PHP (backup calculation)
+        $age = 0;
+        if (isset($data['age']) && is_numeric($data['age'])) {
+            $age = (int)$data['age'];
+            error_log('Using provided age: ' . $age);
+        } else {
+            // Calculate age from birthdate
+            $birthdateObj = new DateTime($birthdate);
+            $today = new DateTime();
+            $age = $today->diff($birthdateObj)->y;
+            error_log('Calculated age from birthdate: ' . $age);
         }
 
-        // Calculate age
-        $birthdateObj = new DateTime($birthdate);
-        $today = new DateTime();
-        $age = $today->diff($birthdateObj)->y;
+        // Ensure age is not negative
+        $age = max(0, $age);
 
         // Generate address
         $address = "House {$data['houseNumber']}, Purok {$data['purok']}, Balas, Mexico, Pampanga, Philippines";
 
-        $middleName = $data['middleName'] ?? '';
-        $suffix = $data['suffix'] ?? '';
-        $email = $data['email'] ?? '';
+        // Handle optional fields
+        $middleName = !empty($data['middleName']) ? $data['middleName'] : null;
+        $suffix = !empty($data['suffix']) ? $data['suffix'] : null;
+        $email = !empty($data['email']) ? $data['email'] : null;
         $createAccount = isset($data['createAccount']) && $data['createAccount'] === 'true';
+
+        // Get current user ID for processed_by field
+        $processedBy = getUserId();
+
+        // DEBUG: Log final values
+        error_log("Final values - birthdate: $birthdate, age: $age");
 
         // Start transaction
         $conn->begin_transaction();
 
         try {
-            // Insert resident
+            // Insert resident - FIXED: Proper parameter binding with correct types
             $stmt = $conn->prepare("INSERT INTO residents 
                 (first_name, last_name, middle_name, suffix, sex, birthdate, age, contact_number, email, house_number, purok, address)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -337,19 +354,20 @@ function handleAddResident() {
                 throw new Exception('Database error (prepare residents): ' . $conn->error);
             }
 
-            $stmt->bind_param("sssssissssss", 
-                $data['firstName'],
-                $data['lastName'],
-                $middleName,
-                $suffix,
-                $data['sex'],
-                $birthdate,
-                $age,
-                $data['contactNumber'],
-                $email,
-                $data['houseNumber'],
-                $data['purok'],
-                $address
+            // FIXED: Correct parameter binding - age should be 'i' for integer
+            $stmt->bind_param("ssssssisssss", 
+                $data['firstName'],      // s - string
+                $data['lastName'],       // s - string  
+                $middleName,            // s - string (can be null)
+                $suffix,                // s - string (can be null)
+                $data['sex'],           // s - string
+                $birthdate,             // s - string (date)
+                $age,                   // i - integer
+                $data['contactNumber'], // s - string
+                $email,                 // s - string (can be null)
+                $data['houseNumber'],   // s - string
+                $data['purok'],         // s - string
+                $address                // s - string
             );
 
             if (!$stmt->execute()) {
@@ -357,6 +375,7 @@ function handleAddResident() {
             }
 
             $residentId = $stmt->insert_id;
+            error_log("Resident inserted with ID: $residentId");
 
             // If account creation is requested
             if ($createAccount) {
@@ -365,23 +384,25 @@ function handleAddResident() {
                 }
 
                 $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
-                $accountStatus = 'Approved'; // Or 'Pending' if you want to approve manually
+                $accountStatus = 'Approved';
                 $dateRequested = date('Y-m-d H:i:s');
                 
+                // Include processed_by field when creating account
                 $stmt = $conn->prepare("INSERT INTO resident_accounts 
-                    (resident_id, email, password, account_status, date_requested)
-                    VALUES (?, ?, ?, ?, ?)");
+                    (resident_id, email, password, account_status, date_requested, processed_by, date_processed)
+                    VALUES (?, ?, ?, ?, ?, ?, NOW())");
                 
                 if (!$stmt) {
                     throw new Exception('Database error (prepare accounts): ' . $conn->error);
                 }
 
-                $stmt->bind_param("issss", 
+                $stmt->bind_param("issssi", 
                     $residentId,
                     $email,
                     $hashedPassword,
                     $accountStatus,
-                    $dateRequested
+                    $dateRequested,
+                    $processedBy
                 );
 
                 if (!$stmt->execute()) {
@@ -394,7 +415,12 @@ function handleAddResident() {
 
             $response = [
                 'success' => true,
-                'message' => 'Resident added successfully.' . ($createAccount ? ' Account created.' : '')
+                'message' => 'Resident added successfully.' . ($createAccount ? ' Account created.' : ''),
+                'resident_id' => $residentId,
+                'debug_info' => [
+                    'birthdate' => $birthdate,
+                    'age' => $age
+                ]
             ];
 
         } catch (Exception $e) {
@@ -404,6 +430,7 @@ function handleAddResident() {
         }
 
     } catch (Exception $e) {
+        error_log('Add Resident Error: ' . $e->getMessage());
         $response = [
             'success' => false,
             'message' => $e->getMessage()
@@ -413,48 +440,64 @@ function handleAddResident() {
     echo json_encode($response);
     exit();
 }
-
 function handleEditResident() {
     global $conn, $response;
-    
+
     $data = json_decode(file_get_contents('php://input'), true);
-    
+
     // Validate required fields
     if (empty($data['id'])) {
         throw new Exception("Resident ID is required");
     }
-    
+
     $required = ['firstName', 'lastName', 'sex', 'contactNumber', 'houseNumber', 'purok', 'birthdate'];
     foreach ($required as $field) {
         if (empty($data[$field])) {
             throw new Exception("Missing required field: $field");
         }
     }
-    
+
     // Calculate age
     $birthdate = new DateTime($data['birthdate']);
     $today = new DateTime();
     $age = $today->diff($birthdate)->y;
-    
+
     // Generate address
     $address = "House {$data['houseNumber']}, Purok {$data['purok']}, Balas, Mexico, Pampanga, Philippines";
-    
+
+    // ✅ Store optional fields in variables so they can be passed by reference
+    $middleName    = $data['middleName'] ?? '';
+    $suffix        = $data['suffix'] ?? '';
+    $email         = $data['email'] ?? '';
+
     // Update resident
     $stmt = $conn->prepare("UPDATE residents SET 
         first_name = ?, last_name = ?, middle_name = ?, suffix = ?, sex = ?, 
         birthdate = ?, age = ?, contact_number = ?, email = ?, 
         house_number = ?, purok = ?, address = ?
         WHERE id = ?");
-    
-    $stmt->bind_param("ssssssisssssi", 
-        $data['firstName'], $data['lastName'], $data['middleName'] ?? '', $data['suffix'] ?? '',
-        $data['sex'], $data['birthdate'], $age, $data['contactNumber'], $data['email'] ?? '',
-        $data['houseNumber'], $data['purok'], $address, $data['id']);
-    
+
+    $stmt->bind_param(
+        "ssssssisssssi",
+        $data['firstName'],
+        $data['lastName'],
+        $middleName,
+        $suffix,
+        $data['sex'],
+        $data['birthdate'],
+        $age,
+        $data['contactNumber'],
+        $email,
+        $data['houseNumber'],
+        $data['purok'],
+        $address,
+        $data['id']
+    );
+
     if (!$stmt->execute()) {
         throw new Exception("Failed to update resident: " . $stmt->error);
     }
-    
+
     $response['success'] = true;
     $response['message'] = 'Resident updated successfully';
     echo json_encode($response);
@@ -485,29 +528,6 @@ function handleDeleteResident() {
     echo json_encode($response);
 }
 
-
-function handleVerifyResident() {
-    global $conn, $response;
-    
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    if (empty($data['id'])) {
-        throw new Exception("Resident ID is required");
-    }
-    
-    $user_id = getUserId();
-    
-    $stmt = $conn->prepare("UPDATE residents SET verification_status = 'Verified' WHERE id = ?");
-    $stmt->bind_param("i", $data['id']);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to verify resident: " . $stmt->error);
-    }
-    
-    $response['success'] = true;
-    $response['message'] = 'Resident verified successfully';
-    echo json_encode($response);
-}
 
 function handleProcessRequest() {
     global $conn, $response;

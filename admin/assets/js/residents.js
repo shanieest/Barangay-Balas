@@ -1,4 +1,4 @@
-    // Global variables
+// Global variables
 let currentResidentId = null;
 let currentRequestId = null;
 let currentResidentPage = 1;
@@ -81,6 +81,7 @@ function renderResidentsTable(residents, pagination) {
         const row = document.createElement('tr');
         row.innerHTML = `<td colspan="7" class="text-center">No residents found</td>`;
         tableBody.appendChild(row);
+        updatePagination('resident', pagination);
         return;
     }
     
@@ -90,7 +91,8 @@ function renderResidentsTable(residents, pagination) {
     });
     
     updatePagination('resident', pagination);
-    addButtonEventListeners();
+    // FIXED: Move event listener attachment after DOM is updated
+    attachButtonEventListeners();
 }
 
 // Function to create a resident table row
@@ -108,13 +110,13 @@ function createResidentRow(resident, index) {
         <td>${resident.birthdate}</td>
         <td>${accountStatusBadge}</td>
         <td>
-            <button class="btn btn-sm btn-info view-btn" data-id="${resident.id}">
+            <button class="btn btn-sm btn-info view-btn" data-id="${resident.id}" title="View Details">
                 <i class="fas fa-eye"></i>
             </button>
-            <button class="btn btn-sm btn-warning edit-btn" data-id="${resident.id}">
+            <button class="btn btn-sm btn-warning edit-btn" data-id="${resident.id}" title="Edit">
                 <i class="fas fa-edit"></i>
             </button>
-            <button class="btn btn-sm btn-danger delete-btn" data-id="${resident.id}">
+            <button class="btn btn-sm btn-danger delete-btn" data-id="${resident.id}" title="Delete">
                 <i class="fas fa-trash"></i>
             </button>
         </td>
@@ -135,6 +137,48 @@ function createAccountStatusBadge(status) {
     
     const badgeClass = badgeClasses[status] || 'bg-secondary';
     return `<span class="badge ${badgeClass}">${status}</span>`;
+}
+
+// FIXED: Renamed and improved event listener attachment
+function attachButtonEventListeners() {
+    console.log('Attaching button event listeners...');
+    
+    // Remove existing listeners to prevent duplicates
+    document.querySelectorAll('.view-btn, .edit-btn, .delete-btn').forEach(btn => {
+        btn.replaceWith(btn.cloneNode(true));
+    });
+    
+    // View buttons
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.getAttribute('data-id');
+            console.log('View button clicked for ID:', id);
+            viewResident(id);
+        });
+    });
+    
+    // Edit buttons
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.getAttribute('data-id');
+            console.log('Edit button clicked for ID:', id);
+            editResident(id);
+        });
+    });
+    
+    // Delete buttons
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.getAttribute('data-id');
+            console.log('Delete button clicked for ID:', id);
+            showDeleteModal(id);
+        });
+    });
+    
+    console.log('Event listeners attached to', document.querySelectorAll('.view-btn, .edit-btn, .delete-btn').length, 'buttons');
 }
 
 // Function to update pagination controls
@@ -300,30 +344,6 @@ function handleResponse(response) {
     });
 }
 
-// Function to add event listeners to all action buttons
-function addButtonEventListeners() {
-    // View buttons
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            viewResident(this.getAttribute('data-id'));
-        });
-    });
-    
-    // Edit buttons
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            editResident(this.getAttribute('data-id'));
-        });
-    });
-    
-    // Delete buttons
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            showDeleteModal(this.getAttribute('data-id'));
-        });
-    });
-}
-
 // Function to add event listeners to request action buttons
 function addRequestButtonEventListeners() {
     // View request buttons
@@ -348,34 +368,41 @@ function addRequestButtonEventListeners() {
     });
 }
 
-// View resident function
+// FIXED: Improved View resident function with better error handling
 function viewResident(id) {
     if (!id) {
         showToast('Invalid resident ID', 'danger');
         return;
     }
 
+    console.log('Viewing resident with ID:', id);
     currentResidentId = id;
     
     const viewModal = getElement('#viewResidentModal');
-    if (viewModal) {
-        viewModal.querySelectorAll('.resident-data').forEach(el => {
-            el.textContent = 'Loading...';
-        });
-        viewModal.querySelectorAll('img').forEach(img => {
-            img.src = 'img/default-profile.jpg';
-        });
+    if (!viewModal) {
+        showToast('View modal not found', 'danger');
+        return;
     }
 
+    // Show loading state
+    viewModal.querySelectorAll('.resident-data').forEach(el => {
+        el.textContent = 'Loading...';
+    });
+    
+    // Show the modal first
+    const modal = new bootstrap.Modal(viewModal);
+    modal.show();
     
     fetch(`residents-backend.php?action=list&id=${id}`)
         .then(response => {
+            console.log('Response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.text();
         })
         .then(text => {
+            console.log('Raw response:', text.substring(0, 200) + '...');
             try {
                 return JSON.parse(text);
             } catch (e) {
@@ -385,27 +412,47 @@ function viewResident(id) {
             }
         })
         .then(data => {
+            console.log('Parsed data:', data);
+            
             if (data.success && data.data) {
-                // Handle both array and object cases
-                const resident = Array.isArray(data.data) ? data.data[0] : data.data;
-                
-                if (resident) {
-                    displayResidentModal(resident);
-                } else {
-                    throw new Error('Resident not found');
-                }
+                displayResidentModal(data.data);
             } else {
-                throw new Error('No resident data received');
+                throw new Error(data.message || 'No resident data received');
             }
         })
         .catch(error => {
             console.error('Error loading resident:', error);
             showToast('Failed to load resident details: ' + error.message, 'danger');
-            
-            const modalInstance = bootstrap.Modal.getInstance(viewModal);
-            if (modalInstance) {
-                modalInstance.hide();
+            modal.hide();
+        });
+}
+
+// FIXED: Improved Edit resident function
+function editResident(id) {
+    if (!id) {
+        showToast('Invalid resident ID', 'danger');
+        return;
+    }
+
+    console.log('Editing resident with ID:', id);
+    
+    fetch(`residents-backend.php?action=list&id=${id}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.data) {
+                populateEditForm(data.data);
+            } else {
+                throw new Error(data.message || 'No resident data received');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading resident for edit:', error);
+            showToast('Failed to load resident details: ' + error.message, 'danger');
         });
 }
 
@@ -414,7 +461,7 @@ function displayResidentModal(resident) {
     const viewModal = getElement('#viewResidentModal');
     if (!viewModal) return;
 
-    console.log('Displaying resident data:', resident); // Debug log
+    console.log('Displaying resident data:', resident);
 
     // Helper function to safely get value or return 'N/A'
     const safeValue = (value) => {
@@ -445,7 +492,7 @@ function displayResidentModal(resident) {
                 day: 'numeric'
             });
             
-            // Use provided age or calculate it
+            // Calculate age if not provided
             if (resident.age && resident.age > 0) {
                 calculatedAge = resident.age + ' years old';
             } else {
@@ -460,15 +507,11 @@ function displayResidentModal(resident) {
         }
     }
 
-    // Format address
-    const address = safeValue(resident.address);
-
     // Update basic information
     updateModalText(viewModal, '.resident-name', fullName);
     updateModalText(viewModal, '.resident-id', resident.id ? `Resident ID: ${resident.id}` : 'N/A');
     updateModalText(viewModal, '.resident-birthdate', formattedBirthdate);
     
-    // Fix sex display
     const sex = resident.sex ? 
         (resident.sex.toLowerCase() === 'male' ? 'Male' : 
          resident.sex.toLowerCase() === 'female' ? 'Female' : 
@@ -479,41 +522,42 @@ function displayResidentModal(resident) {
     updateModalText(viewModal, '.resident-contact', safeValue(resident.contact_number));
     updateModalText(viewModal, '.resident-email', safeValue(resident.email));
     updateModalText(viewModal, '.resident-age', calculatedAge);
-    updateModalText(viewModal, '.resident-address', address);
+    updateModalText(viewModal, '.resident-address', safeValue(resident.address));
 
-    // Update verification status badge
-    const verificationStatus = resident.verification_status || 'Unverified';
-    const verificationClass = verificationStatus === 'Verified' ? 'bg-success' : 
-                             verificationStatus === 'Pending' ? 'bg-warning' : 'bg-secondary';
-    updateModalField(viewModal, '.verification-badge', `badge ${verificationClass}`, verificationStatus);
+    // Handle photo path
+    let photoPath = 'img/default-profile.jpg';
+    if (resident.photo_path && resident.photo_path !== 'null' && resident.photo_path !== '') {
+        photoPath = `../auth/uploads/photos/${resident.photo_path}`;
+    }
 
-    // Update resident status badge  
+    // Handle valid ID path
+    let idPath = 'img/default-id.jpg';
+    if (resident.valid_id_path && resident.valid_id_path !== 'null' && resident.valid_id_path !== '') {
+        let cleanPath = resident.valid_id_path;
+        cleanPath = cleanPath.replace(/^uploads\/valid_ids\//, '');
+        cleanPath = cleanPath.replace(/^auth\/uploads\/valid_ids\//, '');
+        idPath = `../auth/uploads/valid_ids/${cleanPath}`;
+    }
+
+    updateModalImage(viewModal, '.resident-photo', photoPath);
+    updateModalImage(viewModal, '.resident-valid-id', idPath);
+
+    // Resident status badge
     const residentStatus = resident.resident_status || 'Active';
     const statusClass = residentStatus === 'Active' ? 'bg-primary' :
                        residentStatus === 'Inactive' ? 'bg-secondary' :
                        residentStatus === 'Deceased' ? 'bg-dark' : 'bg-info';
     updateModalField(viewModal, '.resident-status-badge', `badge ${statusClass}`, residentStatus);
 
-    // Update images with proper error handling
-    const photoPath = resident.photo_path || resident.photo || 'img/default-profile.jpg';
-    const idPath = resident.valid_id_path || resident.valid_id || 'img/default-id.jpg';
-    
-    updateModalImage(viewModal, '.resident-photo', photoPath);
-    updateModalImage(viewModal, '.resident-valid-id', idPath);
-
-    // Handle account information section
+    // Account Information Section
     const accountSection = viewModal.querySelector('.account-details');
     if (accountSection) {
         const accountStatus = resident.account_status;
-        
         if (accountStatus && accountStatus !== 'null') {
             accountSection.style.display = 'block';
-            
-            // Update account status badge
             const accountStatusBadge = accountSection.querySelector('.account-status-badge');
             if (accountStatusBadge) {
                 accountStatusBadge.className = 'badge account-status-badge';
-                
                 if (accountStatus === 'Approved') {
                     accountStatusBadge.classList.add('account-approved');
                 } else if (accountStatus === 'Pending') {
@@ -523,40 +567,15 @@ function displayResidentModal(resident) {
                 } else {
                     accountStatusBadge.classList.add('bg-secondary');
                 }
-                
                 accountStatusBadge.textContent = accountStatus;
             }
-            
-            // Update processed information
-            updateModalText(viewModal, '.resident-processed-by', 
-                safeValue(resident.account_processed_by));
-            
-            const processedDate = resident.account_date_processed;
-            updateModalText(viewModal, '.resident-date-processed', 
-                processedDate && processedDate !== '0000-00-00 00:00:00' ? 
-                new Date(processedDate).toLocaleDateString() : 'N/A');
-            
-            updateModalText(viewModal, '.resident-account-notes', 
-                safeValue(resident.account_notes));
+            updateModalText(viewModal, '.resident-processed-by', resident.account_processed_by || 'N/A');
+            updateModalText(viewModal, '.resident-date-processed', resident.account_date_processed || 'N/A');
+            updateModalText(viewModal, '.resident-account-notes', resident.account_notes || 'N/A');
         } else {
             accountSection.style.display = 'none';
         }
     }
-
-    // Update verify button state
-    const verifyBtn = getElement('#verifyResidentBtn');
-    if (verifyBtn) {
-        verifyBtn.dataset.id = resident.id;
-        const isVerified = verificationStatus === 'Verified';
-        verifyBtn.disabled = isVerified;
-        verifyBtn.textContent = isVerified ? 'Verified' : 'Verify';
-        verifyBtn.className = isVerified ? 'btn btn-success' : 'btn btn-info text-white';
-    }
-
-    // Store current resident ID and show modal
-    currentResidentId = resident.id;
-    const modal = new bootstrap.Modal(viewModal);
-    modal.show();
 }
 
 // Helper functions for updating modal fields
@@ -585,7 +604,7 @@ function updateModalField(modal, selector, className, value) {
     const element = modal.querySelector(selector);
     if (element) {
         if (className) {
-            element.classList.add(...className.split(' ')); // safer
+            element.className = className;
         }
         element.textContent = safeValue(value);
     } else {
@@ -595,24 +614,28 @@ function updateModalField(modal, selector, className, value) {
 
 function updateModalImage(modal, selector, src) {
     const element = modal.querySelector(selector);
-    if (element) {
-        if (src) {
-            element.src = src;
-        } else {
-            element.src = selector.includes('id')
-                ? 'img/default-id.jpg'
-                : 'img/default-profile.jpg';
-        }
-
-        element.onerror = function () {
-            this.onerror = null; // stop loops
-            this.src = selector.includes('id')
-                ? 'img/default-id.jpg'
-                : 'img/default-profile.jpg';
-        };
-    } else {
+    if (!element) {
         console.warn(`Modal image element not found: ${selector}`);
+        return;
     }
+
+    console.log(`Setting image source for ${selector}:`, src);
+    
+    if (src && src !== 'img/default-profile.jpg' && src !== 'img/default-id.jpg') {
+        element.src = src;
+    } else {
+        element.src = selector.includes('id') ? 'img/default-id.jpg' : 'img/default-profile.jpg';
+    }
+
+    element.onerror = function () {
+        console.error(`Failed to load image: ${this.src}`);
+        this.onerror = null;
+        this.src = selector.includes('id') ? 'img/default-id.jpg' : 'img/default-profile.jpg';
+    };
+    
+    element.onload = function() {
+        console.log(`Successfully loaded image: ${this.src}`);
+    };
 }
 
 // View request function
@@ -621,7 +644,6 @@ function viewRequest(id) {
         showToast('Invalid request ID', 'danger');
         return;
     }
-
     
     fetch(`residents-backend.php?action=account_requests&id=${id}`)
         .then(response => {
@@ -631,7 +653,7 @@ function viewRequest(id) {
             return response.text();
         })
         .then(text => {
-            console.log('Raw response:', text); // Debug log
+            console.log('Raw response:', text);
             try {
                 return JSON.parse(text);
             } catch (e) {
@@ -641,10 +663,9 @@ function viewRequest(id) {
             }
         })
         .then(data => {
-            console.log('Parsed data:', data); // Debug log
+            console.log('Parsed data:', data);
             
             if (data.success && data.data && data.data.length > 0) {
-                // Get the first request from the array
                 const request = data.data[0];
                 displayRequestModal(request);
             } else {
@@ -657,14 +678,13 @@ function viewRequest(id) {
         });
 }
 
-// Display request data in modal
+// Display request data in modal (keeping existing implementation)
 function displayRequestModal(request) {
     const viewModal = getElement('#viewRequestModal');
     if (!viewModal) return;
 
-    console.log('Displaying request data:', request); // Debug log
+    console.log('Displaying request data:', request);
 
-    // Helper function to safely get value or return 'N/A'
     const safeValue = (value) => {
         if (value === null || value === undefined || value === '' || value === 'null') {
             return 'N/A';
@@ -672,7 +692,6 @@ function displayRequestModal(request) {
         return value;
     };
 
-    // Format full name
     const fullName = [
         safeValue(request.first_name),
         safeValue(request.middle_name),
@@ -680,7 +699,6 @@ function displayRequestModal(request) {
         safeValue(request.suffix)
     ].filter(part => part !== 'N/A' && part.trim()).join(' ') || 'N/A';
 
-    // Format birthdate
     let formattedBirthdate = 'N/A';
     if (request.birthdate && request.birthdate !== '0000-00-00') {
         const birthdate = new Date(request.birthdate);
@@ -691,26 +709,19 @@ function displayRequestModal(request) {
                 day: 'numeric'
             });
             
-            // Add age if available
             if (request.age && request.age > 0) {
                 formattedBirthdate += ` (${request.age} years old)`;
             }
         }
     }
 
-    // Format request ID
     const requestId = request.account_id || request.id;
-    const formattedRequestId = requestId ? `BRGY-REQ-${requestId.toString().padStart(4, '0')}` : 'N/A';
+    const formattedRequestId = requestId ? `${requestId.toString().padStart( '0')}` : 'N/A';
 
-    // Format address
-    const address = safeValue(request.address);
-
-    // Update basic information
     updateModalText(viewModal, '.request-name', fullName);
     updateModalText(viewModal, '.request-id', `Request ID: ${formattedRequestId}`);
     updateModalText(viewModal, '.request-birthdate', formattedBirthdate);
     
-    // Fix sex display
     const sex = request.sex ? 
         (request.sex.toLowerCase() === 'male' ? 'Male' : 
          request.sex.toLowerCase() === 'female' ? 'Female' : 
@@ -719,9 +730,8 @@ function displayRequestModal(request) {
     
     updateModalText(viewModal, '.request-contact', safeValue(request.contact_number));
     updateModalText(viewModal, '.request-email', safeValue(request.email));
-    updateModalText(viewModal, '.request-address', address);
+    updateModalText(viewModal, '.request-address', safeValue(request.address));
 
-    // Update status badge
     const accountStatus = request.account_status || 'Pending';
     let statusClass = 'bg-secondary';
     if (accountStatus === 'Approved') {
@@ -733,38 +743,39 @@ function displayRequestModal(request) {
     }
     updateModalField(viewModal, '.request-status-badge', `badge ${statusClass}`, accountStatus);
 
-    // Update images
-    const photoPath = request.photo_path || request.photo || 'img/default-profile.jpg';
-    const idPath = request.valid_id_path || request.valid_id || 'img/default-id.jpg';
+    let photoPath = 'img/default-profile.jpg';
+    if (request.photo_path && request.photo_path !== 'null' && request.photo_path !== '') {
+        photoPath = `../auth/uploads/photos/${request.photo_path}`;
+    }
+
+    let idPath = 'img/default-id.jpg';
+    if (request.valid_id_path && request.valid_id_path !== 'null' && request.valid_id_path !== '') {
+        let cleanPath = request.valid_id_path;
+        cleanPath = cleanPath.replace(/^uploads\/valid_ids\//, '');
+        cleanPath = cleanPath.replace(/^auth\/uploads\/valid_ids\//, '');
+        idPath = `../auth/uploads/valid_ids/${cleanPath}`;
+    }
     
     updateModalImage(viewModal, '.request-photo', photoPath);
     updateModalImage(viewModal, '.request-valid-id', idPath);
 
-    // Update request information
     const dateRequested = request.date_requested;
     updateModalText(viewModal, '.request-date-requested', 
         dateRequested && dateRequested !== '0000-00-00 00:00:00' ? 
         new Date(dateRequested).toLocaleDateString() : 'N/A');
 
-    // Update processed information
-    const processedBy = request.processed_by;
-    const dateProcessed = request.date_processed;
-    const notes = request.notes;
-
-    updateModalText(viewModal, '.request-processed-by', safeValue(processedBy));
+    updateModalText(viewModal, '.request-processed-by', safeValue(request.processed_by));
     updateModalText(viewModal, '.request-date-processed', 
-        dateProcessed && dateProcessed !== '0000-00-00 00:00:00' ? 
-        new Date(dateProcessed).toLocaleDateString() : 'N/A');
-    updateModalText(viewModal, '.request-notes', safeValue(notes));
+        request.date_processed && request.date_processed !== '0000-00-00 00:00:00' ? 
+        new Date(request.date_processed).toLocaleDateString() : 'N/A');
+    updateModalText(viewModal, '.request-notes', safeValue(request.notes));
 
-    // Show/hide processed info based on status
     const processedInfo = viewModal.querySelector('#requestProcessedInfo');
     if (processedInfo) {
         const isPending = accountStatus === 'Pending';
         processedInfo.style.display = isPending ? 'none' : 'block';
     }
 
-    // Update action buttons
     const approveBtn = getElement('#approveRequestBtn');
     const rejectBtn = getElement('#rejectRequestBtn');
     
@@ -779,7 +790,6 @@ function displayRequestModal(request) {
         rejectBtn.style.display = isPending ? 'inline-block' : 'none';
     }
 
-    // Store current request ID and show modal
     currentRequestId = request.account_id || request.id;
     const modal = new bootstrap.Modal(viewModal);
     modal.show();
@@ -801,7 +811,7 @@ function populateEditForm(resident) {
     const editBirthdate = getElement('#editBirthdate');
     const editAge = getElement('#editAge');
     
-    // Parse address to get house number and purok if it follows the expected format
+    // Parse address to get house number and purok
     let houseNumber = '';
     let purok = '';
     
@@ -820,15 +830,15 @@ function populateEditForm(resident) {
     const editAddress = getElement('#editAddress');
     
     if (editResidentId) editResidentId.value = resident.id;
-    if (editFirstName) editFirstName.value = resident.first_name;
+    if (editFirstName) editFirstName.value = resident.first_name || '';
     if (editMiddleName) editMiddleName.value = resident.middle_name || '';
-    if (editLastName) editLastName.value = resident.last_name;
+    if (editLastName) editLastName.value = resident.last_name || '';
     if (editSuffix) editSuffix.value = resident.suffix || '';
-    if (editSex) editSex.value = resident.sex;
-    if (editContactNumber) editContactNumber.value = resident.contact_number;
+    if (editSex) editSex.value = resident.sex || '';
+    if (editContactNumber) editContactNumber.value = resident.contact_number || '';
     if (editEmail) editEmail.value = resident.email || '';
-    if (editBirthdate) editBirthdate.value = resident.birthdate;
-    if (editAge) editAge.value = resident.age;
+    if (editBirthdate) editBirthdate.value = resident.birthdate || '';
+    if (editAge) editAge.value = resident.age || '';
     if (editHouseNumber) editHouseNumber.value = houseNumber;
     if (editPurok) editPurok.value = purok;
     if (editAddress) editAddress.value = resident.address || '';
@@ -856,9 +866,18 @@ function updateResident() {
     updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
     updateBtn.disabled = true;
 
+    // Convert FormData to JSON for the backend
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+
     fetch('residents-backend.php?action=edit', {
         method: 'POST',
-        body: formData
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
     })
     .then(handleResponse)
     .then(data => {
@@ -881,45 +900,19 @@ function updateResident() {
     });
 }
 
-// Verify resident function
-function verifyResident(id) {
-    if (confirm('Are you sure you want to verify this resident?')) {
-        fetch('residents-backend.php?action=verify', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `id=${id}`
-        })
-        .then(handleResponse)
-        .then(data => {
-            if (data.success) {
-                showToast('Resident verified successfully');
-                refreshResidentList(currentResidentPage, currentResidentSearch);
-                const modal = bootstrap.Modal.getInstance(getElement('#viewResidentModal'));
-                if (modal) modal.hide();
-            } else {
-                throw new Error(data.message || 'Error verifying resident');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('Failed to verify resident: ' + error.message, 'danger');
-        });
-    }
-}
-
 // Show delete confirmation modal
 function showDeleteModal(id) {
     fetch(`residents-backend.php?action=list&id=${id}`)
         .then(handleResponse)
         .then(data => {
             if (data.success && data.data) {
-                const resident = data.data; // now a single object
+                const resident = data.data;
                 const deleteResidentName = getElement('#deleteResidentName');
+                const deleteResidentIdSpan = getElement('#deleteResidentId');
                 const confirmDeleteBtn = getElement('#confirmDeleteBtn');
                 
                 if (deleteResidentName) deleteResidentName.textContent = `${resident.first_name} ${resident.last_name}`;
+                if (deleteResidentIdSpan) deleteResidentIdSpan.textContent = resident.id;
                 if (confirmDeleteBtn) confirmDeleteBtn.dataset.id = resident.id;
                 
                 const modal = new bootstrap.Modal(getElement('#deleteResidentModal'));
@@ -932,10 +925,18 @@ function showDeleteModal(id) {
             console.error('Error:', error);
             showToast('Failed to load resident details: ' + error.message, 'danger');
         });
- }
+}
 
- // Delete resident function
+// Delete resident function
 function deleteResident(id) {
+    const confirmDeleteBtn = getElement('#confirmDeleteBtn');
+    const originalText = confirmDeleteBtn ? confirmDeleteBtn.innerHTML : '';
+    
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+        confirmDeleteBtn.disabled = true;
+    }
+
     fetch('residents-backend.php?action=delete', {
         method: 'POST',
         headers: {
@@ -957,10 +958,15 @@ function deleteResident(id) {
     .catch(error => {
         console.error('Error:', error);
         showToast('Failed to delete resident: ' + error.message, 'danger');
+    })
+    .finally(() => {
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.innerHTML = originalText;
+            confirmDeleteBtn.disabled = false;
+        }
     });
 }
 
-// Show process request modal (approve/reject)
 function showProcessRequestModal(id, action) {
     currentRequestId = id;
     
@@ -1009,7 +1015,6 @@ function showProcessRequestModal(id, action) {
 
 // Process account request (approve/reject)
 function processAccountRequest(id, action, note) {
-    // Validate that rejection has a note
     if (action === 'reject' && !note.trim()) {
         const noteInput = getElement('#requestNote');
         if (noteInput) noteInput.classList.add('is-invalid');
@@ -1025,7 +1030,6 @@ function processAccountRequest(id, action, note) {
         submitBtn.disabled = true;
     }
 
-    // Create form data to properly send the request
     const formData = new FormData();
     formData.append('id', id);
     formData.append('action', action);
@@ -1042,7 +1046,6 @@ function processAccountRequest(id, action, note) {
             refreshAccountRequests(currentRequestPage, currentRequestFilter);
             refreshResidentList(currentResidentPage, currentResidentSearch);
             
-            // Close modals
             const processModal = bootstrap.Modal.getInstance(getElement('#processRequestModal'));
             if (processModal) processModal.hide();
             
@@ -1071,6 +1074,8 @@ function exportResidents() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Initializing residents management...');
+    
     // Load initial resident list and account requests
     refreshResidentList();
     refreshAccountRequests();
@@ -1126,7 +1131,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const createAccount = getElement('#createAccount');
             if (createAccount) createAccount.value = this.checked ? 'true' : 'false';
             
-            // Toggle required attribute on account fields
             const password = getElement('#password');
             if (password) {
                 password.required = this.checked;
@@ -1134,145 +1138,56 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-// Add resident form submission
+    // Add resident form submission
+    // Add resident form submission - FIXED VERSION
 const saveResidentBtn = getElement('#saveResidentBtn');
 if (saveResidentBtn) {
-    saveResidentBtn.addEventListener('click', function() {
+    saveResidentBtn.addEventListener('click', async function () {
         const form = getElement('#addResidentForm');
         if (!form) return;
-        
+
+        // Stop native submit if user presses Enter
+        form.addEventListener('submit', e => e.preventDefault(), { once: true });
+
         if (!form.checkValidity()) {
             form.classList.add('was-validated');
             return;
         }
 
-        // Format the birthdate properly
+        /* ---------- Birthdate Validation ---------- */
         const birthdateInput = getElement('#birthdate');
+        const ageInput = getElement('#age');
+        
         if (birthdateInput) {
-            const dateValue = birthdateInput.value;
-            
-            // If only year is provided (e.g., "2003"), convert to full date
+            const dateValue = birthdateInput.value.trim();
+
+            // Year only → default to Jan 1
             if (/^\d{4}$/.test(dateValue)) {
-                birthdateInput.value = dateValue + '-01-01'; // Default to January 1st
+                birthdateInput.value = `${dateValue}-01-01`;
             }
-            // If it's already in YYYY-MM-DD format, leave it as is
+            // Full date → strict check
             else if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-                // Valid format, no change needed
+                const [y, m, d] = dateValue.split('-').map(Number);
+                const dt = new Date(dateValue);
+                if (dt.getFullYear() !== y || dt.getMonth() + 1 !== m || dt.getDate() !== d) {
+                    showToast('Invalid birthdate. Use a real YYYY-MM-DD date.', 'danger');
+                    return;
+                }
             }
-            // If it's in another format, try to parse it
+            // Browser-parsable fallback
             else {
                 const parsedDate = new Date(dateValue);
                 if (!isNaN(parsedDate.getTime())) {
                     birthdateInput.value = parsedDate.toISOString().split('T')[0];
                 } else {
-                    showToast('Invalid birthdate format. Please use YYYY-MM-DD or year only.', 'danger');
+                    showToast('Invalid birthdate format. Use YYYY-MM-DD or year only.', 'danger');
                     return;
                 }
             }
-        }
 
-        const formData = new FormData(form);
-        const originalText = saveResidentBtn.innerHTML;
-        
-        saveResidentBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-        saveResidentBtn.disabled = true;
-
-        fetch('residents-backend.php?action=add', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            // First check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                return response.text().then(text => {
-                    throw new Error(text || 'Invalid response from server');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                showToast('Resident added successfully!', 'success');
-                const modal = bootstrap.Modal.getInstance(getElement('#addResidentModal'));
-                if (modal) modal.hide();
-                form.reset();
-                form.classList.remove('was-validated');
-                refreshResidentList();
-            } else {
-                throw new Error(data.message || 'Failed to save resident');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast(error.message || 'An error occurred', 'danger');
-        })
-        .finally(() => {
-            saveResidentBtn.innerHTML = originalText;
-            saveResidentBtn.disabled = false;
-        });
-    });
-}
-    
-    // Update resident form submission
-    const updateResidentBtn = getElement('#updateResidentBtn');
-    if (updateResidentBtn) {
-        updateResidentBtn.addEventListener('click', updateResident);
-    }
-    
-    // Delete resident confirmation
-    const confirmDeleteBtn = getElement('#confirmDeleteBtn');
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', function() {
-            deleteResident(this.dataset.id);
-        });
-    }
-    
-    // Verify button in view modal
-    const verifyResidentBtn = getElement('#verifyResidentBtn');
-    if (verifyResidentBtn) {
-        verifyResidentBtn.addEventListener('click', function() {
-            verifyResident(this.dataset.id);
-        });
-    }
-    
-    // Approve/Reject request buttons in view modal
-const approveRequestBtn = getElement('#approveRequestBtn');
-const rejectRequestBtn = getElement('#rejectRequestBtn');
-if (approveRequestBtn && rejectRequestBtn) {
-    approveRequestBtn.addEventListener('click', function() {
-        currentRequestId = this.dataset.id; // Set the global variable
-        showProcessRequestModal(this.dataset.id, 'approve');
-    });
-    
-    rejectRequestBtn.addEventListener('click', function() {
-        currentRequestId = this.dataset.id; // Set the global variable
-        showProcessRequestModal(this.dataset.id, 'reject');
-    });
-}
-    // Confirm process request button
-
-const confirmProcessRequestBtn = getElement('#confirmProcessRequestBtn');
-if (confirmProcessRequestBtn) {
-    confirmProcessRequestBtn.addEventListener('click', function() {
-        const requestId = currentRequestId; // Use the global variable
-        const action = this.textContent.trim().toLowerCase(); // Get action from button text
-        const note = getElement('#requestNote')?.value || '';
-        
-        if (!requestId) {
-            showToast('Request ID is required', 'danger');
-            return;
-        }
-
-        processAccountRequest(requestId, action, note);
-    });
-}
-    // Calculate age when birthdate changes
-    const birthdateInput = getElement('#birthdate');
-    if (birthdateInput) {
-        birthdateInput.addEventListener('change', function() {
-            if (this.value) {
-                const birthdate = new Date(this.value);
+            /* ---------- Calculate Age AFTER birthdate validation ---------- */
+            if (ageInput) {
+                const birthdate = new Date(birthdateInput.value);
                 const today = new Date();
                 let age = today.getFullYear() - birthdate.getFullYear();
                 const monthDiff = today.getMonth() - birthdate.getMonth();
@@ -1281,11 +1196,166 @@ if (confirmProcessRequestBtn) {
                     age--;
                 }
                 
-                const ageInput = getElement('#age');
-                if (ageInput) ageInput.value = age;
+                // Ensure age is not negative
+                age = Math.max(0, age);
+                ageInput.value = age;
+                
+                console.log('Calculated age:', age, 'for birthdate:', birthdateInput.value);
             }
-        });
-    }
+        }
+
+        /* ---------- Auto-generate address ---------- */
+        const houseNumberInput = getElement('#houseNumber');
+        const purokInput = getElement('#purok');
+        const addressInput = getElement('#address');
+        if (houseNumberInput && purokInput && addressInput) {
+            const houseNumber = houseNumberInput.value.trim();
+            const purok = purokInput.value.trim();
+            if (houseNumber && purok) {
+                addressInput.value = `House ${houseNumber}, Purok ${purok}, Balas, Mexico, Pampanga, Philippines`;
+            }
+        }
+
+        /* ---------- Prepare and send ---------- */
+        const formData = new FormData(form);
+        
+        // CRITICAL: Ensure age is explicitly added to FormData
+        if (ageInput && ageInput.value) {
+            formData.set('age', ageInput.value);
+            console.log('Age added to FormData:', ageInput.value);
+        }
+        
+        // CRITICAL: Ensure birthdate is explicitly added to FormData
+        if (birthdateInput && birthdateInput.value) {
+            formData.set('birthdate', birthdateInput.value);
+            console.log('Birthdate added to FormData:', birthdateInput.value);
+        }
+        
+        // Debug: Log all form data
+        console.log('FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, ':', value);
+        }
+
+        const originalText = saveResidentBtn.innerHTML;
+        saveResidentBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving…';
+        saveResidentBtn.disabled = true;
+
+        try {
+            const response = await fetch('residents-backend.php?action=add', {
+                method: 'POST',
+                body: formData
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                throw new Error('Invalid response from server.');
+            }
+
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to save resident');
+            }
+
+            showToast('Resident added successfully!', 'success');
+
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(getElement('#addResidentModal'));
+            if (modal) modal.hide();
+
+            // Reset form
+            form.reset();
+            form.classList.remove('was-validated');
+
+            // Reset account toggle fields
+            const accountFields = getElement('#accountFields');
+            if (accountFields) accountFields.style.display = 'none';
+            const createAccountCheck = getElement('#createAccountCheck');
+            if (createAccountCheck) createAccountCheck.checked = false;
+            const createAccount = getElement('#createAccount');
+            if (createAccount) createAccount.value = 'false';
+
+            // Refresh the resident list
+            refreshResidentList();
+        }
+        catch (error) {
+            console.error('Save Resident Error:', error);
+            showToast(error.message || 'An unexpected error occurred.', 'danger');
+        }
+        finally {
+            saveResidentBtn.innerHTML = originalText;
+            saveResidentBtn.disabled = false;
+        }
+    });
+}
+        
+        // Update resident form submission
+        const updateResidentBtn = getElement('#updateResidentBtn');
+        if (updateResidentBtn) {
+            updateResidentBtn.addEventListener('click', updateResident);
+        }
+        
+        // Delete resident confirmation
+        const confirmDeleteBtn = getElement('#confirmDeleteBtn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', function() {
+                deleteResident(this.dataset.id);
+            });
+        }
+        
+        // Approve/Reject request buttons in view modal
+        const approveRequestBtn = getElement('#approveRequestBtn');
+        const rejectRequestBtn = getElement('#rejectRequestBtn');
+        if (approveRequestBtn && rejectRequestBtn) {
+            approveRequestBtn.addEventListener('click', function() {
+                currentRequestId = this.dataset.id;
+                showProcessRequestModal(this.dataset.id, 'approve');
+            });
+            
+            rejectRequestBtn.addEventListener('click', function() {
+                currentRequestId = this.dataset.id;
+                showProcessRequestModal(this.dataset.id, 'reject');
+            });
+        }
+
+        // Confirm process request button
+        const confirmProcessRequestBtn = getElement('#confirmProcessRequestBtn');
+        if (confirmProcessRequestBtn) {
+            confirmProcessRequestBtn.addEventListener('click', function() {
+                const requestId = currentRequestId;
+                const action = this.textContent.trim().toLowerCase();
+                const note = getElement('#requestNote')?.value || '';
+                
+                if (!requestId) {
+                    showToast('Request ID is required', 'danger');
+                    return;
+                }
+
+                processAccountRequest(requestId, action, note);
+            });
+        }
+        
+        // Calculate age when birthdate changes
+        const birthdateInput = getElement('#birthdate');
+        if (birthdateInput) {
+            birthdateInput.addEventListener('change', function() {
+                if (this.value) {
+                    const birthdate = new Date(this.value);
+                    const today = new Date();
+                    let age = today.getFullYear() - birthdate.getFullYear();
+                    const monthDiff = today.getMonth() - birthdate.getMonth();
+                    
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+                        age--;
+                    }
+                    
+                    const ageInput = getElement('#age');
+                    if (ageInput) ageInput.value = age;
+                }
+            });
+        }
     
     // Edit form birthdate change handler
     const editBirthdateInput = getElement('#editBirthdate');
@@ -1409,4 +1479,6 @@ if (confirmProcessRequestBtn) {
             }
         });
     }
+    
+    console.log('Residents management initialized successfully');
 });

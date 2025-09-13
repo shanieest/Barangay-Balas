@@ -1,4 +1,4 @@
-   <!-- Add Resident Modal -->
+<!-- Add Resident Modal -->
     <div class="modal fade" id="addResidentModal" tabindex="-1" aria-labelledby="addResidentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -301,7 +301,6 @@
                             <img src="img/default-profile.jpg" class="img-thumbnail mb-3 resident-photo" width="150">
                             <h5 class="resident-name"></h5>
                             <p class="text-muted resident-id"></p>
-                            <span class="badge verification-badge mb-2"></span>
                             <span class="badge resident-status-badge"></span>
                         </div>
                         <div class="col-md-8">

@@ -35,3 +35,98 @@ Stack trace:
 #1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(34): handleListResidents()
 #2 {main}
   thrown in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 124
+[13-Sep-2025 03:18:53 Europe/Berlin] PHP Fatal error:  Uncaught Error: mysqli_stmt::bind_param(): Argument #4 cannot be passed by reference in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php:450
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(43): handleEditResident()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 450
+[13-Sep-2025 03:19:36 Europe/Berlin] PHP Fatal error:  Uncaught Error: mysqli_stmt::bind_param(): Argument #4 cannot be passed by reference in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php:450
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(43): handleEditResident()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 450
+[13-Sep-2025 09:54:43 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(339): mysqli_stmt->bind_param('ssssssississs', 'Marvina', 'Tolentino ', 'Chan', '', 'female', '2001-11-11', 23, '09123456781', 'marvin@gmail.co...', '1', '3', 'House 1, Purok ...')
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(40): handleAddResident()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 339
+[13-Sep-2025 09:54:55 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php:339
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(339): mysqli_stmt->bind_param('ssssssississs', 'Marvina', 'Tolentino ', 'Chan', '', 'female', '2001-11-11', 23, '09123456781', 'marvin@gmail.co...', '1', '3', 'House 1, Purok ...')
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(40): handleAddResident()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 339
+[13-Sep-2025 09:58:17 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvina
+    [lastName] => Punzalan
+    [middleName] => Manalo
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 09123456781
+    [email] => marvin@gmail.com
+    [houseNumber] => 1
+    [purok] => 4
+    [address] => House 1, Purok 4, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2001-11-11
+    [age] => 23
+    [password] => 11111111
+)
+
+[13-Sep-2025 09:58:17 Europe/Berlin] Using provided age: 23
+[13-Sep-2025 09:58:17 Europe/Berlin] Final values - birthdate: 2001-11-11, age: 23
+[13-Sep-2025 09:58:17 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php:358
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(358): mysqli_stmt->bind_param('ssssssississs', 'Marvina', 'Punzalan', 'Manalo', NULL, 'female', '2001-11-11', 23, '09123456781', 'marvin@gmail.co...', '1', '4', 'House 1, Purok ...')
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(40): handleAddResident()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 358
+[13-Sep-2025 09:58:30 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvina
+    [lastName] => Punzalan
+    [middleName] => Manalo
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 09123456781
+    [email] => marvin@gmail.com
+    [houseNumber] => 1
+    [purok] => 4
+    [address] => House 1, Purok 4, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2001-11-11
+    [age] => 23
+    [password] => 11111111
+)
+
+[13-Sep-2025 09:58:30 Europe/Berlin] Using provided age: 23
+[13-Sep-2025 09:58:30 Europe/Berlin] Final values - birthdate: 2001-11-11, age: 23
+[13-Sep-2025 09:58:30 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php:358
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(358): mysqli_stmt->bind_param('ssssssississs', 'Marvina', 'Punzalan', 'Manalo', NULL, 'female', '2001-11-11', 23, '09123456781', 'marvin@gmail.co...', '1', '4', 'House 1, Purok ...')
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(40): handleAddResident()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 358
+[13-Sep-2025 10:01:17 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Lorenzo
+    [middleName] => Manalo
+    [suffix] => 
+    [sex] => male
+    [contactNumber] => 09123456781
+    [email] => marvin@gmail.com
+    [houseNumber] => 1
+    [purok] => 4
+    [address] => House 1, Purok 4, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2001-11-11
+    [age] => 23
+    [password] => 11111111
+)
+
+[13-Sep-2025 10:01:17 Europe/Berlin] Using provided age: 23
+[13-Sep-2025 10:01:17 Europe/Berlin] Final values - birthdate: 2001-11-11, age: 23
+[13-Sep-2025 10:01:17 Europe/Berlin] Resident inserted with ID: 29
