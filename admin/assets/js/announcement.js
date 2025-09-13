@@ -1,12 +1,401 @@
-//modal
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date as default for add form
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('announcementDate').value = today;
+    const addDateField = document.getElementById('announcementDate');
+    if (addDateField) {
+        addDateField.value = today;
+    }
+
+    // Initialize tooltips
+    const tooltipElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipElements.forEach(element => {
+        new bootstrap.Tooltip(element);
+    });
+
+    // Setup form validation
+    setupFormValidation();
+    
+    // Setup character counters
+    setupCharacterCounter('announcementContent', 1000);
+    setupCharacterCounter('editAnnouncementContent', 1000);
+    
+    // Setup form submissions
+    setupFormSubmissions();
+
+    // Setup image preview for file inputs
+    setupImagePreview('announcementImages', 'addImagePreview');
+    setupImagePreview('editannouncementImages', 'editImagePreview');
 });
 
-function populateEditModal(title, content, date, image) {
-    document.getElementById('editAnnouncementTitle').value = title;
-    document.getElementById('editAnnouncementContent').value = content;
-    document.getElementById('editAnnouncementDate').value = date;
-    document.getElementById('currentImageInfo').textContent = image ? `Current image: ${image}` : '';
+// Form validation setup
+function setupFormValidation() {
+    const forms = ['addAnnouncementForm', 'editAnnouncementForm'];
+    
+    forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                showAlert('Please fill in all required fields.', 'danger');
+            }
+        });
+    });
+}
+
+// Character counter setup
+function setupCharacterCounter(textareaId, maxLength) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+    
+    const counter = document.createElement('div');
+    counter.className = 'form-text text-end';
+    textarea.parentNode.insertBefore(counter, textarea.nextSibling);
+    
+    function updateCounter() {
+        const remaining = maxLength - textarea.value.length;
+        counter.textContent = `${remaining} characters remaining`;
+        
+        if (remaining < 50) {
+            counter.className = 'form-text text-end text-warning';
+        } else if (remaining < 0) {
+            counter.className = 'form-text text-end text-danger';
+        } else {
+            counter.className = 'form-text text-end text-muted';
+        }
+    }
+    
+    textarea.addEventListener('input', updateCounter);
+    updateCounter();
+}
+
+// Image preview setup
+function setupImagePreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    // Create preview container if it doesn't exist
+    let previewContainer = document.getElementById(previewId);
+    if (!previewContainer) {
+        previewContainer = document.createElement('div');
+        previewContainer.id = previewId;
+        previewContainer.className = 'mt-2 d-flex flex-wrap gap-2';
+        input.parentNode.insertBefore(previewContainer, input.nextSibling);
+    }
+
+    input.addEventListener('change', function(e) {
+        previewContainer.innerHTML = '';
+        const files = e.target.files;
+        
+        if (files.length > 5) {
+            showAlert('You can only upload a maximum of 5 images.', 'warning');
+            input.value = '';
+            return;
+        }
+
+        Array.from(files).forEach((file, index) => {
+            if (!file.type.startsWith('image/')) {
+                showAlert('Please select only image files.', 'warning');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                showAlert('Each image must be less than 5MB.', 'warning');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'position-relative';
+                previewItem.innerHTML = `
+                    <img src="${e.target.result}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 rounded-circle" 
+                            style="width: 20px; height: 20px; font-size: 10px; padding: 0;"
+                            onclick="removeImagePreview(this, ${index})">&times;</button>
+                `;
+                previewContainer.appendChild(previewItem);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+}
+
+// Remove image preview
+function removeImagePreview(button, index) {
+    const previewItem = button.parentElement;
+    const input = previewItem.closest('.mb-3').querySelector('input[type="file"]');
+    
+    // Remove the preview
+    previewItem.remove();
+    
+    // Create new file list without the removed file
+    const dt = new DataTransfer();
+    const files = Array.from(input.files);
+    
+    files.forEach((file, i) => {
+        if (i !== index) {
+            dt.items.add(file);
+        }
+    });
+    
+    input.files = dt.files;
+}
+
+// Form submission handlers
+function setupFormSubmissions() {
+    // Add announcement form
+    const saveBtn = document.getElementById('saveAnnouncementBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            submitAddForm();
+        });
+    }
+    
+    // Update announcement form  
+    const updateBtn = document.getElementById('updateAnnouncementBtn');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', function() {
+            submitEditForm();
+        });
+    }
+    
+    // Delete announcement form
+    const deleteBtn = document.getElementById('deleteAnnouncementBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            submitDeleteForm();
+        });
+    }
+}
+
+// Submit add announcement form
+function submitAddForm() {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'announcements-backend.php';
+    form.enctype = 'multipart/form-data';
+    
+    // Get form data
+    const title = document.getElementById('announcementTitle').value;
+    const content = document.getElementById('announcementContent').value;
+    const date = document.getElementById('announcementDate').value;
+    const imagesInput = document.getElementById('announcementImages');
+    
+    // Validate required fields
+    if (!title.trim() || !content.trim() || !date) {
+        showAlert('Please fill in all required fields.', 'danger');
+        return;
+    }
+    
+    // Add hidden fields
+    addHiddenField(form, 'addAnnouncement', '1');
+    addHiddenField(form, 'title', title);
+    addHiddenField(form, 'content', content);
+    addHiddenField(form, 'date', date);
+    
+    // Add multiple image files if selected
+    if (imagesInput && imagesInput.files.length > 0) {
+        // Clone the file input to preserve the multiple files
+        const clonedInput = imagesInput.cloneNode(true);
+        clonedInput.style.display = 'none';
+        form.appendChild(clonedInput);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Submit edit announcement form
+function submitEditForm() {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'announcements-backend.php';
+    form.enctype = 'multipart/form-data';
+    
+    // Get form data
+    const id = window.currentEditId;
+    const title = document.getElementById('editAnnouncementTitle').value;
+    const content = document.getElementById('editAnnouncementContent').value;
+    const date = document.getElementById('editAnnouncementDate').value;
+    const imagesInput = document.getElementById('editannouncementImages');
+    const currentImage = window.currentImagePath || '';
+    
+    // Validate required fields
+    if (!title.trim() || !content.trim() || !date) {
+        showAlert('Please fill in all required fields.', 'danger');
+        return;
+    }
+    
+    // Add hidden fields
+    addHiddenField(form, 'editAnnouncement', '1');
+    addHiddenField(form, 'id', id);
+    addHiddenField(form, 'title', title);
+    addHiddenField(form, 'content', content);
+    addHiddenField(form, 'date', date);
+    addHiddenField(form, 'current_image', currentImage);
+    
+    // Add multiple image files if selected
+    if (imagesInput && imagesInput.files.length > 0) {
+        const clonedInput = imagesInput.cloneNode(true);
+        clonedInput.style.display = 'none';
+        form.appendChild(clonedInput);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Submit delete announcement form
+function submitDeleteForm() {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'announcements-backend.php';
+    
+    const id = window.currentDeleteId;
+    
+    addHiddenField(form, 'deleteAnnouncement', '1');
+    addHiddenField(form, 'id', id);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Helper function to add hidden fields
+function addHiddenField(form, name, value) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+}
+
+// Edit announcement modal handler
+function editAnnouncement(announcementData) {
+    // Store current data globally for form submission
+    window.currentEditId = announcementData.id;
+    window.currentImagePath = announcementData.image_paths;
+    
+    // Populate form fields
+    document.getElementById('editAnnouncementTitle').value = announcementData.title;
+    document.getElementById('editAnnouncementContent').value = announcementData.content;
+    document.getElementById('editAnnouncementDate').value = announcementData.date_posted;
+    
+    // Clear any previous file selection and preview
+    const editImagesInput = document.getElementById('editannouncementImages');
+    if (editImagesInput) {
+        editImagesInput.value = '';
+        const previewContainer = document.getElementById('editImagePreview');
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+        }
+    }
+    
+    // Update current image info
+    const currentImageInfo = document.getElementById('currentImageInfo');
+    if (announcementData.image_paths) {
+        const images = announcementData.image_paths.split(',');
+        const imageCount = images.length;
+        const filenames = images.map(path => path.trim().split('/').pop()).join(', ');
+        currentImageInfo.innerHTML = `Current images (${imageCount}): <strong>${filenames}</strong><br><small class="text-muted">New images will be added to existing ones</small>`;
+    } else {
+        currentImageInfo.innerHTML = '<em>No current images</em>';
+    }
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editAnnouncementModal'));
+    modal.show();
+}
+
+// Delete announcement modal handler
+function deleteAnnouncement(id, title, date) {
+    // Store current data globally for form submission
+    window.currentDeleteId = id;
+    
+    // Populate modal content
+    document.getElementById('deleteAnnouncementTitle').textContent = title;
+    document.getElementById('deleteAnnouncementDate').textContent = new Date(date).toLocaleDateString();
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteAnnouncementModal'));
+    modal.show();
+}
+
+// Show image modal
+function showImageModal(imagePath) {
+    // Create image modal if it doesn't exist
+    let imageModal = document.getElementById('imageViewModal');
+    if (!imageModal) {
+        imageModal = createImageModal();
+        document.body.appendChild(imageModal);
+    }
+    
+    const modalImage = document.getElementById('modalImage');
+    modalImage.src = imagePath;
+    
+    const modal = new bootstrap.Modal(imageModal);
+    modal.show();
+}
+
+// Create image view modal
+function createImageModal() {
+    const modalHtml = `
+        <div class="modal fade" id="imageViewModal" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="imageViewModalLabel">View Image</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="modalImage" src="" class="img-fluid" alt="Announcement Image">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const div = document.createElement('div');
+    div.innerHTML = modalHtml;
+    return div.firstElementChild;
+}
+
+// Utility function to show alerts
+function showAlert(message, type = 'info') {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Find container to insert alert
+    const container = document.querySelector('.container-fluid') || document.querySelector('main');
+    if (container) {
+        const alertDiv = document.createElement('div');
+        alertDiv.innerHTML = alertHtml;
+        container.insertBefore(alertDiv.firstElementChild, container.firstElementChild);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            const alert = container.querySelector('.alert');
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    }
 }

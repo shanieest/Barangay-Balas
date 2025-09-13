@@ -366,10 +366,6 @@ if (isset($_SESSION['login_error'])) {
                             </div>
 
                             <div class="form-group">
-                                <label for="idNumber">ID Number</label>
-                                <input type="text" class="form-control" id="idNumber" name="idNumber" placeholder="Enter ID number" required>
-                            </div>
-                            <div class="form-group">
                                 <label for="idUpload">Upload ID</label>
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="idUpload" name="validId" accept="image/*,.pdf" required>

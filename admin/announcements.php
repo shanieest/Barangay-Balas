@@ -1,307 +1,144 @@
-<?php 
-require_once __DIR__ . '/includes/auth.php';
-requireAuth();
-require_once __DIR__ . '/includes/db.php';
+<?php
+require_once __DIR__.'/announcements-backend.php';
 
-function timeAgo($datetime) {
-    $time = strtotime($datetime);
-    $diff = time() - $time;
+$announcements = $conn->query(
+    "SELECT a.*, u.first_name, u.last_name, 
+        GROUP_CONCAT(ai.image_path) AS image_paths
+     FROM announcements a
+     LEFT JOIN admin_users u ON a.posted_by = u.id
+     LEFT JOIN announcement_images ai ON a.id = ai.announcement_id
+     GROUP BY a.id
+     ORDER BY a.date_posted DESC"
+);
 
-    if ($diff < 60) {
-        return $diff . ' seconds ago';
-    } elseif ($diff < 3600) {
-        return floor($diff / 60) . ' minutes ago';
-    } elseif ($diff < 86400) {
-        return floor($diff / 3600) . ' hours ago';
-    } elseif ($diff < 604800) {
-        return floor($diff / 86400) . ' days ago';
-    } elseif ($diff < 2419200) {
-        return floor($diff / 604800) . ' weeks ago';
-    } else {
-        return date('M d, Y', $time);
-    }
+if (!$announcements) {
+    $error = "Database error: " . $conn->error;
 }
-
-
-// Handle Add Announcement
-if (isset($_POST['addAnnouncement'])) {
-    $title   = mysqli_real_escape_string($conn, $_POST['title']);
-    $content = mysqli_real_escape_string($conn, $_POST['content']);
-    $date    = $_POST['date'];
-    $userId  = $_SESSION['user_id'];
-
-    $imagePath = null;
-    if (!empty($_FILES['image']['name'])) {
-        $targetDir = "uploads/announcements/";
-        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
-
-        $fileName = time() . "_" . basename($_FILES['image']['name']);
-        $targetFile = $targetDir . $fileName;
-
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
-            $imagePath = $targetFile;
-        }
-    }
-
-    $sql = "INSERT INTO announcements (title, content, image_path, date_posted, posted_by) 
-            VALUES ('$title', '$content', " . ($imagePath ? "'$imagePath'" : "NULL") . ", '$date', '$userId')";
-    mysqli_query($conn, $sql);
-    header("Location: announcements.php");
-    exit();
-}
-
-// Handle Edit Announcement
-if (isset($_POST['editAnnouncement'])) {
-    $id      = (int) $_POST['id'];
-    $title   = mysqli_real_escape_string($conn, $_POST['title']);
-    $content = mysqli_real_escape_string($conn, $_POST['content']);
-    $date    = $_POST['date'];
-    $currentImage = $_POST['current_image'];
-
-    $imagePath = $currentImage;
-    if (!empty($_FILES['image']['name'])) {
-        $targetDir = "uploads/announcements/";
-        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
-
-        $fileName = time() . "_" . basename($_FILES['image']['name']);
-        $targetFile = $targetDir . $fileName;
-
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
-            if ($currentImage && file_exists($currentImage)) {
-                unlink($currentImage);
-            }
-            $imagePath = $targetFile;
-        }
-    }
-
-    $sql = "UPDATE announcements 
-            SET title='$title', content='$content', image_path=" . ($imagePath ? "'$imagePath'" : "NULL") . ", date_posted='$date' 
-            WHERE id=$id";
-    mysqli_query($conn, $sql);
-    header("Location: announcements.php");
-    exit();
-}
-
-// Handle Delete Announcement
-if (isset($_POST['deleteAnnouncement'])) {
-    $id = (int) $_POST['id'];
-
-    // delete image first
-    $result = mysqli_query($conn, "SELECT image_path FROM announcements WHERE id=$id");
-    if ($row = mysqli_fetch_assoc($result)) {
-        if ($row['image_path'] && file_exists($row['image_path'])) {
-            unlink($row['image_path']);
-        }
-    }
-
-    mysqli_query($conn, "DELETE FROM announcements WHERE id=$id");
-    header("Location: announcements.php");
-    exit();
-}
-
-// Fetch Announcements with user info
-$sql = "SELECT a.*, u.first_name, u.last_name 
-        FROM announcements a 
-        JOIN admin_users u ON a.posted_by = u.id
-        ORDER BY a.date_posted DESC";
-
-$announcements = mysqli_query($conn, $sql);
 ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Announcements | Barangay Balas Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Announcements | Barangay Balas Admin</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="sb-nav-fixed">
-    <?php include 'includes/navbar.php'; ?>
-    
-    <div id="layoutSidenav">
-        <?php include 'includes/sidebar.php'; ?>
-        
-        <div id="layoutSidenav_content">
-            <main>
-                <div class="container-fluid px-4">
-                    <h1 class="mt-4">Announcements</h1>
-                    <ol class="breadcrumb mb-4">
-                        <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Announcements</li>
-                    </ol>
-                    
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i class="fas fa-table me-1"></i>
-                                    Manage Announcements
+<?php include 'includes/navbar.php'; ?>
+<div id="layoutSidenav">
+<?php include 'includes/sidebar.php'; ?>
+<div id="layoutSidenav_content">
+<main class="container-fluid px-4">
+    <h1 class="mt-4">Announcements</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item active">Announcements</li>
+    </ol>
+
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($error)): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= $error ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div><i class="fas fa-bullhorn me-1"></i>Manage Announcements</div>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
+                <i class="fas fa-plus me-1"></i>Add Announcement
+            </button>
+        </div>
+        <div class="card-body">
+            <?php if (is_object($announcements) && $announcements->num_rows > 0): ?>
+                <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th><th>Title</th><th>Content</th><th>Image</th>
+                            <th>Date Posted</th><th>Posted By</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php $i=1; while($row=$announcements->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= $i++ ?></td>
+                            <td><strong><?= htmlspecialchars($row['title']) ?></strong></td>
+                            <td><?= strlen($row['content'])>100 ?
+                                    htmlspecialchars(substr($row['content'],0,100)).'...' :
+                                    htmlspecialchars($row['content']); ?></td>
+                            <td>
+                                <?php
+                                if ($row['image_paths']) {
+                                    $images = explode(',', $row['image_paths']);
+                                    foreach ($images as $img) {
+                                        $img = trim($img);
+                                        if ($img) {
+                                            echo '<img src="'.htmlspecialchars($img).'" width="50" height="50" class="img-thumbnail rounded me-1 mb-1" style="object-fit:cover;cursor:pointer;" onclick="showImageModal(\''.htmlspecialchars($img).'\')" data-bs-toggle="tooltip" title="Click to view full image">';
+                                        }
+                                    }
+                                } else {
+                                    echo '<span class="text-muted">No image</span>';
+                                }
+                                ?>
+                            </td>
+                            <td><small class="text-muted"><?= timeAgo($row['date_posted']) ?></small></td>
+                            <td><?= htmlspecialchars($row['first_name']." ".$row['last_name']) ?></td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-warning"
+                                        onclick='editAnnouncement(<?= json_encode($row) ?>)'
+                                        title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                        onclick="deleteAnnouncement(<?= $row['id'] ?>,'<?= htmlspecialchars($row['title']) ?>','<?= $row['date_posted'] ?>')"
+                                        title="Delete"><i class="fas fa-trash"></i></button>
                                 </div>
-                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
-                                    <i class="fas fa-plus me-1"></i> Add Announcement
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <table id="announcementsTable" class="table table-striped table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Title</th>
-                                        <th>Content</th>
-                                        <th>Image</th>
-                                        <th>Date Posted</th>
-                                        <th>Posted By</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php $i=1; while($row = mysqli_fetch_assoc($announcements)): ?>
-                                    <tr>
-                                        <td><?= $i++ ?></td>
-                                        <td><?= htmlspecialchars($row['title']) ?></td>
-                                        <td><?= htmlspecialchars($row['content']) ?></td>
-                                        <td>
-                                            <?php if($row['image_path']): ?>
-                                                <img src="<?= $row['image_path'] ?>" width="50" class="img-thumbnail">
-                                            <?php endif; ?>
-                                        </td>
-                                        <td><?= timeAgo($row['date_posted']) ?></td>
-                                        <td><?= htmlspecialchars($row['first_name'] . " " . $row['last_name']) ?></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-warning" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#editAnnouncementModal<?= $row['id'] ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#deleteAnnouncementModal<?= $row['id'] ?>">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Edit Modal (Dynamic) -->
-                                    <div class="modal fade" id="editAnnouncementModal<?= $row['id'] ?>" tabindex="-1">
-                                        <div class="modal-dialog modal-lg">
-                                            <div class="modal-content">
-                                                <form method="POST" enctype="multipart/form-data">
-                                                    <div class="modal-header bg-warning text-white">
-                                                        <h5 class="modal-title">Edit Announcement</h5>
-                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                                                        <input type="hidden" name="current_image" value="<?= $row['image_path'] ?>">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Title</label>
-                                                            <input type="text" class="form-control" name="title" value="<?= htmlspecialchars($row['title']) ?>" required>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Content</label>
-                                                            <textarea class="form-control" name="content" rows="5" required><?= htmlspecialchars($row['content']) ?></textarea>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Image</label>
-                                                            <input class="form-control" type="file" name="image">
-                                                            <?php if($row['image_path']): ?>
-                                                                <small class="text-muted">Current: <?= basename($row['image_path']) ?></small>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Date</label>
-                                                            <input type="date" class="form-control" name="date" value="<?= $row['date_posted'] ?>" required>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                        <button type="submit" name="editAnnouncement" class="btn btn-warning text-white">Update</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Delete Modal -->
-                                    <div class="modal fade" id="deleteAnnouncementModal<?= $row['id'] ?>" tabindex="-1">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <form method="POST">
-                                                    <div class="modal-header bg-danger text-white">
-                                                        <h5 class="modal-title">Delete Announcement</h5>
-                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                                                        <p>Are you sure you want to delete this announcement?</p>
-                                                        <p><strong>Title:</strong> <?= htmlspecialchars($row['title']) ?></p>
-                                                        <p><strong>Date:</strong> <?= $row['date_posted'] ?></p>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                        <button type="submit" name="deleteAnnouncement" class="btn btn-danger">Delete</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <?php endwhile; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                    </tbody>
+                </table>
                 </div>
-            </main>
-             
-            <?php include 'includes/footer.php'; ?>
+            <?php else: ?>
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-bullhorn fa-3x mb-3"></i>
+                    <h5>No announcements yet</h5>
+                    <p>Click "Add Announcement" to create your first announcement.</p>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
+</main>
+<?php include 'includes/footer.php'; ?>
+</div>
+</div>
 
-    <!-- Add Modal -->
-    <div class="modal fade" id="addAnnouncementModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <form method="POST" enctype="multipart/form-data">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Add New Announcement</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input type="text" class="form-control" name="title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Content</label>
-                            <textarea class="form-control" name="content" rows="5" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Image</label>
-                            <input class="form-control" type="file" name="image">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Date</label>
-                            <input type="date" class="form-control" name="date" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="addAnnouncement" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<?php include 'modals/announcementsModal.php'; ?>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/announcement.js"></script>
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <img id="modalImage" src="" class="img-fluid rounded shadow" alt="Announcement Image">
     </div>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/script.js"></script>
-
+  </div>
+</div>
+<script>
+function showImageModal(src) {
+    document.getElementById('modalImage').src = src;
+    var modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+}
+</script>
 </body>
 </html>
