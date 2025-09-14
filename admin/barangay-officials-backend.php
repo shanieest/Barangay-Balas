@@ -51,6 +51,9 @@ function handleGetOfficials() {
               END, last_name, first_name";
     
     $result = $conn->query($query);
+    if ($result === false) {
+        throw new Exception("Database query failed: " . $conn->error);
+    }
     
     $officials = [];
     while ($row = $result->fetch_assoc()) {
@@ -66,16 +69,21 @@ function handleGetOfficial() {
     global $conn, $response;
     
     $id = $_GET['id'] ?? null;
-    
-    if (!$id) {
-        throw new Exception("Official ID is required");
+    if (!$id || !is_numeric($id)) {
+        throw new Exception("Valid official ID is required");
     }
     
     $stmt = $conn->prepare("SELECT * FROM barangay_officials WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
+    }
     
+    $stmt->bind_param("i", $id);
+    if (!$stmt->execute()) {
+        throw new Exception("Execute failed: " . $stmt->error);
+    }
+    
+    $result = $stmt->get_result();
     if ($result->num_rows === 0) {
         throw new Exception("Official not found");
     }
@@ -89,6 +97,9 @@ function handleAddOfficial() {
     global $conn, $response;
     
     $data = json_decode(file_get_contents('php://input'), true);
+    if ($data === null) {
+        throw new Exception("Invalid JSON data");
+    }
     
     // Validate required fields
     $required = ['first_name', 'last_name', 'position', 'email', 'password'];
@@ -98,123 +109,290 @@ function handleAddOfficial() {
         }
     }
     
+    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        throw new Exception("Invalid email format");
+    }
+    
+    // Check email duplicates
+    $stmt = $conn->prepare("SELECT id FROM barangay_officials WHERE email = ?");
+    $stmt->bind_param("s", $data['email']);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        throw new Exception("Email already exists");
+    }
+    
+    $stmt = $conn->prepare("SELECT id FROM admin_users WHERE email = ?");
+    $stmt->bind_param("s", $data['email']);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        throw new Exception("Email already exists in admin users");
+    }
+    
     if (strlen($data['password']) < 8) {
         throw new Exception("Password must be at least 8 characters long");
     }
     
-    $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
-    
-    $stmt = $conn->prepare("INSERT INTO barangay_officials 
-        (first_name, last_name, middle_name, position, email, contact_number, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?)");
-    
-    $stmt->bind_param("sssssss", 
-        $data['first_name'], $data['last_name'], $data['middle_name'] ?? '',
-        $data['position'], $data['email'], $data['contact_number'] ?? '',
-        $data['status'] ?? 'Active');
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to add official: " . $stmt->error);
+    if (!empty($data['contact_number']) && !preg_match('/^[0-9]{11}$/', $data['contact_number'])) {
+        throw new Exception("Contact number must be 11 digits");
     }
     
-    // Also add to admin_users table for login access
-    $official_id = $stmt->insert_id;
-    $username = strtolower($data['first_name'][0] . $data['last_name']);
-    $username = preg_replace('/[^a-z0-9]/', '', $username);
-    
-    // Make sure username is unique
-    $temp_username = $username;
-    $counter = 1;
-    while (true) {
-        $stmt = $conn->prepare("SELECT id FROM admin_users WHERE username = ?");
-        $stmt->bind_param("s", $temp_username);
+    if ($data['position'] === 'Barangay Captain') {
+        $stmt = $conn->prepare("SELECT id FROM barangay_officials WHERE position = 'Barangay Captain' AND status = 'Active'");
         $stmt->execute();
-        if ($stmt->get_result()->num_rows === 0) {
-            $username = $temp_username;
-            break;
+        if ($stmt->get_result()->num_rows > 0) {
+            throw new Exception("There can only be one active Barangay Captain");
         }
-        $temp_username = $username . $counter++;
     }
     
-    $stmt = $conn->prepare("INSERT INTO admin_users 
-        (username, password, first_name, last_name, middle_name, email, contact_number, position)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
+    $conn->begin_transaction();
     
-    $stmt->bind_param("ssssssss", 
-        $username, $hashed_password,
-        $data['first_name'], $data['last_name'], $data['middle_name'] ?? '',
-        $data['email'], $data['contact_number'] ?? '', $data['position']);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to create admin account for official: " . $stmt->error);
+    try {
+        // Barangay officials
+        $stmt = $conn->prepare("INSERT INTO barangay_officials 
+            (first_name, last_name, middle_name, position, email, contact_number, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)");
+        
+        $first_name     = $data['first_name'];
+        $last_name      = $data['last_name'];
+        $middle_name    = $data['middle_name'] ?? '';
+        $position       = $data['position'];
+        $email          = $data['email'];
+        $contact_number = $data['contact_number'] ?? '';
+        $status         = $data['status'] ?? 'Active';
+        
+        $stmt->bind_param("sssssss", 
+            $first_name, 
+            $last_name, 
+            $middle_name, 
+            $position, 
+            $email, 
+            $contact_number, 
+            $status
+        );
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to add official: " . $stmt->error);
+        }
+        
+        $official_id = $stmt->insert_id;
+        
+        // Generate username
+        $username = strtolower($first_name[0] . $last_name);
+        $username = preg_replace('/[^a-z0-9]/', '', $username);
+        $temp_username = $username;
+        $counter = 1;
+        while (true) {
+            $stmt = $conn->prepare("SELECT id FROM admin_users WHERE username = ?");
+            $stmt->bind_param("s", $temp_username);
+            $stmt->execute();
+            if ($stmt->get_result()->num_rows === 0) {
+                $username = $temp_username;
+                break;
+            }
+            $temp_username = $username . $counter++;
+            if ($counter > 100) {
+                throw new Exception("Unable to generate unique username");
+            }
+        }
+        
+        // Admin user account
+        $stmt = $conn->prepare("INSERT INTO admin_users 
+            (username, password, first_name, last_name, middle_name, email, contact_number, position, role)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Official')");
+        
+        $au_first_name  = $first_name;
+        $au_last_name   = $last_name;
+        $au_middle_name = $middle_name;
+        $au_email       = $email;
+        $au_contact     = $contact_number;
+        $au_position    = $position;
+        
+        $stmt->bind_param("ssssssss", 
+            $username, 
+            $hashed_password,
+            $au_first_name, 
+            $au_last_name, 
+            $au_middle_name,
+            $au_email, 
+            $au_contact, 
+            $au_position
+        );
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to create admin account: " . $stmt->error);
+        }
+        
+        $admin_user_id = $stmt->insert_id;
+        $stmt = $conn->prepare("UPDATE barangay_officials SET admin_user_id = ? WHERE id = ?");
+        $stmt->bind_param("ii", $admin_user_id, $official_id);
+        $stmt->execute();
+        
+        $conn->commit();
+        $response['success'] = true;
+        $response['message'] = 'Official added successfully';
+        $response['username'] = $username;
+        echo json_encode($response);
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
     }
-    
-    $response['success'] = true;
-    $response['message'] = 'Official added successfully';
-    echo json_encode($response);
 }
+
 
 function handleUpdateOfficial() {
     global $conn, $response;
     
     $data = json_decode(file_get_contents('php://input'), true);
-    
-    if (empty($data['id'])) {
-        throw new Exception("Official ID is required");
+    if ($data === null) {
+        throw new Exception("Invalid JSON data");
     }
-    
+    if (empty($data['id']) || !is_numeric($data['id'])) {
+        throw new Exception("Valid official ID is required");
+    }
+
     $required = ['first_name', 'last_name', 'position', 'email'];
     foreach ($required as $field) {
         if (empty($data[$field])) {
             throw new Exception("Missing required field: $field");
         }
     }
-    
-    $stmt = $conn->prepare("UPDATE barangay_officials SET 
-        first_name = ?, last_name = ?, middle_name = ?, position = ?, 
-        email = ?, contact_number = ?, status = ?
-        WHERE id = ?");
-    
-    $stmt->bind_param("sssssssi", 
-        $data['first_name'], $data['last_name'], $data['middle_name'] ?? '',
-        $data['position'], $data['email'], $data['contact_number'] ?? '',
-        $data['status'] ?? 'Active', $data['id']);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to update official: " . $stmt->error);
+
+    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        throw new Exception("Invalid email format");
     }
-    
-    // Update password if provided
-    if (!empty($data['password'])) {
-        if (strlen($data['password']) < 8) {
-            throw new Exception("Password must be at least 8 characters long");
+
+    if (!empty($data['contact_number']) && !preg_match('/^[0-9]{11}$/', $data['contact_number'])) {
+        throw new Exception("Contact number must be 11 digits");
+    }
+
+    // Check duplicate email (excluding self)
+    $stmt = $conn->prepare("SELECT id FROM barangay_officials WHERE email = ? AND id != ?");
+    $stmt->bind_param("si", $data['email'], $data['id']);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        throw new Exception("Email already exists");
+    }
+
+    // Get current official
+    $stmt = $conn->prepare("SELECT * FROM barangay_officials WHERE id = ?");
+    $stmt->bind_param("i", $data['id']);
+    $stmt->execute();
+    $current = $stmt->get_result()->fetch_assoc();
+    if (!$current) {
+        throw new Exception("Official not found");
+    }
+
+    // Barangay Captain constraint
+    if ($data['position'] === 'Barangay Captain' && $current['position'] !== 'Barangay Captain') {
+        $stmt = $conn->prepare("SELECT id FROM barangay_officials WHERE position = 'Barangay Captain' AND status = 'Active' AND id != ?");
+        $stmt->bind_param("i", $data['id']);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            throw new Exception("There can only be one active Barangay Captain");
         }
+    }
+
+    $conn->begin_transaction();
+    try {
+        // Update barangay_officials
+        $stmt = $conn->prepare("UPDATE barangay_officials SET 
+            first_name = ?, last_name = ?, middle_name = ?, position = ?, 
+            email = ?, contact_number = ?, status = ?
+            WHERE id = ?");
         
-        $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
-        
-        $stmt = $conn->prepare("UPDATE admin_users SET password = ? WHERE email = ?");
-        $stmt->bind_param("ss", $hashed_password, $data['email']);
-        
+        $first_name     = $data['first_name'];
+        $last_name      = $data['last_name'];
+        $middle_name    = $data['middle_name'] ?? '';
+        $position       = $data['position'];
+        $email          = $data['email'];
+        $contact_number = $data['contact_number'] ?? '';
+        $status         = $data['status'] ?? 'Active';
+        $id             = (int)$data['id'];
+
+        $stmt->bind_param("sssssssi", 
+            $first_name, $last_name, $middle_name, 
+            $position, $email, $contact_number, 
+            $status, $id
+        );
         if (!$stmt->execute()) {
-            throw new Exception("Failed to update official password: " . $stmt->error);
+            throw new Exception("Failed to update official: " . $stmt->error);
         }
+
+        // Update admin_users
+        $sql = "UPDATE admin_users SET 
+            first_name = ?, last_name = ?, middle_name = ?, 
+            email = ?, contact_number = ?, position = ?, status = ?";
+        
+        $first_name2     = $first_name;
+        $last_name2      = $last_name;
+        $middle_name2    = $middle_name;
+        $email2          = $email;
+        $contact_number2 = $contact_number;
+        $position2       = $position;
+        $status2         = $status;
+
+        $types = "sssssss";
+        
+        // Handle password update
+        if (!empty($data['password'])) {
+            if (strlen($data['password']) < 8) {
+                throw new Exception("Password must be at least 8 characters long");
+            }
+            $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
+            $sql .= ", password = ?";
+            $types .= "s";
+        }
+
+        $sql .= " WHERE email = ?";
+        $stmt = $conn->prepare($sql);
+
+        if (!empty($data['password'])) {
+            $stmt->bind_param($types, 
+                $first_name2, $last_name2, $middle_name2, 
+                $email2, $contact_number2, $position2, $status2,
+                $hashed_password, $current['email']
+            );
+        } else {
+            $stmt->bind_param($types . "s", 
+                $first_name2, $last_name2, $middle_name2, 
+                $email2, $contact_number2, $position2, $status2,
+                $current['email']
+            );
+        }
+
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to update admin account: " . $stmt->error);
+        }
+
+        $conn->commit();
+        $response['success'] = true;
+        $response['message'] = 'Official updated successfully';
+        echo json_encode($response);
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
     }
-    
-    $response['success'] = true;
-    $response['message'] = 'Official updated successfully';
-    echo json_encode($response);
 }
+
 
 function handleDeleteOfficial() {
     global $conn, $response;
     
     $id = $_GET['id'] ?? null;
     
-    if (!$id) {
-        throw new Exception("Official ID is required");
+    if (!$id || !is_numeric($id)) {
+        throw new Exception("Valid official ID is required");
     }
     
-    $stmt = $conn->prepare("SELECT email FROM barangay_officials WHERE id = ?");
+    // Get official data first
+    $stmt = $conn->prepare("SELECT * FROM barangay_officials WHERE id = ?");
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
+    }
+    
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -225,24 +403,48 @@ function handleDeleteOfficial() {
     
     $official = $result->fetch_assoc();
     
-    // Delete from admin_users first
-    $stmt = $conn->prepare("DELETE FROM admin_users WHERE email = ?");
-    $stmt->bind_param("s", $official['email']);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to delete official admin account: " . $stmt->error);
+    // Prevent deletion of Barangay Captain
+    if ($official['position'] === 'Barangay Captain') {
+        throw new Exception("Cannot delete Barangay Captain");
     }
     
-    // Then delete from barangay_officials
-    $stmt = $conn->prepare("DELETE FROM barangay_officials WHERE id = ?");
-    $stmt->bind_param("i", $id);
+    // Start transaction
+    $conn->begin_transaction();
     
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to delete official: " . $stmt->error);
+    try {
+        // Delete from admin_users first
+        $stmt = $conn->prepare("DELETE FROM admin_users WHERE email = ?");
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
+        
+        $stmt->bind_param("s", $official['email']);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to delete official admin account: " . $stmt->error);
+        }
+        
+        // Then delete from barangay_officials
+        $stmt = $conn->prepare("DELETE FROM barangay_officials WHERE id = ?");
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
+        
+        $stmt->bind_param("i", $id);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to delete official: " . $stmt->error);
+        }
+        
+        $conn->commit();
+        
+        $response['success'] = true;
+        $response['message'] = 'Official deleted successfully';
+        echo json_encode($response);
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
     }
-    
-    $response['success'] = true;
-    $response['message'] = 'Official deleted successfully';
-    echo json_encode($response);
 }
 ?>

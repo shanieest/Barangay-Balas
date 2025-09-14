@@ -28,15 +28,13 @@ $activityQuery = "SELECT activity, timestamp
                   FROM activity_logs 
                   ORDER BY timestamp DESC LIMIT 5";
 $activities = $conn->query($activityQuery);
-
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barangay Balas Portal</title>
+    <title>Dashboard - Barangay Balas Portal</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for icons -->
@@ -176,32 +174,6 @@ $activities = $conn->query($activityQuery);
             background-color: var(--accent-red);
         }
         
-        .sidebar-collapsed .sidebar {
-            width: 80px;
-            overflow: hidden;
-        }
-        
-        .sidebar-collapsed .sidebar .sidebar-text {
-            display: none;
-        }
-        
-        .sidebar-collapsed .main-content {
-            margin-left: 80px;
-        }
-        
-        .sidebar-collapsed .sidebar-header h3 {
-            display: none;
-        }
-        
-        .sidebar-collapsed .sidebar-menu li {
-            text-align: center;
-        }
-        
-        .sidebar-collapsed .sidebar-menu li i {
-            margin-right: 0;
-            font-size: 1.2rem;
-        }
-        
         .document-request-card {
             border-left: 4px solid var(--primary-blue);
         }
@@ -212,14 +184,6 @@ $activities = $conn->query($activityQuery);
         
         .alert-card {
             border-left: 4px solid var(--accent-red);
-        }
-        
-        .profile-img {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--primary-blue);
         }
         
         @media (max-width: 768px) {
@@ -251,16 +215,15 @@ $activities = $conn->query($activityQuery);
     </style>
 </head>
 <body>
-<div class="wrapper">
-    <!-- Sidebar -->
-    <?php include '../../includes/sidebar.php'?>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <?php include '../../includes/sidebar.php'?>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <?php include '../../includes/navbar.php'?>
+        <!-- Main Content -->
+        <div class="main-content">
+            <?php include '../../includes/navbar.php'?>
 
-        <div class="content-area">
-            <section id="dashboard">
+            <div class="content-area">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Dashboard</h2>
                     <span class="badge bg-light text-dark">
@@ -290,7 +253,7 @@ $activities = $conn->query($activityQuery);
                                         </a>
                                     <?php endwhile; ?>
                                 </div>
-                                <a href="documentRequests.php" class="btn btn-sm btn-primary mt-3">View All Requests</a>
+                                <a href="history.php" class="btn btn-sm btn-primary mt-3">View All Requests</a>
                             </div>
                         </div>
                     </div>
@@ -327,7 +290,7 @@ $activities = $conn->query($activityQuery);
                             <div class="card-body">
                                 <div class="list-group list-group-flush">
                                     <?php if ($alertsCount > 0): ?>
-                                        <a href="documentRequests.php" class="list-group-item list-group-item-action">
+                                        <a href="history.php" class="list-group-item list-group-item-action">
                                             <div class="d-flex">
                                                 <i class="fas fa-exclamation-circle text-danger me-3"></i>
                                                 <div>
@@ -374,56 +337,23 @@ $activities = $conn->query($activityQuery);
                         <div class="card">
                             <div class="card-header">Quick Actions</div>
                             <div class="card-body d-grid gap-2">
-                                <a href="requestDocument.php" class="btn btn-primary"><i class="fas fa-file-alt me-2"></i> Request Document</a>
-                                <a href="events.php" class="btn btn-warning"><i class="fas fa-calendar-alt me-2"></i> View Events</a>
-                                <a href="reportIssue.php" class="btn btn-danger"><i class="fas fa-exclamation-triangle me-2"></i> Report Issue</a>
+                                <a href="services.php" class="btn btn-primary"><i class="fas fa-file-alt me-2"></i> Request Document</a>
+                                <a href="announcements.php" class="btn btn-warning"><i class="fas fa-calendar-alt me-2"></i> View Events</a>
+                                <a href="services.php" class="btn btn-danger"><i class="fas fa-exclamation-triangle me-2"></i> Report Issue</a>
                                 <a href="profile.php" class="btn btn-outline-primary"><i class="fas fa-user-edit me-2"></i> Update Profile</a>
                             </div>
                         </div>
                     </div>
-            
                 </div>
-            </section>
-            <?php include 'services.php';  ?>
-                    <?php include 'requestsHistory.php';  ?>
-                    <?php include 'announcements.php'; ?>                 
-                    <?php include 'profile.php';  ?>
-                    <?php include 'census.php';  ?>
-
+            </div>
         </div>
     </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
         document.getElementById('sidebarToggle').addEventListener('click', function() {
             document.querySelector('.wrapper').classList.toggle('sidebar-collapsed');
-        });
-        
-        document.querySelectorAll('.sidebar-menu li a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                document.querySelectorAll('section').forEach(section => {
-                    section.classList.add('d-none');
-                });
-                
-                const target = this.getAttribute('href').substring(1);
-                document.getElementById(target).classList.remove('d-none');
-                
-                document.querySelectorAll('.sidebar-menu li').forEach(item => {
-                    item.classList.remove('active');
-                });
-                this.parentElement.classList.add('active');
-            });
-        });
-        
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
         });
     </script>
 </body>
 </html>
-
-

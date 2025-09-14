@@ -24,7 +24,7 @@ $path = $row['document_file_path'];
 $size = filesize($path);
 header('Content-Type: application/pdf');
 header('Content-Length: ' . $size);
-header('Content-Disposition: inline; filename="document.pdf"');
+header('Content-Disposition: inline; filename="/admin/download-document.pdf"');
 readfile($path);
 
 // optionally remove token for single-use:

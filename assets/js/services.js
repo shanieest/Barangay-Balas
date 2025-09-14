@@ -13,32 +13,4 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-//modal documents
-document.addEventListener("DOMContentLoaded", function () {
-  const birthdateInput = document.getElementById("birthdate");
-  const ageInput = document.getElementById("age");
-
-  function calculateAge() {
-    const birthdate = new Date(birthdateInput.value);
-    if (!isNaN(birthdate)) {
-      const today = new Date();
-      let age = today.getFullYear() - birthdate.getFullYear();
-      const monthDiff = today.getMonth() - birthdate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
-        age--;
-      }
-      ageInput.value = age >= 0 ? age : "";
-    } else {
-      ageInput.value = "";
-    }
-  }
-
-  // Calculate on change
-  birthdateInput.addEventListener("change", calculateAge);
-
-  // Calculate immediately if there's already a value
-  if (birthdateInput.value) {
-    calculateAge();
-  }
-});
 

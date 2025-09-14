@@ -56,7 +56,7 @@ if (!file_exists($pdfPath)) { http_response_code(404); echo "File not found"; ex
     // fetch the PDF as blob from protected endpoint stream_pdf.php
     (async () => {
       const token = "<?php echo htmlspecialchars($token); ?>";
-      const resp = await fetch('/stream_pdf.php?token=' + encodeURIComponent(token));
+      const resp = await fetch('stream_pdf.php?token=' + encodeURIComponent(token));
       if (!resp.ok) {
         document.body.innerText = 'Failed to load document: ' + resp.status;
         return;

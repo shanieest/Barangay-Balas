@@ -1,4 +1,5 @@
 <?php
+// announcements-backend.php admin backend
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();
 require_once __DIR__ . '/includes/db.php';

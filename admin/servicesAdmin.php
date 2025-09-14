@@ -3,7 +3,6 @@ require 'includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();
 
-// Document Requests Query (existing code)
 $doc_sql = "SELECT dr.id, dr.purpose, dr.status, dr.date_requested, dr.date_processed, dr.notes, 
                dr.document_file_path, dt.document_type, 
                CONCAT(r.first_name, ' ', r.last_name) AS resident_name
@@ -28,7 +27,6 @@ while ($row = $doc_result->fetch_assoc()) {
     }
 }
 
-// Service Reservations Query
 $service_sql = "SELECT sr.*, 
                    GROUP_CONCAT(st.service_name SEPARATOR ', ') as service_names,
                    CONCAT(sr.reservation_date_start, 
@@ -193,9 +191,10 @@ while ($row = $service_result->fetch_assoc()) {
                                 <i class="fas fa-eye"></i> View
                               </button>
                               <?php if (!empty($row['document_file_path'])): ?>
-                                <a href="download-document.php?file=<?= htmlspecialchars($row['document_file_path']) ?>" class="btn btn-sm btn-primary" download>
-                                  <i class="fas fa-download"></i> Download
+                                <a href="download-document.php?id=<?= (int)$row['id'] ?>" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-download"></i> Download
                                 </a>
+
                               <?php else: ?>
                                 <span class="text-muted">No file</span>
                               <?php endif; ?>

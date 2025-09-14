@@ -1,6 +1,7 @@
 <?php
-// process_request.php
+// process_request.php - FIXED VERSION
 require 'includes/db.php';
+require 'includes/auth.php';
 require '../vendor/autoload.php';
 require_once __DIR__ . '/../lib/phpqrcode/qrlib.php';
 
@@ -11,13 +12,44 @@ header('Content-Type: application/json');
 $response = [
     'success' => false,
     'message' => '',
-    'file_path' => ''
+    'file_path' => '',
+    'auto_download' => false
 ];
+
+// Get admin ID safely - FIXED: Use consistent variable name
+$current_admin_id = null;
+if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+    // Validate that admin exists
+    $admin_check = $conn->prepare("SELECT id FROM admin_users WHERE id = ?");
+    $admin_check->bind_param('i', $_SESSION['user_id']);
+    $admin_check->execute();
+    $admin_result = $admin_check->get_result();
+    
+    if ($admin_result->num_rows > 0) {
+        $current_admin_id = (int) $_SESSION['user_id'];
+        error_log("DEBUG: Admin found in database with ID: " . $current_admin_id);
+    } else {
+        error_log("DEBUG: No admin found with user_id: " . $_SESSION['user_id']);
+    }
+    $admin_check->close();
+} else {
+    error_log("DEBUG: No user_id found in session");
+}
+
+// Debug session variables
+error_log("DEBUG: Session variables: " . print_r($_SESSION, true));
+error_log("DEBUG: Determined admin ID: " . $current_admin_id);
+
+// If no valid admin found, log this
+if ($current_admin_id === null) {
+    error_log("Warning: No valid admin ID found in session for document processing");
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST['action'])) {
     $request_id   = (int) $_POST['request_id'];
     $action       = $_POST['action'];
     $notes        = $_POST['notes'] ?? null;
+    $auto_download = isset($_POST['auto_download']) && $_POST['auto_download'] === '1';
 
     try {
         $conn->begin_transaction();
@@ -35,13 +67,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         $result = $stmt->get_result();
         $request = $result->fetch_assoc();
         if (!$request) throw new Exception('Request not found.');
+        $stmt->close();
 
         $status = ($action === 'approve') ? 'Approved' : 'Disapproved';
 
-        // Update request status
-        $stmt = $conn->prepare("UPDATE document_requests SET status = ?, notes = ?, date_processed = NOW() WHERE id = ?");
-        $stmt->bind_param('ssi', $status, $notes, $request_id);
-        $stmt->execute();
+        // Update request status - use current admin ID if available
+        if ($current_admin_id !== null) {
+            $stmt = $conn->prepare("UPDATE document_requests SET status = ?, notes = ?, processed_by = ?, date_processed = NOW() WHERE id = ?");
+            $stmt->bind_param('ssii', $status, $notes, $current_admin_id, $request_id);
+            error_log("DEBUG: Updating with admin ID: " . $current_admin_id . " for request: " . $request_id);
+        } else {
+            $stmt = $conn->prepare("UPDATE document_requests SET status = ?, notes = ?, date_processed = NOW() WHERE id = ?");
+            $stmt->bind_param('ssi', $status, $notes, $request_id);
+            error_log("WARNING: No admin ID available, updating without processed_by for request: " . $request_id);
+        }
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to update request status: " . $stmt->error);
+        }
+        
+        // Check if processed_by was actually updated
+        if ($current_admin_id !== null) {
+            $check_stmt = $conn->prepare("SELECT processed_by FROM document_requests WHERE id = ?");
+            $check_stmt->bind_param('i', $request_id);
+            $check_stmt->execute();
+            $check_stmt->bind_result($actual_processed_by);
+            $check_stmt->fetch();
+            $check_stmt->close();
+            
+            error_log("DEBUG: Actual processed_by value in database: " . ($actual_processed_by ?? 'NULL'));
+        }
+        
+        $stmt->close();
 
         if ($status === 'Approved') {
             $timestamp = time();
@@ -60,13 +117,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             // Generate QR
             $qr_code = bin2hex(random_bytes(8));
             $qrPath  = $qrDir . "/qr_{$request_id}_{$timestamp}.png";
-            $verifyUrl = "https://thedomain.com/verify.php?code={$qr_code}";
+            $verifyUrl = "verify.php?code={$qr_code}";
             QRcode::png($verifyUrl, $qrPath, QR_ECLEVEL_L, 4);
 
             // Insert QR into DB
             $stmt = $conn->prepare("INSERT INTO document_qr_codes (request_id, qr_code, qr_code_image_path) VALUES (?, ?, ?)");
             $stmt->bind_param('iss', $request_id, $qr_code, $qrPath);
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to insert QR code: " . $stmt->error);
+            }
+            $stmt->close();
 
             // Fill DOCX placeholders
             $templateProcessor->setValue('first_name', htmlspecialchars($request['first_name']));
@@ -97,11 +157,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $relativePdfPath = "uploads/generated_docs/request_{$request_id}_{$timestamp}.pdf";
             $stmt = $conn->prepare("UPDATE document_requests SET document_file_path = ? WHERE id = ?");
             $stmt->bind_param('si', $relativePdfPath, $request_id);
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to update document file path: " . $stmt->error);
+            }
+            $stmt->close();
 
             $response['success'] = true;
             $response['message'] = 'Request approved and document generated successfully.';
             $response['file_path'] = $relativePdfPath;
+            $response['auto_download'] = $auto_download;
         } else {
             $response['success'] = true;
             $response['message'] = 'Request disapproved successfully.';
@@ -111,9 +175,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
     } catch (Exception $e) {
         $conn->rollback();
         $response['message'] = $e->getMessage();
+        error_log("ERROR: " . $e->getMessage());
     }
 } else {
     $response['message'] = 'Invalid request.';
 }
 
 echo json_encode($response);
+?>

@@ -21,7 +21,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
-    $resident_id = intval($_SESSION['user_id']); // From session
+    // Get the actual resident_id from resident_accounts
+    $account_id = intval($_SESSION['user_id']);
+    $get_resident = $conn->prepare("SELECT resident_id FROM resident_accounts WHERE id = ? AND account_status = 'Approved'");
+    $get_resident->bind_param('i', $account_id);
+    $get_resident->execute();
+    $get_resident->bind_result($resident_id);
+    $get_resident->fetch();
+    $get_resident->close();
+
+    if (!$resident_id) {
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                  strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+        if ($isAjax) {
+            echo json_encode([
+                "status" => "error",
+                "message" => "Your account is not approved or not properly linked to a resident record."
+            ]);
+        } else {
+            echo "<h3>❌ Account issue. Please contact administrator.</h3>";
+        }
+        exit;
+    }
+
     $document_type_id = intval($_POST['document_type_id']);
     $first_name       = trim($_POST['first_name']);
     $middle_name      = trim($_POST['middle_name']);

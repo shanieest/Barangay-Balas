@@ -1,4 +1,5 @@
 <?php
+// announcements.php admin view
 require_once __DIR__.'/announcements-backend.php';
 
 $announcements = $conn->query(

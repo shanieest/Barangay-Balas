@@ -1,43 +1,44 @@
+<!-- sidebar.php -->
 <div class="sidebar">
-            <div class="sidebar-header d-flex justify-content-between align-items-center">
-                <h3 class="m-0">Barangay Balas</h3>
-            </div>
-            <ul class="sidebar-menu">
-                <li class="active">
-                    <a href="#dashboard">
-                        <i class="fas fa-home"></i>
-                        <span class="sidebar-text">Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#documents">
-                        <i class="fas fa-briefcase"></i>
-                        <span class="sidebar-text">Services</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#announcements">
-                        <i class="fas fa-bullhorn"></i>
-                        <span class="sidebar-text">Announcements</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#profile">
-                        <i class="fas fa-user"></i>
-                        <span class="sidebar-text">My Profile</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#history">
-                        <i class="fas fa-history"></i>
-                        <span class="sidebar-text">Request History</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#census">
-                        <i class="fas fa-users"></i>
-                        <span class="sidebar-text">Census Data</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+    <div class="sidebar-header d-flex justify-content-between align-items-center">
+        <h3 class="m-0">Barangay Balas</h3>
+    </div>
+    <ul class="sidebar-menu">
+        <li class="<?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">
+            <a href="dashboard.php">
+                <i class="fas fa-home"></i>
+                <span class="sidebar-text">Dashboard</span>
+            </a>
+        </li>
+        <li class="<?= basename($_SERVER['PHP_SELF']) == 'services.php' ? 'active' : '' ?>">
+            <a href="services.php">
+                <i class="fas fa-briefcase"></i>
+                <span class="sidebar-text">Services</span>
+            </a>
+        </li>
+        <li class="<?= basename($_SERVER['PHP_SELF']) == 'announcements.php' ? 'active' : '' ?>">
+            <a href="announcements.php">
+                <i class="fas fa-bullhorn"></i>
+                <span class="sidebar-text">Announcements</span>
+            </a>
+        </li>
+        <li class="<?= basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : '' ?>">
+            <a href="profile.php">
+                <i class="fas fa-user"></i>
+                <span class="sidebar-text">My Profile</span>
+            </a>
+        </li>
+        <li class="<?= basename($_SERVER['PHP_SELF']) == 'requestsHistory.php' ? 'active' : '' ?>">
+            <a href="requestsHistory.php">
+                <i class="fas fa-history"></i>
+                <span class="sidebar-text">Request History</span>
+            </a>
+        </li>
+        <li class="<?= basename($_SERVER['PHP_SELF']) == 'census.php' ? 'active' : '' ?>">
+            <a href="census.php">
+                <i class="fas fa-users"></i>
+                <span class="sidebar-text">Census Data</span>
+            </a>
+        </li>
+    </ul>
+</div>

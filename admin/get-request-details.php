@@ -1,6 +1,6 @@
 <?php
-// get-request-details.php
-require_once 'includes/db.php'; // Fixed path - should match your actual config path
+// get-request-details.php - DEBUG VERSION
+require_once 'includes/db.php';
 
 if (!isset($_GET['id'])) {
     http_response_code(400);
@@ -10,19 +10,36 @@ if (!isset($_GET['id'])) {
 
 $request_id = intval($_GET['id']);
 
+// DEBUG: First, let's see what's in the document_requests table
+$debug_stmt = $conn->prepare("SELECT id, status, processed_by, date_processed FROM document_requests WHERE id = ?");
+$debug_stmt->bind_param('i', $request_id);
+$debug_stmt->execute();
+$debug_result = $debug_stmt->get_result();
+$debug_data = $debug_result->fetch_assoc();
+
+// Log this information
+error_log("DEBUG - Request $request_id: status=" . $debug_data['status'] . ", processed_by=" . $debug_data['processed_by'] . ", date_processed=" . $debug_data['date_processed']);
+
+// Main query with detailed debugging
 $stmt = $conn->prepare("
     SELECT dr.*, dt.document_type, 
-           r.first_name, r.middle_name, r.last_name, r.contact_number,
-           r.house_number, r.purok, r.address, r.civil_status, r.sex, r.birthdate, r.age,
-           ra.email AS resident_email, ra.account_status,
-           CONCAT(a.first_name, ' ', a.last_name) AS processed_by_name, a.username AS processed_by_username
+           a.id as admin_id,
+           a.first_name as admin_first_name,
+           a.last_name as admin_last_name,
+           a.username as admin_username,
+           CONCAT(a.first_name, ' ', a.last_name) AS processed_by_name, 
+           a.username AS processed_by_username,
+           ra.email AS resident_email, 
+           ra.account_status,
+           r.contact_number
     FROM document_requests dr
     LEFT JOIN document_types dt ON dr.document_type_id = dt.id
+    LEFT JOIN admin_users a ON dr.processed_by = a.id
     LEFT JOIN residents r ON dr.resident_id = r.id
     LEFT JOIN resident_accounts ra ON r.id = ra.resident_id
-    LEFT JOIN admin_users a ON dr.processed_by = a.id
     WHERE dr.id = ?
 ");
+
 $stmt->bind_param('i', $request_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -34,25 +51,57 @@ if ($result->num_rows === 0) {
 }
 
 $request = $result->fetch_assoc();
+
+// DEBUG: Log what we got from the admin join
+error_log("DEBUG - Admin join result: admin_id=" . $request['admin_id'] . ", admin_first_name=" . $request['admin_first_name'] . ", processed_by_name=" . $request['processed_by_name']);
+
 $stmt->close();
+
+// Determine processed_by text
+$processed_by_text = 'Not processed yet';
+if ($request['processed_by']) {
+    if ($request['processed_by_name'] && $request['processed_by_username']) {
+        $processed_by_text = $request['processed_by_name'] . ' (' . $request['processed_by_username'] . ')';
+    } else {
+        // Fallback: if join failed but we have processed_by ID, try to get admin info separately
+        $admin_fallback = $conn->prepare("SELECT first_name, last_name, username FROM admin_users WHERE id = ?");
+        $admin_fallback->bind_param('i', $request['processed_by']);
+        $admin_fallback->execute();
+        $admin_result = $admin_fallback->get_result();
+        if ($admin_data = $admin_result->fetch_assoc()) {
+            $processed_by_text = $admin_data['first_name'] . ' ' . $admin_data['last_name'] . ' (' . $admin_data['username'] . ')';
+            error_log("DEBUG - Used fallback query for admin: " . $processed_by_text);
+        } else {
+            $processed_by_text = 'Admin ID: ' . $request['processed_by'] . ' (Admin not found)';
+            error_log("DEBUG - Admin not found for ID: " . $request['processed_by']);
+        }
+        $admin_fallback->close();
+    }
+}
 
 // Format the response
 $response = [
     'id' => $request['id'],
-    'document_type' => $request['document_type'],
+    'document_type' => $request['document_type'] ?: 'Unknown',
     'date_requested' => date('F j, Y, g:i a', strtotime($request['date_requested'])),
     'status' => $request['status'],
     'full_name' => trim($request['first_name'] . ' ' . ($request['middle_name'] ? $request['middle_name'] . ' ' : '') . $request['last_name']),
-    'address' => $request['address'],
+    'houseno' => $request['houseno'],
     'purok' => $request['purok'],
-    'contact_number' => $request['contact_number'],
+    'contact_number' => $request['contact_number'] ?: 'N/A',
     'purpose' => $request['purpose'],
     'notes' => $request['notes'],
-    'resident_email' => $request['resident_email'],
-    'account_status' => $request['account_status'],
-    'processed_by' => $request['processed_by_name'] ? $request['processed_by_name'] . ' (' . $request['processed_by_username'] . ')' : 'Not processed yet',
-    'document_path' => $request['document_file_path'] ?? null // Add this for download functionality
+    'resident_email' => $request['resident_email'] ?: 'N/A',
+    'account_status' => $request['account_status'] ?: 'N/A',
+    'processed_by' => $processed_by_text,
+    'document_path' => $request['document_file_path'] ?? null,
+    // DEBUG: Add raw values for troubleshooting
+    'debug_processed_by_id' => $request['processed_by'],
+    'debug_admin_found' => $request['processed_by_name'] ? true : false
 ];
+
+// DEBUG: Log the final response
+error_log("DEBUG - Final processed_by: " . $processed_by_text);
 
 header('Content-Type: application/json');
 echo json_encode($response);

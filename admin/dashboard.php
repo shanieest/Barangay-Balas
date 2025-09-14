@@ -100,7 +100,7 @@ require_once __DIR__ . '/includes/db.php';
                                     <i class="fas fa-file-alt fa-2x"></i>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
-                                    <a class="small text-white stretched-link" href="document-requests.php">View Details</a>
+                                    <a class="small text-white stretched-link" href="servicesAdmin.php">View Details</a>
                                     <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                                 </div>
                             </div>
@@ -117,7 +117,7 @@ require_once __DIR__ . '/includes/db.php';
                                     <i class="fas fa-check-circle fa-2x"></i>
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
-                                    <a class="small text-white stretched-link" href="document-requests.php">View Details</a>
+                                    <a class="small text-white stretched-link" href="servicesAdmin.php">View Details</a>
                                     <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                                 </div>
                             </div>

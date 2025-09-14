@@ -74,7 +74,7 @@
   <div class="container d-flex justify-content-between align-items-center">
 
     <!-- Left Side: Barangay Balas Logo + Text -->
-    <a class="navbar-brand d-flex align-items-center" href="/balas 2.0/index.php">
+    <a class="navbar-brand d-flex align-items-center" href="/barangay-balas/index.php">
       <img src="\barangay-balas\assets\img\pampangalogo.png" alt="Pampanga Logo" width="80" height="80" class="d-inline-block align-top mr-2">
       <img src="\barangay-balas\assets\img\Mexico_Pampanga.png" alt="Mexico Logo" width="80" height="80" class="d-inline-block align-top mr-2">
       <img src="\barangay-balas\assets\img\balas-logo.png" alt="Balas Logo" width="80" height="80" class="d-inline-block align-top mr-2">
@@ -91,10 +91,10 @@
     <div class="collapse navbar-collapse justify-content-center" id="mainNavbar">
       <ul class="navbar-nav">
         <li class="nav-item">
-          <a class="nav-link" href="/balas 2.0/index.php">Home</a>
+          <a class="nav-link" href="/barangay-balas/index.php">Home</a>
         </li>
         <!-- Services Dropdown -->
-        <li class="nav-item dropdown">
+    <!--    <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
             Services
           </a>
@@ -120,15 +120,15 @@
               </ul>
             </li>
           </ul>
-        </li>
+        </li> -->
         <li class="nav-item">
-          <a class="nav-link" href="/barangay-balas/officials.php">Barangay Officials</a>
+          <a class="nav-link" href="/barangay-balas/public/officials.php">Barangay Officials</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="#jobs">Jobs</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/barangay-balas/announcements.php">News & Events</a>
+          <a class="nav-link" href="/barangay-balas/public/announcements.php">News & Events</a>
         </li>
       </ul>
     </div>

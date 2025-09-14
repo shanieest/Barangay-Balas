@@ -9,7 +9,7 @@ ini_set('display_errors', 1);
 // Check if ID parameter exists
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     http_response_code(400);
-    die("Error: No document ID specified. Usage: download-document.php?id=123");
+    die("Error: No document ID specified. Usage: download-document.php?id=1");
 }
 
 $request_id = (int) $_GET['id'];

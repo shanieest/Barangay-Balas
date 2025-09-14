@@ -49,7 +49,7 @@ if ($status === 'Approved') {
         'expires' => $expires
     ];
 
-    $viewerUrl = '/viewer.php?token=' . $viewToken;
+    $viewerUrl = 'viewer.php?token=' . $viewToken;
     // Also include download URL if you want auto-download when admin flagged auto_download
     echo json_encode(['status'=>'Approved', 'viewer_url'=>$viewerUrl, 'auto_download'=>0, 'notes'=>$row['notes'] ?? '']);
     exit;

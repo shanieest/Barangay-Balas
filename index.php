@@ -7,11 +7,16 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="assets/css/style.css" />
 
   <style>
-    .hero {
-      background: linear-gradient(to right, #0033cc 0%, #990000 97%);
+    .hero-section {
+     background-image: 
+        linear-gradient(to right, rgba(0, 51, 204, 0.7) 0%, rgba(153, 0, 0, 0.7) 80%), 
+        url('assets/img/arc.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       color: white;
       height: 70vh;
       display: flex;
@@ -29,7 +34,7 @@
 <?php include 'includes/header.php'; ?>
 
 <!-- Hero Section -->
-<section class="hero">
+<section class="hero-section">
   <div class="container">
     <h1 class="display-4 fw-bolder">Barangay Balas Online Management System</h1>
     <p class="lead">Serving the community of Balas, Mexico, Pampanga</p>
@@ -56,18 +61,22 @@
   </div>
 </section>
 
-<!-- News and Announcements Section (DYNAMIC) -->
+<!-- News and Announcements Section (index.php) -->
 <section id="news" class="py-5 bg-light">
   <div class="container">
     <h2 class="section-title">Latest News & Announcements</h2>
 
     <?php
       require_once __DIR__ . '/config/db.php';
-
-      // Pull latest 5 announcements
-      $q = $conn->prepare("SELECT a.id, a.title, a.content, a.image_path, a.date_posted, au.first_name, au.last_name
+      
+      // Fixed query to get images from announcement_images table
+      $q = $conn->prepare("SELECT a.id, a.title, a.content, 
+                                  a.date_posted, au.first_name, au.last_name,
+                                  GROUP_CONCAT(ai.image_path) AS image_paths
                            FROM announcements a
                            LEFT JOIN admin_users au ON au.id = a.posted_by
+                           LEFT JOIN announcement_images ai ON ai.announcement_id = a.id
+                           GROUP BY a.id
                            ORDER BY a.date_posted DESC, a.created_at DESC
                            LIMIT 5");
       $q->execute();
@@ -75,15 +84,37 @@
       $announcements = $res->fetch_all(MYSQLI_ASSOC);
       $hasAnnouncements = count($announcements) > 0;
 
-      // helper: fallback image
-      function news_img($path) {
-        if (!$path || !trim($path)) return 'assets/img/news-placeholder.jpg';
-        return htmlspecialchars($path);
-      }
+      // Helper for image display - Fixed path construction
+    function news_img($image_paths) {
+    if (!$image_paths || !trim($image_paths)) {
+        return 'assets/img/news-placeholder.jpg';
+    }
+
+    $images = explode(',', $image_paths);
+    $firstImage = trim($images[0]);
+
+    // Try with admin folder prefix
+    if (file_exists(__DIR__ . '/admin/' . $firstImage)) {
+        return 'admin/' . $firstImage;
+    }
+
+    // Fallback: if stored path works directly
+    if (file_exists(__DIR__ . '/' . $firstImage)) {
+        return $firstImage;
+    }
+
+    return 'assets/img/news-placeholder.jpg';
+}
+
     ?>
 
     <?php if ($hasAnnouncements): ?>
-      <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel">
+      <div id="newsCarousel"
+           class="carousel slide"
+           data-bs-ride="carousel"
+           data-bs-interval="5000"
+           data-bs-pause="hover">
+
         <!-- Indicators -->
         <div class="carousel-indicators">
           <?php foreach ($announcements as $i => $_): ?>
@@ -100,35 +131,92 @@
           <?php foreach ($announcements as $i => $row): ?>
             <div class="carousel-item <?= $i === 0 ? 'active' : '' ?>">
               <div class="card shadow-sm mx-auto" style="max-width: 900px;">
-                <img src="<?= news_img($row['image_path']) ?>" class="card-img-top news-img" alt="Announcement image">
+                <?php 
+                $imagePath = news_img($row['image_paths']);
+                $hasImage = $imagePath !== 'assets/img/news-placeholder.jpg';
+                ?>
+                
+                <?php if ($hasImage): ?>
+                  <div class="position-relative">
+                    <img src="<?= $imagePath ?>" class="card-img-top news-img" alt="Announcement image" style="height: 300px; object-fit: cover; cursor: pointer;" onclick="showImageModal('<?= $imagePath ?>')">
+                    <div class="position-absolute top-0 end-0 p-2">
+                      <span class="badge bg-primary">
+                        <i class="bi bi-eye"></i> Click to view
+                      </span>
+                    </div>
+                  </div>
+                <?php endif; ?>
+                
                 <div class="card-body text-center">
                   <h5 class="card-title mb-2"><?= htmlspecialchars($row['title']) ?></h5>
                   <p class="small text-muted mb-3">
+                    <i class="bi bi-calendar-event"></i>
                     <?= date('F j, Y', strtotime($row['date_posted'])) ?>
                     <?php if (!empty($row['first_name']) || !empty($row['last_name'])): ?>
-                      • by <?= htmlspecialchars(trim(($row['first_name'] ?? '').' '.($row['last_name'] ?? ''))) ?>
+                      • <i class="bi bi-person"></i> by <?= htmlspecialchars(trim(($row['first_name'] ?? '').' '.($row['last_name'] ?? ''))) ?>
                     <?php endif; ?>
                   </p>
                   <p class="card-text">
                     <?= htmlspecialchars(mb_strimwidth(strip_tags($row['content']), 0, 160, '…')) ?>
                   </p>
-                  <a href="announcement.php?id=<?= (int)$row['id'] ?>" class="btn btn-outline-warning btn-sm">Read More</a>
+                  <div class="d-flex justify-content-center gap-2">
+                    <a href="public/announcements.php#announcement-<?= (int)$row['id'] ?>" class="btn btn-outline-primary btn-sm">
+                      <i class="bi bi-eye"></i> Read More
+                    </a>
+                    <?php if ($hasImage): ?>
+                      <button class="btn btn-outline-secondary btn-sm" onclick="showAllImages(<?= (int)$row['id'] ?>)">
+                        <i class="bi bi-images"></i> View Images
+                      </button>
+                    <?php endif; ?>
+                  </div>
                 </div>
               </div>
             </div>
           <?php endforeach; ?>
         </div>
 
-        <!-- Controls -->
+        <!-- Navigation arrows -->
         <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon bg-dark rounded-circle p-3"></span>
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
           <span class="visually-hidden">Previous</span>
         </button>
         <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
-          <span class="carousel-control-next-icon bg-dark rounded-circle p-3"></span>
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
           <span class="visually-hidden">Next</span>
         </button>
       </div>
+      
+      <!-- Image Modal -->
+      <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content bg-transparent border-0">
+            <div class="modal-header border-0">
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+              <img id="modalImage" src="" class="img-fluid w-100 rounded" alt="Announcement Image">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multiple Images Modal -->
+      <div class="modal fade" id="multiImageModal" tabindex="-1" aria-labelledby="multiImageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="multiImageModalLabel">Announcement Images</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="imageGallery" class="row g-3">
+                <!-- Images will be loaded here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     <?php else: ?>
       <div class="alert alert-info d-flex align-items-center" role="alert">
         <i class="bi bi-info-circle me-2"></i>
@@ -137,6 +225,7 @@
     <?php endif; ?>
   </div>
 </section>
+
 
 <!-- Services / Features -->
 <section id="services" class="py-5 bg-light">
@@ -254,6 +343,7 @@
 <?php include 'includes/foot.php'; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/script.js"></script>
 
 </body>
 </html>

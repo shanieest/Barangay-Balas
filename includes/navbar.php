@@ -7,7 +7,6 @@ $user = null;
 $notifCount = 0;
 $notifResult = null;
 
-
 if ($userId) {
     $notifSql = "SELECT activity, timestamp 
                  FROM activity_logs
@@ -108,3 +107,9 @@ $userName = $user
         </div>
     </div>
 </nav>
+
+<script>
+    document.getElementById('sidebarToggle').addEventListener('click', function () {
+        document.body.classList.toggle('sidebar-collapsed');
+    });
+</script>
