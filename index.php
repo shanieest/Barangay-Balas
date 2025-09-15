@@ -269,10 +269,8 @@
     <h2 class="section-title fw-bolder">Barangay Balas Location</h2>
     <div class="row">
       <div class="h-100 rounded shadow overflow-hidden">
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3857.086160278755!2d120.7449!3d15.0733!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0000000000000000%3A0x0000000000000000!2sBarangay%20Balas%2C%20Mexico%2C%20Pampanga!5e0!3m2!1sen!2sph!4v0000000000"
-          width="100%" height="350" style="border:0;" allowfullscreen loading="lazy">
-        </iframe>
+        <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d30819.63833916192!2d120.71717999999998!3d15.078242999999999!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3396fa72b5b92d3f%3A0x4e5f0a93bbada2a0!2sBalas%2C%20Mexico%2C%20Pampanga!5e0!3m2!1sen!2sph!4v1757904223740!5m2!1sen!2sph"
+           width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
       </div>
     </div>
   </div>
