@@ -315,3 +315,48 @@ Stack trace:
 [15-Sep-2025 13:24:14 Europe/Berlin] Final values - birthdate: 2001-11-11, age: 23
 [15-Sep-2025 13:24:14 Europe/Berlin] Resident inserted with ID: 40
 [16-Sep-2025 06:57:32 Europe/Berlin] Processing request id=38 action=approve user_id=20 note=
+[17-Sep-2025 04:29:13 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[17-Sep-2025 04:40:02 Europe/Berlin] Processing request id=55 action=approve user_id=1 note=
+[17-Sep-2025 04:40:19 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=haha
+[17-Sep-2025 04:41:48 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Lorenzo
+    [middleName] => Chan
+    [suffix] => 
+    [sex] => male
+    [contactNumber] => 09972353679
+    [email] => marvin@gmail.com
+    [houseNumber] => 3
+    [purok] => 3
+    [address] => House 3, Purok 3, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2003-12-16
+    [age] => 21
+    [password] => 12345678
+)
+
+[17-Sep-2025 04:41:48 Europe/Berlin] Using provided age: 21
+[17-Sep-2025 04:41:48 Europe/Berlin] Final values - birthdate: 2003-12-16, age: 21
+[17-Sep-2025 04:41:48 Europe/Berlin] Resident inserted with ID: 56
+[17-Sep-2025 04:43:01 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Jarlene
+    [lastName] => Tolentino
+    [middleName] => Sigua
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 09972353679
+    [email] => jarlene@gmail.com
+    [houseNumber] => 1
+    [purok] => 1
+    [address] => House 1, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 1999-03-04
+    [age] => 26
+    [password] => 12345678
+)
+
+[17-Sep-2025 04:43:01 Europe/Berlin] Using provided age: 26
+[17-Sep-2025 04:43:01 Europe/Berlin] Final values - birthdate: 1999-03-04, age: 26
+[17-Sep-2025 04:43:01 Europe/Berlin] Resident inserted with ID: 57

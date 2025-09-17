@@ -302,13 +302,13 @@ if (isset($_SESSION['login_error'])) {
                                 <label for="purok">Purok*</label>
                                 <select class="form-control" id="purok" name="purok" required>
                                     <option value="">-- Select Purok --</option>
-                                    <option value="Purok 1">Purok 1</option>
-                                    <option value="Purok 2">Purok 2</option>
-                                    <option value="Purok 3">Purok 3</option>
-                                    <option value="Purok 4">Purok 4</option>
-                                    <option value="Purok 5">Purok 5</option>
-                                    <option value="Purok 6">Purok 6</option>
-                                    <option value="Purok 7">Purok 7</option>
+                                    <option value="Purok 1">1</option>
+                                    <option value="Purok 2">2</option>
+                                    <option value="Purok 3">3</option>
+                                    <option value="Purok 4">4</option>
+                                    <option value="Purok 5">5</option>
+                                    <option value="Purok 6">6</option>
+                                    <option value="Purok 7">7</option>
                                 </select>
                              </div>
 
@@ -513,7 +513,7 @@ if (isset($_SESSION['login_error'])) {
             let addressParts = [];
 
             if (houseNo) addressParts.push("House " + houseNo);
-            if (purok) addressParts.push("Purok " + purok);
+            if (purok) addressParts.push(purok);
 
             addressParts.push("Balas, Mexico, Pampanga, Philippines");
 

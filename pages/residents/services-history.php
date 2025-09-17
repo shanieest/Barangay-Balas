@@ -21,18 +21,23 @@ if ($userId) {
     $documentRequests = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
-       $resQuery = "SELECT sr.id, sr.date_requested, sr.reservation_date_start, 
-                    sr.duration_days, sr.purpose, sr.status,
+    $resQuery = "SELECT sr.id, sr.date_requested, sr.reservation_date_start, 
+                    sr.duration_days, sr.purpose, sr.status, sr.resident_name,
                     GROUP_CONCAT(DISTINCT st.service_name ORDER BY st.service_name SEPARATOR ', ') AS services
              FROM service_reservations sr
-             INNER JOIN service_reservation_items sri ON sr.id = sri.reservation_id
-             INNER JOIN service_types st ON sri.service_type_id = st.id
-             WHERE sr.resident_id = ?
-             GROUP BY sr.id, sr.date_requested, sr.reservation_date_start, sr.duration_days, sr.purpose, sr.status
+             LEFT JOIN service_reservation_items sri ON sr.id = sri.reservation_id
+             LEFT JOIN service_types st ON sri.service_type_id = st.id
+             WHERE sr.resident_id = ? OR (sr.resident_id IS NULL AND sr.resident_name = (
+                 SELECT CONCAT(r.first_name, ' ', r.last_name) 
+                 FROM residents r 
+                 WHERE r.id = ?
+             ))
+             GROUP BY sr.id, sr.date_requested, sr.reservation_date_start, 
+                     sr.duration_days, sr.purpose, sr.status, sr.resident_name
              ORDER BY sr.date_requested DESC";
 
     $stmt = $conn->prepare($resQuery);
-    $stmt->bind_param("i", $userId);
+    $stmt->bind_param("ii", $userId, $userId);
     $stmt->execute();
     $result = $stmt->get_result();
     $serviceReservations = $result->fetch_all(MYSQLI_ASSOC);
@@ -328,12 +333,12 @@ if ($userId) {
                                 <div>
                                     <select class="form-select form-select-sm" id="serviceStatusFilter" style="width: 150px;">
                                         <option value="all">All Status</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Approved">Approved</option>
-                                        <option value="In Progress">In Progress</option>
-                                        <option value="Completed">Completed</option>
-                                        <option value="Cancelled">Cancelled</option>
-                                        <option value="Rejected">Rejected</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="in-progress">In Progress</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="rejected">Rejected</option>
                                     </select>
                                 </div>
                             </div>
@@ -353,39 +358,49 @@ if ($userId) {
                                         </thead>
                                         <tbody>
                                            <?php if (!empty($serviceReservations)): ?>
-    <?php foreach ($serviceReservations as $reservation): ?>
-        <tr data-status="<?= strtolower(str_replace(' ', '-', $reservation['status'] ?? 'Pending')) ?>">
-            <td><?= date("Y-m-d", strtotime($reservation['date_requested'])) ?></td>
-            <td><?= htmlspecialchars($reservation['services'] ?? 'N/A') ?></td>
-            <td><?= date("Y-m-d", strtotime($reservation['reservation_date_start'])) ?></td>
-            <td><?= htmlspecialchars($reservation['duration_days']) ?> day(s)</td>
-            <td><?= htmlspecialchars($reservation['purpose'] ?? '') ?></td>
-            <td>
-                <span class="badge <?= $reservation['status'] === 'Completed' ? 'bg-success' : 'bg-warning text-dark' ?>">
-                    <?= htmlspecialchars($reservation['status']) ?>
-                </span>
-            </td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary view-reservation" data-id="<?= $reservation['id'] ?>">
-                    <i class="fas fa-info-circle me-1"></i>View Details
-                </button>
-                <?php if ($reservation['status'] === 'Pending'): ?>
-                    <button class="btn btn-sm btn-outline-danger cancel-reservation" data-id="<?= $reservation['id'] ?>">
-                        <i class="fas fa-times me-1"></i>Cancel
-                    </button>
-                <?php endif; ?>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-<?php else: ?>
-    <tr>
-        <td colspan="7" class="text-center text-muted py-4">
-            <i class="fas fa-calendar-times fa-2x mb-3 d-block"></i>
-            No service reservations found. <a href="services.php" class="text-primary">Make your first reservation</a>
-        </td>
-    </tr>
-<?php endif; ?>
-
+                                            <?php foreach ($serviceReservations as $reservation): ?>
+                                                <?php
+                                                $status = $reservation['status'] ?? 'Pending';
+                                                $badgeClass = match($status) {
+                                                    'Pending' => 'bg-warning text-dark',
+                                                    'Approved' => 'bg-info',
+                                                    'In Progress' => 'bg-primary',
+                                                    'Completed' => 'bg-success',
+                                                    'Cancelled', 'Rejected' => 'bg-danger',
+                                                    default => 'bg-secondary'
+                                                };
+                                                ?>
+                                                <tr data-status="<?= strtolower(str_replace(' ', '-', $status)) ?>">
+                                                    <td><?= date("Y-m-d", strtotime($reservation['date_requested'])) ?></td>
+                                                    <td><?= htmlspecialchars($reservation['services'] ?? 'No services listed') ?></td>
+                                                    <td><?= date("Y-m-d", strtotime($reservation['reservation_date_start'])) ?></td>
+                                                    <td><?= htmlspecialchars($reservation['duration_days']) ?> day(s)</td>
+                                                    <td><?= htmlspecialchars($reservation['purpose'] ?? '') ?></td>
+                                                    <td>
+                                                        <span class="badge <?= $badgeClass ?>">
+                                                            <?= htmlspecialchars($status) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary view-reservation" data-id="<?= $reservation['id'] ?>">
+                                                            <i class="fas fa-info-circle me-1"></i>View Details
+                                                        </button>
+                                                        <?php if ($status === 'Pending'): ?>
+                                                            <button class="btn btn-sm btn-outline-danger cancel-reservation" data-id="<?= $reservation['id'] ?>">
+                                                                <i class="fas fa-times me-1"></i>Cancel
+                                                            </button>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted py-4">
+                                                    <i class="fas fa-calendar-times fa-2x mb-3 d-block"></i>
+                                                    No service reservations found. <a href="services.php" class="text-primary">Make your first reservation</a>
+                                                </td>
+                                            </tr>
+                                        <?php endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -417,7 +432,7 @@ if ($userId) {
         </div>
     </div>
 
-        <!-- Cancel Confirmation Modal -->
+    <!-- Cancel Confirmation Modal -->
     <div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-labelledby="cancelConfirmModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -440,9 +455,13 @@ if ($userId) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.querySelector('.wrapper').classList.toggle('sidebar-collapsed');
-        });
+        // Check if sidebarToggle exists before adding event listener
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                document.querySelector('.wrapper').classList.toggle('sidebar-collapsed');
+            });
+        }
         
         // Filter functionality for document requests
         document.getElementById('documentStatusFilter').addEventListener('change', function() {
@@ -461,7 +480,7 @@ if ($userId) {
         
         // Filter functionality for service reservations
         document.getElementById('serviceStatusFilter').addEventListener('change', function() {
-            const status = this.value.toLowerCase().replace(' ', '-');
+            const status = this.value.toLowerCase();
             const table = this.closest('.card').querySelector('table');
             const rows = table.querySelectorAll('tbody tr');
             
@@ -502,12 +521,11 @@ if ($userId) {
         document.querySelectorAll('.view-reservation').forEach(button => {
             button.addEventListener('click', function() {
                 const reservationId = this.getAttribute('data-id');
-                
-                alert(`Reservation ID: ${reservationId}`);
+                alert(`Reservation ID: ${reservationId} - Details functionality to be implemented`);
             });
         });
 
-          // Cancel document request
+        // Cancel document request
         document.querySelectorAll('.cancel-request').forEach(button => {
             button.addEventListener('click', function() {
                 const requestId = this.getAttribute('data-id');
@@ -533,33 +551,33 @@ if ($userId) {
 
         // Handle the actual cancellation
         document.getElementById('confirmCancel').addEventListener('click', function() {
-        const requestId = document.getElementById('cancelRequestId').value;
-        const requestType = document.getElementById('cancelRequestType').value;
-        
-        // Create a form to submit the cancellation
-        const formData = new FormData();
-        formData.append('request_id', requestId);
-        formData.append('type', requestType);
-        
-        fetch('services-history-backend.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message and reload the page
-                alert('Request cancelled successfully!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while cancelling the request.');
+            const requestId = document.getElementById('cancelRequestId').value;
+            const requestType = document.getElementById('cancelRequestType').value;
+            
+            // Create a form to submit the cancellation
+            const formData = new FormData();
+            formData.append('request_id', requestId);
+            formData.append('type', requestType);
+            
+            fetch('services-history-backend.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message and reload the page
+                    alert('Request cancelled successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while cancelling the request.');
+            });
         });
-    });
     </script>
 </body>
 </html>
