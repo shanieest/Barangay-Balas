@@ -5,7 +5,7 @@ session_start();
 require_once __DIR__ . '/db.php';
 
 function isLoggedIn() {
-    return isset($_SESSION['user_id']);
+    return isset($_SESSION['admin_id']);
 }
 
 function requireAuth() {
@@ -16,7 +16,7 @@ function requireAuth() {
 }
 
 function getUserId() {
-    return $_SESSION['user_id'] ?? null;
+    return $_SESSION['admin_id'] ?? null;
 }
 
 function getUserData() {
@@ -41,7 +41,7 @@ function login($username, $password) {
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
         if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['admin_id'] = $user['id'];
             logActivity($user['id'], "Logged in");
             return true;
         }

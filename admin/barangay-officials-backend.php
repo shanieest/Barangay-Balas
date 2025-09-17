@@ -243,11 +243,12 @@ function handleAddOfficial() {
 
 function handleUpdateOfficial() {
     global $conn, $response;
-    
+
     $data = json_decode(file_get_contents('php://input'), true);
     if ($data === null) {
         throw new Exception("Invalid JSON data");
     }
+
     if (empty($data['id']) || !is_numeric($data['id'])) {
         throw new Exception("Valid official ID is required");
     }
@@ -267,7 +268,7 @@ function handleUpdateOfficial() {
         throw new Exception("Contact number must be 11 digits");
     }
 
-    // Check duplicate email (excluding self)
+    // Check duplicate email in barangay_officials
     $stmt = $conn->prepare("SELECT id FROM barangay_officials WHERE email = ? AND id != ?");
     $stmt->bind_param("si", $data['email'], $data['id']);
     $stmt->execute();
@@ -295,13 +296,16 @@ function handleUpdateOfficial() {
     }
 
     $conn->begin_transaction();
+
     try {
+        // ----------------------
         // Update barangay_officials
+        // ----------------------
         $stmt = $conn->prepare("UPDATE barangay_officials SET 
-            first_name = ?, last_name = ?, middle_name = ?, position = ?, 
-            email = ?, contact_number = ?, status = ?
+            first_name = ?, last_name = ?, middle_name = ?, 
+            position = ?, email = ?, contact_number = ?, status = ? 
             WHERE id = ?");
-        
+
         $first_name     = $data['first_name'];
         $last_name      = $data['last_name'];
         $middle_name    = $data['middle_name'] ?? '';
@@ -311,31 +315,30 @@ function handleUpdateOfficial() {
         $status         = $data['status'] ?? 'Active';
         $id             = (int)$data['id'];
 
-        $stmt->bind_param("sssssssi", 
-            $first_name, $last_name, $middle_name, 
-            $position, $email, $contact_number, 
+        $stmt->bind_param(
+            "sssssssi",
+            $first_name, $last_name, $middle_name,
+            $position, $email, $contact_number,
             $status, $id
         );
+
         if (!$stmt->execute()) {
             throw new Exception("Failed to update official: " . $stmt->error);
         }
 
+        // ----------------------
         // Update admin_users
+        // ----------------------
         $sql = "UPDATE admin_users SET 
             first_name = ?, last_name = ?, middle_name = ?, 
             email = ?, contact_number = ?, position = ?, status = ?";
-        
-        $first_name2     = $first_name;
-        $last_name2      = $last_name;
-        $middle_name2    = $middle_name;
-        $email2          = $email;
-        $contact_number2 = $contact_number;
-        $position2       = $position;
-        $status2         = $status;
-
+        $params = [
+            $first_name, $last_name, $middle_name,
+            $email, $contact_number, $position, $status
+        ];
         $types = "sssssss";
-        
-        // Handle password update
+
+        // Optional password
         if (!empty($data['password'])) {
             if (strlen($data['password']) < 8) {
                 throw new Exception("Password must be at least 8 characters long");
@@ -343,24 +346,19 @@ function handleUpdateOfficial() {
             $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
             $sql .= ", password = ?";
             $types .= "s";
+            $params[] = $hashed_password;
         }
 
         $sql .= " WHERE email = ?";
-        $stmt = $conn->prepare($sql);
+        $types .= "s";
+        $params[] = $current['email'];
 
-        if (!empty($data['password'])) {
-            $stmt->bind_param($types, 
-                $first_name2, $last_name2, $middle_name2, 
-                $email2, $contact_number2, $position2, $status2,
-                $hashed_password, $current['email']
-            );
-        } else {
-            $stmt->bind_param($types . "s", 
-                $first_name2, $last_name2, $middle_name2, 
-                $email2, $contact_number2, $position2, $status2,
-                $current['email']
-            );
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
         }
+
+        $stmt->bind_param($types, ...$params);
 
         if (!$stmt->execute()) {
             throw new Exception("Failed to update admin account: " . $stmt->error);

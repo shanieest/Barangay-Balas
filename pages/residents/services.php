@@ -94,6 +94,12 @@ require_once '../../config/db.php';
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             border: none;
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         
         .card-header {
@@ -132,37 +138,6 @@ require_once '../../config/db.php';
         .btn-danger {
             background-color: var(--accent-red);
             border-color: var(--accent-red);
-        }
-        
-        .availability-badge {
-            font-size: 0.8rem;
-            padding: 0.35em 0.65em;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        
-        .available {
-            color: #198754;
-        }
-        
-        .limited {
-            color: #fd7e14;
-        }
-        
-        .unavailable {
-            color: #dc3545;
-        }
-        
-        .calendar-icon {
-            cursor: pointer;
-        }
-        
-        #availabilityResults {
-            max-height: 300px;
-            overflow-y: auto;
         }
         
         @media (max-width: 768px) {
@@ -208,23 +183,21 @@ require_once '../../config/db.php';
                 <div class="card-body">
                     <div class="row">
                         <!-- Request Documents Card -->
-                     <div class="card-body">
-      <div class="row">
-        <div class="col-md-4 mb-4">
-          <div class="card h-100">
-            <div class="card-body text-center">
-              <i class="fas fa-handshake fa-3x text-primary mb-3"></i>
-              <h5>Request Documents</h5>
-              <p class="text-muted">Character certification</p>
-              <button class="btn btn-primary btn-sm request-btn" 
-                      data-bs-toggle="modal" 
-                      data-bs-target="#documentRequestModal" 
-                      data-document="Documents">
-                Request
-              </button>
-            </div>
-          </div>
-        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-handshake fa-3x text-primary mb-3"></i>
+                                    <h5>Request Documents</h5>
+                                    <p class="text-muted">Character certification</p>
+                                    <button class="btn btn-primary btn-sm request-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#documentRequestModal" 
+                                            data-document="Documents">
+                                        Request
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Reservation of Service Vehicle -->
                         <div class="col-md-4 mb-4">
@@ -233,15 +206,9 @@ require_once '../../config/db.php';
                                     <i class="fas fa-bus fa-3x text-success mb-3"></i>
                                     <h5>Service Vehicle</h5>
                                     <p class="text-muted">Reserve a barangay vehicle</p>
-                                    <div class="availability mb-2">
-                                        <span class="availability-badge bg-success text-white" id="vehicleAvailability">
-                                            <i class="fas fa-spinner fa-spin"></i> Checking availability...
-                                        </span>
-                                    </div>
                                     <button class="btn btn-success btn-sm" 
                                             data-bs-toggle="modal" 
-                                            data-bs-target="#vehicleReservationModal"
-                                            id="vehicleReserveBtn">
+                                            data-bs-target="#vehicleReservationModal">
                                         Reserve
                                     </button>
                                 </div>
@@ -255,15 +222,9 @@ require_once '../../config/db.php';
                                     <i class="fas fa-campground fa-3x text-warning mb-3"></i>
                                     <h5>Barangay Tent</h5>
                                     <p class="text-muted">Reserve a barangay tent</p>
-                                    <div class="availability mb-2">
-                                        <span class="availability-badge bg-success text-white" id="tentAvailability">
-                                            <i class="fas fa-spinner fa-spin"></i> Checking availability...
-                                        </span>
-                                    </div>
                                     <button class="btn btn-warning btn-sm" 
                                             data-bs-toggle="modal" 
-                                            data-bs-target="#tentReservationModal"
-                                            id="tentReserveBtn">
+                                            data-bs-target="#tentReservationModal">
                                         Reserve
                                     </button>
                                 </div>
@@ -272,45 +233,38 @@ require_once '../../config/db.php';
                     </div>
                 </div>
 
-                <!-- Availability Check Section -->
+                <!-- Additional Services Information -->
                 <section class="mt-5">
                     <div class="card">
                         <div class="card-header bg-light">
-                            <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Check Availability</h5>
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Service Information</h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Select Service</label>
-                                        <select class="form-select" id="availabilityService">
-                                            <option value="vehicle">Service Vehicle</option>
-                                            <option value="tent">Barangay Tent</option>
-                                        </select>
-                                    </div>
+                                    <h6><i class="fas fa-bus text-success me-2"></i>Service Vehicle</h6>
+                                    <ul class="list-unstyled ms-3">
+                                        <li>• Available for medical emergencies</li>
+                                        <li>• Transportation for official business</li>
+                                        <li>• Community event transportation</li>
+                                        <li>• Request at least 1 day in advance</li>
+                                    </ul>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Select Date</label>
-                                        <div class="input-group">
-                                            <input type="date" class="form-control" id="availabilityDate" 
-                                                   min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
-                                            <span class="input-group-text calendar-icon" id="datePickerIcon">
-                                                <i class="fas fa-calendar-alt"></i>
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <h6><i class="fas fa-campground text-warning me-2"></i>Barangay Tent</h6>
+                                    <ul class="list-unstyled ms-3">
+                                        <li>• Perfect for outdoor events</li>
+                                        <li>• Family gatherings and celebrations</li>
+                                        <li>• Community activities</li>
+                                        <li>• Setup assistance available</li>
+                                    </ul>
                                 </div>
                             </div>
-                            <button class="btn btn-primary" id="checkAvailabilityBtn">
-                                <i class="fas fa-search me-1"></i> Check Availability
-                            </button>
-                            
-                            <div class="mt-4" id="availabilityResults" style="display: none;">
-                                <h6>Availability Results:</h6>
-                                <div class="list-group" id="availabilityList">
-                                    <!-- Results will be populated here -->
-                                </div>
+                            <hr>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Note:</strong> All reservations are subject to approval by barangay officials. 
+                                You will be contacted within 24-48 hours regarding your reservation status.
                             </div>
                         </div>
                     </div>
@@ -324,6 +278,6 @@ require_once '../../config/db.php';
     <?php include '../../pages/modals/tentReservationModal.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/services.js"></script>
+<script src="../../assets/js/services.js"></script>
 </body>
 </html>

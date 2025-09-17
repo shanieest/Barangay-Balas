@@ -5,8 +5,8 @@ require_once 'includes/db.php';
 $adminName = "Admin";
 
 // Get admin name if logged in
-if (isset($_SESSION['user_id'])) {
-    $adminId = $_SESSION['user_id'];
+if (isset($_SESSION['admin_id'])) {
+    $adminId = $_SESSION['admin_id'];
     $stmt = $conn->prepare("SELECT first_name, last_name FROM admin_users WHERE id = ?");
     $stmt->bind_param("i", $adminId);
     $stmt->execute();

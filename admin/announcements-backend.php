@@ -21,7 +21,7 @@ if (isset($_POST['addAnnouncement'])) {
     $title = trim($_POST['title']);
     $content = trim($_POST['content']);
     $date = $_POST['date'];
-    $userId = $_SESSION['user_id'];
+    $userId = $_SESSION['admin_id'];
 
     if (empty($title) || empty($content) || empty($date)) {
         $_SESSION['error'] = "All fields except image are required.";

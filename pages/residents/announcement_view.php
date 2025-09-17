@@ -1,9 +1,7 @@
 <?php
-// announcement_view.php - Individual announcement view page
 require_once '../../auth/auth.php';
 require_once '../../config/db.php'; 
 
-// Get announcement ID from URL
 $announcementId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($announcementId <= 0) {
@@ -11,7 +9,6 @@ if ($announcementId <= 0) {
     exit();
 }
 
-// Fetch announcement details with images
 $sql = "SELECT a.id, a.title, a.content, a.date_posted, a.created_at,
                CONCAT(u.first_name, ' ', u.last_name) AS posted_by,
                u.position,
@@ -33,7 +30,6 @@ if (!$announcement) {
     exit();
 }
 
-// Process images
 $images = [];
 if ($announcement['image_paths']) {
     $imagePaths = explode(',', $announcement['image_paths']);

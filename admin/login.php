@@ -2,7 +2,7 @@
 //login.php backend logic
 session_start();
 require_once 'includes/db.php';
-require_once 'includes/functions.php';
+require_once 'includes/auth.php';
 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $user = $result->fetch_assoc();
         
         if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['admin_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['full_name'] = $user['first_name'] . ' ' . $user['last_name'];
             

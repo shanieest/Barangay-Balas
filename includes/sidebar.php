@@ -28,10 +28,10 @@
                 <span class="sidebar-text">My Profile</span>
             </a>
         </li>
-        <li class="<?= basename($_SERVER['PHP_SELF']) == 'requestsHistory.php' ? 'active' : '' ?>">
-            <a href="requestsHistory.php">
+        <li class="<?= basename($_SERVER['PHP_SELF']) == 'services-history.php' ? 'active' : '' ?>">
+            <a href="services-history.php">
                 <i class="fas fa-history"></i>
-                <span class="sidebar-text">Request History</span>
+                <span class="sidebar-text">Services History</span>
             </a>
         </li>
         <li class="<?= basename($_SERVER['PHP_SELF']) == 'census.php' ? 'active' : '' ?>">

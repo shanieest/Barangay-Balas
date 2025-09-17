@@ -1,4 +1,5 @@
 <?php
+// auth.php
 session_start();
 
 function logout() {

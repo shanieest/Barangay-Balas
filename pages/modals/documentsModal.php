@@ -1,5 +1,4 @@
 <?php
-// residents/documentsModal.php
 require_once '../../config/db.php';
 $docTypes = $conn->query("SELECT id, document_type FROM document_types ORDER BY document_type ASC");
 

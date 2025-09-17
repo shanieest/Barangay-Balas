@@ -1,4 +1,4 @@
-//modaal
+//modaal residents census
 document.addEventListener('DOMContentLoaded', function () {
   const addMemberBtn = document.getElementById('addMemberBtn');
   const membersTable = document.getElementById('membersTable').querySelector('tbody');

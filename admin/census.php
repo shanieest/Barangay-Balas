@@ -1,133 +1,105 @@
 <?php
-require_once __DIR__ . '/includes/auth.php';
-requireAuth();
-require_once __DIR__ . '/includes/db.php';
+include 'includes/db.php';
 
-// Initialize variables
+// Initialize variables with default values
+$total_households = 0;
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 25;
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$purok_filter = isset($_GET['purok']) ? $_GET['purok'] : '';
+
+// Calculate offset for pagination
 $offset = ($page - 1) * $limit;
 
-// Filter parameters
-$purok_filter = isset($_GET['purok']) ? $_GET['purok'] : '';
-$water_filter = isset($_GET['water_source']) ? $_GET['water_source'] : '';
-$toilet_filter = isset($_GET['toilet_facility']) ? $_GET['toilet_facility'] : '';
-$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
-$search = isset($_GET['search']) ? $_GET['search'] : '';
+// Build the base query
+$query = "SELECT h.*, r.first_name, r.last_name, r.middle_name, 
+          COUNT(hm.resident_id) as member_count
+          FROM households h
+          LEFT JOIN household_members hm ON h.id = hm.household_id
+          LEFT JOIN residents r ON hm.resident_id = r.id AND hm.relationship_to_head = 'Head'
+          WHERE 1=1";
 
-// Build WHERE clause for filters
+$count_query = "SELECT COUNT(DISTINCT h.id) as total 
+                FROM households h
+                LEFT JOIN household_members hm ON h.id = hm.household_id
+                LEFT JOIN residents r ON hm.resident_id = r.id
+                WHERE 1=1";
+
+// ---------------- FILTERS ----------------
 $where_conditions = [];
-$params = [];
-$types = '';
-
-// Check if relationship_to_head column exists before adding the condition
-$check_column_sql = "SHOW COLUMNS FROM residents LIKE 'relationship_to_head'";
-$column_result = $conn->query($check_column_sql);
-if ($column_result->num_rows > 0) {
-    $where_conditions[] = "r.relationship_to_head = 'Head'";
-}
+$filter_params = [];
+$filter_types = '';
 
 if (!empty($purok_filter)) {
-    $where_conditions[] = "r.purok = ?";
-    $params[] = $purok_filter;
-    $types .= 's';
-}
-
-if (!empty($water_filter)) {
-    $where_conditions[] = "r.type_of_water_source = ?";
-    $params[] = $water_filter;
-    $types .= 's';
-}
-
-if (!empty($toilet_filter)) {
-    $where_conditions[] = "r.type_of_toilet_facility = ?";
-    $params[] = $toilet_filter;
-    $types .= 's';
-}
-
-if (!empty($status_filter)) {
-    $where_conditions[] = "r.resident_status = ?";
-    $params[] = $status_filter;
-    $types .= 's';
+    $where_conditions[] = "h.purok = ?";
+    $filter_params[] = $purok_filter;
+    $filter_types .= 's';
 }
 
 if (!empty($search)) {
-    $where_conditions[] = "(r.first_name LIKE ? OR r.last_name LIKE ? OR r.house_number LIKE ? OR r.address LIKE ?)";
+    $where_conditions[] = "(r.first_name LIKE ? OR r.last_name LIKE ? OR h.house_number LIKE ? OR h.purok LIKE ?)";
     $search_term = "%$search%";
-    $params[] = $search_term;
-    $params[] = $search_term;
-    $params[] = $search_term;
-    $params[] = $search_term;
-    $types .= 'ssss';
+    $filter_params[] = $search_term;
+    $filter_params[] = $search_term;
+    $filter_params[] = $search_term;
+    $filter_params[] = $search_term;
+    $filter_types .= 'ssss';
 }
 
-$where_sql = '';
+// Apply filters
 if (!empty($where_conditions)) {
-    $where_sql = 'WHERE ' . implode(' AND ', $where_conditions);
+    $where_clause = " AND " . implode(" AND ", $where_conditions);
+    $query .= $where_clause;
+    $count_query .= $where_clause;
 }
 
-// Get total count of households (heads of family)
-$count_sql = "SELECT COUNT(DISTINCT r.house_number, r.purok) as total 
-              FROM residents r 
-              $where_sql";
-
-$count_stmt = $conn->prepare($count_sql);
-if (!empty($params)) {
-    $count_stmt->bind_param($types, ...$params);
+// ---------------- COUNT QUERY ----------------
+$stmt_count = $conn->prepare($count_query);
+if (!empty($filter_params)) {
+    $stmt_count->bind_param($filter_types, ...$filter_params);
 }
-$count_stmt->execute();
-$count_result = $count_stmt->get_result();
-$total_households = $count_result->fetch_assoc()['total'];
-$count_stmt->close();
+$stmt_count->execute();
+$result_count = $stmt_count->get_result();
+$total_row = $result_count->fetch_assoc();
+$total_households = $total_row['total'] ?? 0;
 
-// Reset params for main query
-$main_params = array_slice($params, 0, count($params));
-$main_types = $types;
+// ---------------- MAIN QUERY ----------------
+$query .= " GROUP BY h.id ORDER BY h.purok, h.house_number LIMIT ? OFFSET ?";
 
-// Get households data with pagination (heads of family)
-$sql = "SELECT r.*, 
-               (SELECT COUNT(*) FROM residents r2 
-                WHERE r2.house_number = r.house_number 
-                AND r2.purok = r.purok) as member_count
-        FROM residents r 
-        $where_sql 
-        GROUP BY r.house_number, r.purok
-        ORDER BY r.purok, r.house_number 
-        LIMIT ? OFFSET ?";
-
-// Add limit and offset to params
+$main_params = $filter_params;
+$main_types  = $filter_types . 'ii'; // add types for limit + offset
 $main_params[] = $limit;
 $main_params[] = $offset;
-$main_types .= 'ii';
 
-$stmt = $conn->prepare($sql);
-if (!empty($main_params)) {
-    $stmt->bind_param($main_types, ...$main_params);
-}
+$stmt = $conn->prepare($query);
+$stmt->bind_param($main_types, ...$main_params);
 $stmt->execute();
 $result = $stmt->get_result();
-$households = $result->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
 
-// Calculate pagination
+$households = [];
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $households[] = $row;
+    }
+}
+
+// Calculate pagination values
 $total_pages = ceil($total_households / $limit);
 $showing_from = ($page - 1) * $limit + 1;
 $showing_to = min($page * $limit, $total_households);
 
-// Get statistics
-$stats_sql = "SELECT 
-    (SELECT COUNT(DISTINCT house_number, purok) FROM residents" . (($column_result->num_rows > 0) ? " WHERE relationship_to_head = 'Head'" : "") . ") as total_households,
-    (SELECT COUNT(*) FROM resident_accounts WHERE account_status = 'approved') as total_residents,
-    (SELECT COUNT(DISTINCT house_number, purok) FROM residents WHERE type_of_water_source IS NOT NULL AND type_of_water_source != ''" . (($column_result->num_rows > 0) ? " AND relationship_to_head = 'Head'" : "") . ") as water_coverage,
-    (SELECT COUNT(DISTINCT house_number, purok) FROM residents WHERE type_of_toilet_facility IS NOT NULL AND type_of_toilet_facility != ''" . (($column_result->num_rows > 0) ? " AND relationship_to_head = 'Head'" : "") . ") as toilet_coverage";
-
-$stats_result = $conn->query($stats_sql);
-$stats = $stats_result->fetch_assoc();
-$stats_result->close();
-
-// Calculate percentages
-$water_percentage = $stats['total_households'] > 0 ? round(($stats['water_coverage'] / $stats['total_households']) * 100) : 0;
-$toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_coverage'] / $stats['total_households']) * 100) : 0;
+// Function to build pagination links
+function buildPaginationLink($page, $limit, $purok, $search) {
+    $params = [
+        'page' => $page,
+        'limit' => $limit
+    ];
+    
+    if (!empty($purok)) $params['purok'] = $purok;
+    if (!empty($search)) $params['search'] = $search;
+    
+    return 'census.php?' . http_build_query($params);
+}
 ?>
 
 <!DOCTYPE html>
@@ -139,145 +111,59 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
   <style>
-    :root {
-        --primary-color: #3498db;
-        --secondary-color: #2c3e50;
-        --success-color: #27ae60;
-        --warning-color: #f39c12;
-        --danger-color: #e74c3c;
-        --light-bg: #f8f9fa;
-    }
-    
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f5f7f9;
-    }
-    
-    .bg-light-custom {
-        background-color: var(--light_bg);
-        border: 1px solid #e3e6e9;
-    }
-    
-    .household-badge {
-        font-size: 0.9rem;
-        padding: 0.5rem 1rem;
-    }
-    
-    .table th {
-        background-color: var(--secondary-color);
-        color: white;
-    }
-    
-    .btn-export {
-        background-color: var(--success-color);
-        color: white;
-    }
-    
-    .btn-export:hover {
-        background-color: #219653;
-        color: white;
-    }
-    
-    .action-buttons .btn {
-        margin-right: 0.3rem;
-    }
-    
-    .census-period-selector {
-        background-color: white;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .card {
-        border: none;
-        border-radius: 0.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .card-header {
-        border-bottom: 1px solid rgba(0,0,0,0.1);
-        font-weight: 600;
-    }
-    
     .stats-card {
-        text-align: center;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1.5rem;
-        height: 100%;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      margin-bottom: 20px;
     }
-    
     .stats-card i {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
+      font-size: 2rem;
+      margin-bottom: 10px;
     }
-    
     .stats-card .number {
-        font-size: 1.8rem;
-        font-weight: bold;
+      font-size: 1.8rem;
+      font-weight: bold;
     }
-    
     .stats-card .label {
-        font-size: 0.9rem;
-        color: #6c757d;
+      color: #6c757d;
+      font-size: 0.9rem;
     }
-    
-    #householdsTable tbody tr {
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    
-    #householdsTable tbody tr:hover {
-        background-color: rgba(52, 152, 219, 0.1);
-    }
-    
-    .resident-image {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-right: 10px;
-    }
-    
-    .modal-header {
-        background-color: var(--secondary-color);
-        color: white;
-    }
-    
     .resident-image-placeholder {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 10px;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 10px;
     }
-    
-    .pagination {
-        margin-bottom: 0;
+    .action-buttons .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
     }
-    
+    .household-badge {
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+    }
+    .bg-light-custom {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+    }
     .table-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    
     @media (max-width: 768px) {
-        .table-controls {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .search-box {
-            width: 100%;
-        }
+      .table-controls {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -324,29 +210,29 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                 <div class="col-xl-3 col-md-6">
                     <div class="stats-card bg-white">
                         <i class="fas fa-house-user text-primary"></i>
-                        <div class="number"><?php echo number_format($stats['total_households']); ?></div>
+                        <div class="number"><?php echo number_format($total_households); ?></div>
                         <div class="label">Total Households</div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-md-6">
                     <div class="stats-card bg-white">
                         <i class="fas fa-users text-info"></i>
-                        <div class="number"><?php echo number_format($stats['total_residents']); ?></div>
+                        <div class="number">0</div>
                         <div class="label">Total Approved Residents</div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-md-6">
                     <div class="stats-card bg-white">
-                        <i class="fas fa-tint text-success"></i>
-                        <div class="number"><?php echo $water_percentage; ?>%</div>
-                        <div class="label">Water Source Coverage</div>
+                        <i class="fas fa-male text-success"></i>
+                        <div class="number">0</div>
+                        <div class="label">Male Population</div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-md-6">
                     <div class="stats-card bg-white">
-                        <i class="fas fa-toilet text-warning"></i>
-                        <div class="number"><?php echo $toilet_percentage; ?>%</div>
-                        <div class="label">Toilet Facility Coverage</div>
+                        <i class="fas fa-female text-warning"></i>
+                        <div class="number">0</div>
+                        <div class="label">Female Population</div>
                     </div>
                 </div>
             </div>
@@ -368,7 +254,7 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                     <div class="card mb-4 bg-light-custom">
                         <div class="card-header py-2 bg-light-custom">
                             <button class="btn btn-sm btn-link text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
-                                <i class="fas fa-filter me-1"></i> Advanced Filters
+                                <i class="fas fa-filter me-1"></i> Filters
                             </button>
                         </div>
                         <div class="collapse show" id="filterCollapse">
@@ -377,9 +263,9 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                                     <input type="hidden" name="page" value="1">
                                     <input type="hidden" name="limit" value="<?php echo $limit; ?>">
                                     <div class="row g-3">
-                                        <div class="col-md-3">
+                                        <div class="col-md-6">
                                             <label class="form-label">Purok</label>
-                                            <select class="form-select" name="purok">
+                                            <select class="form-select" name="purok" onchange="this.form.submit()">
                                                 <option value="" <?php echo empty($purok_filter) ? 'selected' : ''; ?>>All Puroks</option>
                                                 <option value="1" <?php echo $purok_filter == '1' ? 'selected' : ''; ?>>Purok 1</option>
                                                 <option value="2" <?php echo $purok_filter == '2' ? 'selected' : ''; ?>>Purok 2</option>
@@ -387,42 +273,21 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                                                 <option value="4" <?php echo $purok_filter == '4' ? 'selected' : ''; ?>>Purok 4</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Water Source</label>
-                                            <select class="form-select" name="water_source">
-                                                <option value="" <?php echo empty($water_filter) ? 'selected' : ''; ?>>All Sources</option>
-                                                <option value="Level I" <?php echo $water_filter == 'Level I' ? 'selected' : ''; ?>>Level I (Well)</option>
-                                                <option value="Level II" <?php echo $water_filter == 'Level II' ? 'selected' : ''; ?>>Level II (Deep Well)</option>
-                                                <option value="Level III" <?php echo $water_filter == 'Level III' ? 'selected' : ''; ?>>Level III (Piped)</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Toilet Facility</label>
-                                            <select class="form-select" name="toilet_facility">
-                                                <option value="" <?php echo empty($toilet_filter) ? 'selected' : ''; ?>>All Types</option>
-                                                <option value="Water-sealed" <?php echo $toilet_filter == 'Water-sealed' ? 'selected' : ''; ?>>Water-sealed</option>
-                                                <option value="Pit" <?php echo $toilet_filter == 'Pit' ? 'selected' : ''; ?>>Pit</option>
-                                                <option value="None" <?php echo $toilet_filter == 'None' ? 'selected' : ''; ?>>None</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Status</label>
-                                            <select class="form-select" name="status">
-                                                <option value="" <?php echo empty($status_filter) ? 'selected' : ''; ?>>All Statuses</option>
-                                                <option value="Active" <?php echo $status_filter == 'Active' ? 'selected' : ''; ?>>Active</option>
-                                                <option value="Inactive" <?php echo $status_filter == 'Inactive' ? 'selected' : ''; ?>>Inactive</option>
-                                                <option value="Deceased" <?php echo $status_filter == 'Deceased' ? 'selected' : ''; ?>>Deceased</option>
-                                            </select>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Search</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" name="search" placeholder="Search by name or house number" value="<?php echo htmlspecialchars($search); ?>">
+                                                <button class="btn btn-outline-secondary" type="submit">
+                                                    <i class="fas fa-search"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row mt-3">
                                         <div class="col-12 d-flex justify-content-end">
-                                            <a href="census.php" class="btn btn-outline-secondary me-2">
+                                            <a href="census.php" class="btn btn-outline-secondary">
                                                 <i class="fas fa-undo me-1"></i> Reset
                                             </a>
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fas fa-filter me-1"></i> Apply Filters
-                                            </button>
                                         </div>
                                     </div>
                                 </form>
@@ -446,22 +311,6 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                                 </select>
                             </div>
                         </div>
-                        <div class="search-box">
-                            <form method="GET" action="" class="d-flex">
-                                <input type="hidden" name="page" value="1">
-                                <input type="hidden" name="limit" value="<?php echo $limit; ?>">
-                                <input type="hidden" name="purok" value="<?php echo $purok_filter; ?>">
-                                <input type="hidden" name="water_source" value="<?php echo $water_filter; ?>">
-                                <input type="hidden" name="toilet_facility" value="<?php echo $toilet_filter; ?>">
-                                <input type="hidden" name="status" value="<?php echo $status_filter; ?>">
-                                <div class="input-group input-group-sm" style="width: 250px;">
-                                    <input type="text" class="form-control form-control-sm" name="search" placeholder="Search..." value="<?php echo htmlspecialchars($search); ?>">
-                                    <button class="btn btn-sm btn-outline-secondary" type="submit">
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
                     </div>
 
                     <!-- Main Table -->
@@ -470,12 +319,9 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                             <thead class="table-light">
                                 <tr>
                                     <th width="50">#</th>
-                                    <th>Household No.</th>
                                     <th>Head of Family</th>
                                     <th>Purok</th>
                                     <th>House No.</th>
-                                    <th>Water Source</th>
-                                    <th>Toilet Facility</th>
                                     <th>Members</th>
                                     <th width="120">Actions</th>
                                 </tr>
@@ -497,22 +343,21 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                                         <tr>
                                             <td><?php echo $counter; ?></td>
                                             <td>
-                                                <span class="fw-bold">HH-<?php echo $household['purok']; ?>-<?php echo str_pad($household['id'], 4, '0', STR_PAD_LEFT); ?></span>
-                                                <div class="text-muted small"><?php echo htmlspecialchars($household['address']); ?></div>
-                                            </td>
-                                            <td>
                                                 <div class="d-flex align-items-center">
                                                     <div class="resident-image-placeholder <?php echo $bg_colors[$color_index]; ?> text-white">
                                                         <?php echo $initials; ?>
                                                     </div>
-                                                    <div><?php echo htmlspecialchars($head_name); ?></div>
+                                                    <div>
+                                                        <div class="fw-bold"><?php echo htmlspecialchars($head_name); ?></div>
+                                                        <div class="text-muted small">HH-<?php echo $household['purok']; ?>-<?php echo str_pad($household['id'], 4, '0', STR_PAD_LEFT); ?></div>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td>Purok <?php echo htmlspecialchars($household['purok']); ?></td>
                                             <td><?php echo htmlspecialchars($household['house_number']); ?></td>
-                                            <td><?php echo htmlspecialchars($household['type_of_water_source'] ?? 'Not specified'); ?></td>
-                                            <td><?php echo htmlspecialchars($household['type_of_toilet_facility'] ?? 'Not specified'); ?></td>
-                                            <td><?php echo $household['member_count'] ?? 1; ?></td>
+                                            <td>
+                                                <span class="badge bg-info rounded-pill"><?php echo $household['member_count'] ?? 1; ?> members</span>
+                                            </td>
                                             <td class="action-buttons">
                                                 <button class="btn btn-sm btn-outline-primary view-btn" data-bs-toggle="tooltip" title="View Details" data-id="<?php echo $household['id']; ?>">
                                                     <i class="fas fa-eye"></i>
@@ -529,7 +374,7 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="9" class="text-center py-4">
+                                        <td colspan="6" class="text-center py-4">
                                             <div class="py-3">
                                                 <i class="fas fa-house-circle-exclamation fa-3x text-muted mb-3"></i>
                                                 <h5>No households found</h5>
@@ -551,7 +396,7 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                         <nav aria-label="Page navigation">
                             <ul class="pagination pagination-sm mb-0">
                                 <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                                    <a class="page-link" href="<?php echo buildPaginationLink($page - 1, $limit, $purok_filter, $water_filter, $toilet_filter, $status_filter, $search); ?>">Previous</a>
+                                    <a class="page-link" href="<?php echo buildPaginationLink($page - 1, $limit, $purok_filter, $search); ?>">Previous</a>
                                 </li>
                                 
                                 <?php for ($i = 1; $i <= $total_pages; $i++): ?>
@@ -561,13 +406,13 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
                                         </li>
                                     <?php else: ?>
                                         <li class="page-item">
-                                            <a class="page-link" href="<?php echo buildPaginationLink($i, $limit, $purok_filter, $water_filter, $toilet_filter, $status_filter, $search); ?>"><?php echo $i; ?></a>
+                                            <a class="page-link" href="<?php echo buildPaginationLink($i, $limit, $purok_filter, $search); ?>"><?php echo $i; ?></a>
                                         </li>
                                     <?php endif; ?>
                                 <?php endfor; ?>
                                 
                                 <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
-                                    <a class="page-link" href="<?php echo buildPaginationLink($page + 1, $limit, $purok_filter, $water_filter, $toilet_filter, $status_filter, $search); ?>">Next</a>
+                                    <a class="page-link" href="<?php echo buildPaginationLink($page + 1, $limit, $purok_filter, $search); ?>">Next</a>
                                 </li>
                             </ul>
                         </nav>
@@ -591,26 +436,21 @@ $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_cove
 <script src="assets/js/script.js"></script>
 <script src="assets/js/census.js"></script>
 
-
+<script>
+function updateLimit(newLimit) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('limit', newLimit);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+}
+</script>
 
 </body>
 </html>
 
 <?php
-function buildPaginationLink($page, $limit, $purok, $water, $toilet, $status, $search) {
-    $params = [
-        'page' => $page,
-        'limit' => $limit
-    ];
-    
-    if (!empty($purok)) $params['purok'] = $purok;
-    if (!empty($water)) $params['water_source'] = $water;
-    if (!empty($toilet)) $params['toilet_facility'] = $toilet;
-    if (!empty($status)) $params['status'] = $status;
-    if (!empty($search)) $params['search'] = $search;
-    
-    return 'census.php?' . http_build_query($params);
+// Close database connection
+if (isset($conn)) {
+    $conn->close();
 }
-
-$conn->close();
 ?>

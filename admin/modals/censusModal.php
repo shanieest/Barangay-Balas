@@ -1,6 +1,4 @@
-
-
-
+<!-- Household Details Modal admin side -->
 <div class="modal fade" id="householdModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

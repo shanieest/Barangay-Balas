@@ -1,4 +1,5 @@
 <?php
+//servicesAdmin.php
 require 'includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();

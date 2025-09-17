@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../config/db.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 $household_data = [];
-$residents = [];
+$household_members = [];
 
 $householdId = $_SESSION['household_id'] ?? ($_GET['household_id'] ?? null);
 
@@ -22,25 +22,33 @@ if ($householdId) {
 
     $stmt = $conn->prepare("
         SELECT 
-            r.id, r.first_name, r.last_name, r.relationship_to_head, r.sex, r.civil_status,
-            r.occupation, r.educational_attainment, r.philhealth_number,
-            r.is_4ps_member, r.is_indigent, r.medical_history,
-            CASE 
-              WHEN r.date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, r.date_of_birth, CURDATE())
-              WHEN r.age IS NOT NULL THEN r.age
-              ELSE NULL
-            END AS age
-        FROM residents r
-        WHERE r.household_id = ?
-        ORDER BY r.relationship_to_head = 'Head' DESC, r.last_name ASC, r.first_name ASC
+            hm.id as member_id,
+            r.id as resident_id,
+            r.first_name, 
+            r.last_name, 
+            hm.relationship_to_head, 
+            r.sex, 
+            hm.civil_status,
+            hm.occupation, 
+            hm.educational_attainment, 
+            hm.philhealth_number,
+            hm.is_4ps_member, 
+            hm.is_indigent, 
+            hm.medical_history,
+            hm.age
+        FROM household_members hm
+        JOIN residents r ON hm.resident_id = r.id
+        WHERE hm.household_id = ?
+        ORDER BY hm.relationship_to_head = 'Head' DESC, r.last_name ASC, r.first_name ASC
     ");
     $stmt->bind_param("i", $householdId);
     $stmt->execute();
     $res = $stmt->get_result();
-    $residents = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+    $household_members = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     $stmt->close();
 }
 
+// Get all verified residents for the dropdown
 $all_residents = [];
 $res_stmt = $conn->prepare("SELECT id, first_name, last_name FROM residents WHERE verification_status = 'Verified' ORDER BY last_name, first_name");
 if ($res_stmt) {
@@ -61,6 +69,7 @@ if ($res_stmt) {
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Your existing CSS styles */
         :root {
             --primary-blue:  #0033cc;
             --secondary-blue: #3a7cb9;
@@ -149,21 +158,6 @@ if ($res_stmt) {
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             font-weight: 600;
             padding: 15px 20px;
-        }
-        
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background-color: var(--accent-red);
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .btn-primary {
@@ -298,20 +292,20 @@ if ($res_stmt) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php if (!empty($residents)): ?>
-                                        <?php foreach ($residents as $resident): ?>
+                                    <?php if (!empty($household_members)): ?>
+                                        <?php foreach ($household_members as $member): ?>
                                             <tr>
-                                                <td><?= htmlspecialchars(trim(($resident['first_name'] ?? '') . ' ' . ($resident['last_name'] ?? ''))); ?></td>
-                                                <td><?= htmlspecialchars($resident['relationship_to_head'] ?? ''); ?></td>
-                                                <td><?= htmlspecialchars($resident['age'] !== null ? $resident['age'] : ''); ?></td>
-                                                <td><?= htmlspecialchars(ucfirst($resident['sex'] ?? '')); ?></td>
-                                                <td><?= htmlspecialchars($resident['civil_status'] ?? ''); ?></td>
-                                                <td><?= htmlspecialchars($resident['occupation'] ?? ''); ?></td>
-                                                <td><?= htmlspecialchars($resident['educational_attainment'] ?? ''); ?></td>
-                                                <td><?= (!empty($resident['philhealth_number'])) ? 'Yes' : 'No'; ?></td>
-                                                <td><?= !empty($resident['is_4ps_member']) ? 'Yes' : 'No'; ?></td>
-                                                <td><?= !empty($resident['is_indigent']) ? 'Yes' : 'No'; ?></td>
-                                                <td><?= htmlspecialchars($resident['medical_history'] ?? ''); ?></td>
+                                                <td><?= htmlspecialchars(trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''))); ?></td>
+                                                <td><?= htmlspecialchars($member['relationship_to_head'] ?? ''); ?></td>
+                                                <td><?= htmlspecialchars($member['age'] ?? ''); ?></td>
+                                                <td><?= htmlspecialchars(ucfirst($member['sex'] ?? '')); ?></td>
+                                                <td><?= htmlspecialchars($member['civil_status'] ?? ''); ?></td>
+                                                <td><?= htmlspecialchars($member['occupation'] ?? ''); ?></td>
+                                                <td><?= htmlspecialchars($member['educational_attainment'] ?? ''); ?></td>
+                                                <td><?= (!empty($member['philhealth_number'])) ? 'Yes' : 'No'; ?></td>
+                                                <td><?= !empty($member['is_4ps_member']) ? 'Yes' : 'No'; ?></td>
+                                                <td><?= !empty($member['is_indigent']) ? 'Yes' : 'No'; ?></td>
+                                                <td><?= htmlspecialchars($member['medical_history'] ?? ''); ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>

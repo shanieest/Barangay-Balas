@@ -106,13 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#approveServiceForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Validate required fields
-        var scheduledDateTime = $('#approve-schedule').val();
-        if (!scheduledDateTime) {
-            alert('Please select a scheduled date and time.');
-            return;
-        }
-        
         // Disable submit button to prevent double submission
         var submitBtn = $(this).find('button[type="submit"]');
         var originalText = submitBtn.html();

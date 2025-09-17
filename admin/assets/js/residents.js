@@ -1,3 +1,5 @@
+
+
 // Global variables
 let currentResidentId = null;
 let currentRequestId = null;
@@ -639,12 +641,13 @@ function updateModalImage(modal, selector, src) {
 }
 
 // View request function
+// View request function
 function viewRequest(id) {
     if (!id) {
         showToast('Invalid request ID', 'danger');
         return;
     }
-    
+
     fetch(`residents-backend.php?action=account_requests&id=${id}`)
         .then(response => {
             if (!response.ok) {
@@ -664,12 +667,24 @@ function viewRequest(id) {
         })
         .then(data => {
             console.log('Parsed data:', data);
-            
-            if (data.success && data.data && data.data.length > 0) {
-                const request = data.data[0];
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to load request');
+            }
+
+            let request = null;
+
+            // ✅ Handle array or object responses
+            if (Array.isArray(data.data)) {
+                request = data.data.length > 0 ? data.data[0] : null;
+            } else if (data.data) {
+                request = data.data;
+            }
+
+            if (request) {
                 displayRequestModal(request);
             } else {
-                throw new Error('No request data received or empty data array');
+                throw new Error('No request data received');
             }
         })
         .catch(error => {
@@ -678,7 +693,8 @@ function viewRequest(id) {
         });
 }
 
-// Display request data in modal (keeping existing implementation)
+
+// Display request data in modal 
 function displayRequestModal(request) {
     const viewModal = getElement('#viewRequestModal');
     if (!viewModal) return;
@@ -1013,8 +1029,9 @@ function showProcessRequestModal(id, action) {
     bsModal.show();
 }
 
-// Process account request (approve/reject)
 function processAccountRequest(id, action, note) {
+    console.log('Processing request:', {id, action, note});
+    
     if (action === 'reject' && !note.trim()) {
         const noteInput = getElement('#requestNote');
         if (noteInput) noteInput.classList.add('is-invalid');
@@ -1030,27 +1047,51 @@ function processAccountRequest(id, action, note) {
         submitBtn.disabled = true;
     }
 
+    // Use FormData instead of JSON for file upload compatibility
     const formData = new FormData();
     formData.append('id', id);
-    formData.append('action', action);
+    formData.append('action', action); // Changed from 'action' to avoid conflicts
     if (note) formData.append('note', note);
 
     fetch('residents-backend.php?action=process_request', {
         method: 'POST',
         body: formData
     })
-    .then(handleResponse)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        console.log('Raw response:', text);
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            throw new Error('Invalid JSON response from server');
+        }
+    })
     .then(data => {
+        console.log('Parsed data:', data);
+        
         if (data.success) {
-            showToast(`Account request ${action}d successfully`);
+            showToast(`Account request ${action === 'approve' ? 'approved' : 'rejected'} successfully`);
             refreshAccountRequests(currentRequestPage, currentRequestFilter);
             refreshResidentList(currentResidentPage, currentResidentSearch);
             
-            const processModal = bootstrap.Modal.getInstance(getElement('#processRequestModal'));
-            if (processModal) processModal.hide();
+            // Close both modals
+            const processModalEl = getElement('#processRequestModal');
+            if (processModalEl) {
+                const processModal = bootstrap.Modal.getInstance(processModalEl);
+                if (processModal) processModal.hide();
+            }
             
-            const viewModal = bootstrap.Modal.getInstance(getElement('#viewRequestModal'));
-            if (viewModal) viewModal.hide();
+            const viewModalEl = getElement('#viewRequestModal');
+            if (viewModalEl) {
+                const viewModal = bootstrap.Modal.getInstance(viewModalEl);
+                if (viewModal) viewModal.hide();
+            }
         } else {
             throw new Error(data.message || `Error ${action}ing request`);
         }
@@ -1139,7 +1180,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add resident form submission
-    // Add resident form submission - FIXED VERSION
 const saveResidentBtn = getElement('#saveResidentBtn');
 if (saveResidentBtn) {
     saveResidentBtn.addEventListener('click', async function () {

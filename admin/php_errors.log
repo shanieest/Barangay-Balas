@@ -130,3 +130,188 @@ Stack trace:
 [13-Sep-2025 10:01:17 Europe/Berlin] Using provided age: 23
 [13-Sep-2025 10:01:17 Europe/Berlin] Final values - birthdate: 2001-11-11, age: 23
 [13-Sep-2025 10:01:17 Europe/Berlin] Resident inserted with ID: 29
+[15-Sep-2025 11:33:09 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:33:09 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:33:30 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:33:30 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:37:58 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:37:58 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:38:01 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:38:01 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:38:02 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:38:02 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:41:25 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:41:25 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:42:40 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:42:40 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:42:53 Europe/Berlin] POST data received: Array
+(
+    [id] => 32
+    [action] => approve
+)
+
+[15-Sep-2025 11:42:53 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:43:02 Europe/Berlin] POST data received: Array
+(
+    [id] => 32
+    [action] => approve
+)
+
+[15-Sep-2025 11:43:02 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:43:29 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:43:29 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:43:46 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:43:46 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:44:02 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:44:02 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:44:23 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:44:23 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:44:43 Europe/Berlin] POST data received: Array
+(
+    [id] => 32
+    [action] => approve
+)
+
+[15-Sep-2025 11:44:43 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:45:02 Europe/Berlin] POST data received: Array
+(
+    [id] => 35
+    [action] => approve
+)
+
+[15-Sep-2025 11:45:02 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:45:11 Europe/Berlin] POST data received: Array
+(
+    [id] => 32
+    [action] => approve
+)
+
+[15-Sep-2025 11:45:11 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 11:45:34 Europe/Berlin] POST data received: Array
+(
+    [id] => 32
+    [action] => approve
+)
+
+[15-Sep-2025 11:45:34 Europe/Berlin] Available POST keys: id, action
+[15-Sep-2025 12:27:16 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:27:26 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:28:14 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:28:39 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:28:50 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:32:04 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:32:40 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:32:40 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:32:48 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:32:48 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:33:05 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:34:33 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:37:04 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:42:55 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:44:37 Europe/Berlin] Processing request id=37 action=approve user_id=1 note=
+[15-Sep-2025 12:44:44 Europe/Berlin] Processing request id=34 action=approve user_id=1 note=
+[15-Sep-2025 12:54:02 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[15-Sep-2025 12:54:12 Europe/Berlin] Processing request id=38 action=reject user_id=1 note=qq
+[15-Sep-2025 12:54:52 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[15-Sep-2025 13:04:00 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[15-Sep-2025 13:04:53 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[15-Sep-2025 13:06:50 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[15-Sep-2025 13:07:05 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[15-Sep-2025 13:11:51 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Lorenzo
+    [middleName] => Chan
+    [suffix] => 
+    [sex] => male
+    [contactNumber] => 09972353679
+    [email] => ganda@gmail.com
+    [houseNumber] => 10
+    [purok] => 2
+    [address] => House 10, Purok 2, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2003-02-21
+    [age] => 22
+    [password] => 12345678
+)
+
+[15-Sep-2025 13:11:51 Europe/Berlin] Using provided age: 22
+[15-Sep-2025 13:11:51 Europe/Berlin] Final values - birthdate: 2003-02-21, age: 22
+[15-Sep-2025 13:11:51 Europe/Berlin] Resident inserted with ID: 39
+[15-Sep-2025 13:24:14 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Tolentino
+    [middleName] => Chan
+    [suffix] => 
+    [sex] => male
+    [contactNumber] => 09972353679
+    [email] => ganda@gmail.com
+    [houseNumber] => 11
+    [purok] => 2.
+    [address] => House 11, Purok 2., Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2001-11-11
+    [age] => 23
+    [password] => 12345678
+)
+
+[15-Sep-2025 13:24:14 Europe/Berlin] Using provided age: 23
+[15-Sep-2025 13:24:14 Europe/Berlin] Final values - birthdate: 2001-11-11, age: 23
+[15-Sep-2025 13:24:14 Europe/Berlin] Resident inserted with ID: 40
+[16-Sep-2025 06:57:32 Europe/Berlin] Processing request id=38 action=approve user_id=20 note=

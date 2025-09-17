@@ -1,4 +1,5 @@
 <?php
+// reservation-backend.php
 require_once 'includes/db.php';
 require_once 'includes/auth.php';
 requireAuth();
@@ -6,7 +7,7 @@ requireAuth();
 header('Content-Type: application/json');
 
 $action = $_REQUEST['action'] ?? '';
-$admin_id = $_SESSION['user_id'];
+$admin_id = $_SESSION['admin_id'];
 
 try {
     switch ($action) {
@@ -111,7 +112,6 @@ function handleGet() {
             'email' => $row['email'],
             'date_requested' => date('M d, Y g:i A', strtotime($row['date_requested'])),
             'notes' => $row['notes'],
-            'scheduled_datetime' => $row['scheduled_datetime'] ? date('M d, Y g:i A', strtotime($row['scheduled_datetime'])) : null,
             'processed_by' => $row['processed_by_name'],
             'rejection_reason' => $row['rejection_reason'],
             'status' => $row['status']
@@ -134,15 +134,12 @@ function handleApprove() {
     
     $reservation_id = intval($_POST['reservation_id'] ?? 0);
     $notes = trim($_POST['notes'] ?? '');
-    $scheduled_datetime = $_POST['scheduled_datetime'] ?? null;
     
     if (!$reservation_id) {
         throw new Exception('Reservation ID is required');
     }
     
-    if (empty($scheduled_datetime)) {
-        throw new Exception('Scheduled date and time is required');
-    }
+   
     
     $conn->begin_transaction();
     

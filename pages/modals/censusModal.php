@@ -1,3 +1,4 @@
+<!-- Enhanced Household Details Modal with Smart Resident Selection -->
 <div class="modal fade" id="updateHouseholdModal" tabindex="-1" aria-labelledby="updateHouseholdModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
@@ -59,92 +60,126 @@
             <!-- Household Members -->
             <h6 class="mt-4">Household Members</h6>
             
-            <button type="button" class="btn btn-sm btn-success mb-2" id="addMemberBtn">Add New Member</button>
+            <div class="d-flex gap-2 mb-2">
+              <button type="button" class="btn btn-sm btn-success" id="addMemberBtn">
+                <i class="fas fa-plus"></i> Add New Member
+              </button>
+              <button type="button" class="btn btn-sm btn-info" id="addExistingBtn">
+                <i class="fas fa-search"></i> Add Existing Resident
+              </button>
+            </div>
+
+            <!-- Smart Resident Search Modal -->
+            <div class="modal fade" id="residentSearchModal" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h6 class="modal-title">Search for Existing Resident</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label">Search Resident</label>
+                      <input type="text" class="form-control" id="residentSearch" 
+                             placeholder="Type name to search...">
+                      <small class="form-text text-muted">Type at least 2 characters</small>
+                    </div>
+                    <div id="searchResults" class="list-group" style="max-height: 200px; overflow-y: auto;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <!-- Members table -->
-            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-              <table class="table table-bordered" id="membersTable">
-                <thead class="table-light">
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+              <table class="table table-bordered table-sm" id="membersTable">
+                <thead class="table-light sticky-top">
                   <tr>
-                    <th>Name</th>
-                    <th>Relationship</th>
-                    <th>Age</th>
-                    <th>Gender</th>
-                    <th>Civil Status</th>
-                    <th>Occupation</th>
-                    <th>Education</th>
-                    <th>PhilHealth</th>
-                    <th>4Ps</th>
-                    <th>Indigent</th>
-                    <th>Medical History</th>
-                    <th>Action</th>
+                    <th style="min-width: 150px;">Name</th>
+                    <th style="min-width: 120px;">Relationship</th>
+                    <th style="min-width: 80px;">Age</th>
+                    <th style="min-width: 100px;">Gender</th>
+                    <th style="min-width: 120px;">Civil Status</th>
+                    <th style="min-width: 120px;">Occupation</th>
+                    <th style="min-width: 120px;">Education</th>
+                    <th style="min-width: 100px;">PhilHealth</th>
+                    <th style="min-width: 80px;">4Ps</th>
+                    <th style="min-width: 100px;">Indigent</th>
+                    <th style="min-width: 150px;">Medical History</th>
+                    <th style="min-width: 80px;">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <?php if (!empty($residents)): ?>
-                      <?php foreach ($residents as $resident): ?>
-                          <tr>
+                  <?php if (!empty($household_members)): ?>
+                      <?php foreach ($household_members as $member): ?>
+                          <tr data-resident-id="<?= $member['resident_id'] ?>">
                             <td>
-                                <input type="hidden" name="resident_id[]" value="<?= $resident['id'] ?>">
-                                <input type="text" class="form-control" name="name[]" value="<?= htmlspecialchars(($resident['first_name'] ?? '') . ' ' . ($resident['last_name'] ?? '')) ?>" required>
+                                <input type="hidden" name="member_id[]" value="<?= $member['resident_id'] ?>">
+                                <input type="text" class="form-control form-control-sm" name="name[]" 
+                                       value="<?= htmlspecialchars(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')) ?>" 
+                                       readonly style="background-color: #e9ecef;">
+                                <small class="text-muted">Existing resident</small>
                             </td>
                             <td>
-                                <select class="form-select" name="relationship[]">
-                                    <option value="Head" <?= ($resident['relationship_to_head'] == 'Head') ? 'selected' : '' ?>>Head</option>
-                                    <option value="Spouse" <?= ($resident['relationship_to_head'] == 'Spouse') ? 'selected' : '' ?>>Spouse</option>
-                                    <option value="Child" <?= ($resident['relationship_to_head'] == 'Child') ? 'selected' : '' ?>>Child</option>
-                                    <option value="Parent" <?= ($resident['relationship_to_head'] == 'Parent') ? 'selected' : '' ?>>Parent</option>
-                                    <option value="Sibling" <?= ($resident['relationship_to_head'] == 'Sibling') ? 'selected' : '' ?>>Sibling</option>
-                                    <option value="Relative" <?= ($resident['relationship_to_head'] == 'Relative') ? 'selected' : '' ?>>Relative</option>
-                                    <option value="Other" <?= ($resident['relationship_to_head'] == 'Other') ? 'selected' : '' ?>>Other</option>
+                                <select class="form-select form-select-sm" name="relationship[]">
+                                    <option value="Head" <?= ($member['relationship_to_head'] == 'Head') ? 'selected' : '' ?>>Head</option>
+                                    <option value="Spouse" <?= ($member['relationship_to_head'] == 'Spouse') ? 'selected' : '' ?>>Spouse</option>
+                                    <option value="Child" <?= ($member['relationship_to_head'] == 'Child') ? 'selected' : '' ?>>Child</option>
+                                    <option value="Parent" <?= ($member['relationship_to_head'] == 'Parent') ? 'selected' : '' ?>>Parent</option>
+                                    <option value="Sibling" <?= ($member['relationship_to_head'] == 'Sibling') ? 'selected' : '' ?>>Sibling</option>
+                                    <option value="Relative" <?= ($member['relationship_to_head'] == 'Relative') ? 'selected' : '' ?>>Relative</option>
+                                    <option value="Other" <?= ($member['relationship_to_head'] == 'Other') ? 'selected' : '' ?>>Other</option>
                                 </select>
                             </td>
-                            <td><input type="number" class="form-control" name="age[]" value="<?= htmlspecialchars($resident['age'] ?? '') ?>" required></td>
+                            <td><input type="number" class="form-control form-control-sm" name="age[]" value="<?= htmlspecialchars($member['age'] ?? '') ?>" required></td>
                             <td>
-                              <select class="form-select" name="gender[]" required>
-                                <option value="male" <?= ($resident['sex'] == 'male') ? 'selected' : '' ?>>Male</option>
-                                <option value="female" <?= ($resident['sex'] == 'female') ? 'selected' : '' ?>>Female</option>
+                              <select class="form-select form-select-sm" name="gender[]" required>
+                                <option value="male" <?= ($member['sex'] == 'male') ? 'selected' : '' ?>>Male</option>
+                                <option value="female" <?= ($member['sex'] == 'female') ? 'selected' : '' ?>>Female</option>
                               </select>
                             </td>
                             <td>
-                              <select class="form-select" name="civil_status[]" required>
-                                <option value="Single" <?= ($resident['civil_status'] == 'Single') ? 'selected' : '' ?>>Single</option>
-                                <option value="Married" <?= ($resident['civil_status'] == 'Married') ? 'selected' : '' ?>>Married</option>
-                                <option value="Widowed" <?= ($resident['civil_status'] == 'Widowed') ? 'selected' : '' ?>>Widowed</option>
-                                <option value="Separated" <?= ($resident['civil_status'] == 'Separated') ? 'selected' : '' ?>>Separated</option>
-                                <option value="Live-in" <?= ($resident['civil_status'] == 'Live-in') ? 'selected' : '' ?>>Live-in</option>
+                              <select class="form-select form-select-sm" name="civil_status[]" required>
+                                <option value="Single" <?= ($member['civil_status'] == 'Single') ? 'selected' : '' ?>>Single</option>
+                                <option value="Married" <?= ($member['civil_status'] == 'Married') ? 'selected' : '' ?>>Married</option>
+                                <option value="Widowed" <?= ($member['civil_status'] == 'Widowed') ? 'selected' : '' ?>>Widowed</option>
+                                <option value="Separated" <?= ($member['civil_status'] == 'Separated') ? 'selected' : '' ?>>Separated</option>
+                                <option value="Live-in" <?= ($member['civil_status'] == 'Live-in') ? 'selected' : '' ?>>Live-in</option>
                               </select>
                             </td>
-                            <td><input type="text" class="form-control" name="occupation[]" value="<?= htmlspecialchars($resident['occupation'] ?? '') ?>"></td>
-                            <td><input type="text" class="form-control" name="education[]" value="<?= htmlspecialchars($resident['educational_attainment'] ?? '') ?>"></td>
+                            <td><input type="text" class="form-control form-control-sm" name="occupation[]" value="<?= htmlspecialchars($member['occupation'] ?? '') ?>"></td>
+                            <td><input type="text" class="form-control form-control-sm" name="education[]" value="<?= htmlspecialchars($member['educational_attainment'] ?? '') ?>"></td>
                             <td>
-                              <select class="form-select" name="philhealth[]" required>
-                                <option value="Yes" <?= !empty($resident['philhealth_number']) ? 'selected' : '' ?>>Yes</option>
-                                <option value="No" <?= empty($resident['philhealth_number']) ? 'selected' : '' ?>>No</option>
-                              </select>
-                            </td>
-                            <td>
-                              <select class="form-select" name="4ps[]" required>
-                                <option value="Yes" <?= !empty($resident['is_4ps_member']) ? 'selected' : '' ?>>Yes</option>
-                                <option value="No" <?= empty($resident['is_4ps_member']) ? 'selected' : '' ?>>No</option>
+                              <select class="form-select form-select-sm" name="philhealth[]" required>
+                                <option value="Yes" <?= !empty($member['philhealth_number']) ? 'selected' : '' ?>>Yes</option>
+                                <option value="No" <?= empty($member['philhealth_number']) ? 'selected' : '' ?>>No</option>
                               </select>
                             </td>
                             <td>
-                              <select class="form-select" name="indigent[]" required>
-                                <option value="Yes" <?= !empty($resident['is_indigent']) ? 'selected' : '' ?>>Yes</option>
-                                <option value="No" <?= empty($resident['is_indigent']) ? 'selected' : '' ?>>No</option>
+                              <select class="form-select form-select-sm" name="4ps[]" required>
+                                <option value="Yes" <?= !empty($member['is_4ps_member']) ? 'selected' : '' ?>>Yes</option>
+                                <option value="No" <?= empty($member['is_4ps_member']) ? 'selected' : '' ?>>No</option>
                               </select>
                             </td>
-                            <td><input type="text" class="form-control" name="medical_history[]" value="<?= htmlspecialchars($resident['medical_history'] ?? '') ?>"></td>
+                            <td>
+                              <select class="form-select form-select-sm" name="indigent[]" required>
+                                <option value="Yes" <?= !empty($member['is_indigent']) ? 'selected' : '' ?>>Yes</option>
+                                <option value="No" <?= empty($member['is_indigent']) ? 'selected' : '' ?>>No</option>
+                              </select>
+                            </td>
+                            <td><input type="text" class="form-control form-control-sm" name="medical_history[]" value="<?= htmlspecialchars($member['medical_history'] ?? '') ?>"></td>
                             <td><button type="button" class="btn btn-sm btn-danger removeMember">Remove</button></td>
                           </tr>
                       <?php endforeach; ?>
                   <?php else: ?>
-                      <!-- Fallback empty row if no residents -->
+                      <!-- Fallback empty row if no members -->
                       <tr>
-                        <td><input type="text" class="form-control" name="name[]" required></td>
                         <td>
-                            <select class="form-select" name="relationship[]">
+                            <input type="hidden" name="member_id[]" value="">
+                            <input type="text" class="form-control form-control-sm" name="name[]" required>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm" name="relationship[]">
                                 <option value="Head">Head</option>
                                 <option value="Spouse">Spouse</option>
                                 <option value="Child">Child</option>
@@ -154,15 +189,15 @@
                                 <option value="Other">Other</option>
                             </select>
                         </td>
-                        <td><input type="number" class="form-control" name="age[]" required></td>
+                        <td><input type="number" class="form-control form-control-sm" name="age[]" required></td>
                         <td>
-                          <select class="form-select" name="gender[]" required>
+                          <select class="form-select form-select-sm" name="gender[]" required>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                           </select>
                         </td>
                         <td>
-                          <select class="form-select" name="civil_status[]" required>
+                          <select class="form-select form-select-sm" name="civil_status[]" required>
                             <option value="Single">Single</option>
                             <option value="Married">Married</option>
                             <option value="Widowed">Widowed</option>
@@ -170,27 +205,27 @@
                             <option value="Live-in">Live-in</option>
                           </select>
                         </td>
-                        <td><input type="text" class="form-control" name="occupation[]"></td>
-                        <td><input type="text" class="form-control" name="education[]"></td>
+                        <td><input type="text" class="form-control form-control-sm" name="occupation[]"></td>
+                        <td><input type="text" class="form-control form-control-sm" name="education[]"></td>
                         <td>
-                          <select class="form-select" name="philhealth[]" required>
+                          <select class="form-select form-select-sm" name="philhealth[]" required>
                             <option value="Yes">Yes</option>
                             <option value="No">No</option>
                           </select>
                         </td>
                         <td>
-                          <select class="form-select" name="4ps[]" required>
+                          <select class="form-select form-select-sm" name="4ps[]" required>
                             <option value="Yes">Yes</option>
                             <option value="No">No</option>
                           </select>
                         </td>
                         <td>
-                          <select class="form-select" name="indigent[]" required>
+                          <select class="form-select form-select-sm" name="indigent[]" required>
                             <option value="Yes">Yes</option>
                             <option value="No">No</option>
                           </select>
                         </td>
-                        <td><input type="text" class="form-control" name="medical_history[]"></td>
+                        <td><input type="text" class="form-control form-control-sm" name="medical_history[]"></td>
                         <td><button type="button" class="btn btn-sm btn-danger removeMember">Remove</button></td>
                       </tr>
                   <?php endif; ?>
@@ -210,4 +245,232 @@
   </div>
 </div>
 
-<script src="/assets/js/census.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let searchTimeout;
+    
+    // Add new member functionality
+    document.getElementById('addMemberBtn').addEventListener('click', function() {
+        addNewMemberRow();
+    });
+
+    // Add existing resident functionality
+    document.getElementById('addExistingBtn').addEventListener('click', function() {
+        const searchModal = new bootstrap.Modal(document.getElementById('residentSearchModal'));
+        searchModal.show();
+        document.getElementById('residentSearch').focus();
+    });
+
+    // Smart resident search with debouncing
+    document.getElementById('residentSearch').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length >= 2) {
+            searchTimeout = setTimeout(() => {
+                searchResidents(query);
+            }, 300); // 300ms debounce
+        } else {
+            document.getElementById('searchResults').innerHTML = '';
+        }
+    });
+
+    // Remove member functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('removeMember')) {
+            const tableBody = document.querySelector('#membersTable tbody');
+            if (tableBody.children.length > 1) {
+                e.target.closest('tr').remove();
+            } else {
+                alert('You must have at least one household member.');
+            }
+        }
+    });
+
+    // Handle resident selection from search results
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('resident-search-item')) {
+            const residentData = JSON.parse(e.target.dataset.resident);
+            addExistingResidentRow(residentData);
+            
+            // Close search modal
+            const searchModal = bootstrap.Modal.getInstance(document.getElementById('residentSearchModal'));
+            searchModal.hide();
+            
+            // Clear search
+            document.getElementById('residentSearch').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        }
+    });
+
+    function addNewMemberRow() {
+        const tableBody = document.querySelector('#membersTable tbody');
+        const newRow = document.createElement('tr');
+        
+        newRow.innerHTML = `
+            <td>
+                <input type="hidden" name="member_id[]" value="">
+                <input type="text" class="form-control form-control-sm" name="name[]" required>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="relationship[]">
+                    <option value="Head">Head</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Child">Child</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Relative">Relative</option>
+                    <option value="Other">Other</option>
+                </select>
+            </td>
+            <td><input type="number" class="form-control form-control-sm" name="age[]" required></td>
+            <td>
+                <select class="form-select form-select-sm" name="gender[]" required>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="civil_status[]" required>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Widowed">Widowed</option>
+                    <option value="Separated">Separated</option>
+                    <option value="Live-in">Live-in</option>
+                </select>
+            </td>
+            <td><input type="text" class="form-control form-control-sm" name="occupation[]"></td>
+            <td><input type="text" class="form-control form-control-sm" name="education[]"></td>
+            <td>
+                <select class="form-select form-select-sm" name="philhealth[]" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="4ps[]" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="indigent[]" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </td>
+            <td><input type="text" class="form-control form-control-sm" name="medical_history[]"></td>
+            <td><button type="button" class="btn btn-sm btn-danger removeMember">Remove</button></td>
+        `;
+        
+        tableBody.appendChild(newRow);
+    }
+
+    function addExistingResidentRow(residentData) {
+        // Check if resident is already in the table
+        const existingRows = document.querySelectorAll('#membersTable tbody tr[data-resident-id="' + residentData.id + '"]');
+        if (existingRows.length > 0) {
+            alert('This resident is already added to the household.');
+            return;
+        }
+
+        const tableBody = document.querySelector('#membersTable tbody');
+        const newRow = document.createElement('tr');
+        newRow.setAttribute('data-resident-id', residentData.id);
+        
+        newRow.innerHTML = `
+            <td>
+                <input type="hidden" name="member_id[]" value="${residentData.id}">
+                <input type="hidden" name="existing_member[]" value="${residentData.id}">
+                <input type="text" class="form-control form-control-sm" name="name[]" 
+                       value="${residentData.text}" readonly style="background-color: #e9ecef;">
+                <small class="text-muted">${residentData.address}</small>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="relationship[]">
+                    <option value="Head">Head</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Child">Child</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Relative">Relative</option>
+                    <option value="Other">Other</option>
+                </select>
+            </td>
+            <td><input type="number" class="form-control form-control-sm" name="age[]" required></td>
+            <td>
+                <select class="form-select form-select-sm" name="gender[]" required>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="civil_status[]" required>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Widowed">Widowed</option>
+                    <option value="Separated">Separated</option>
+                    <option value="Live-in">Live-in</option>
+                </select>
+            </td>
+            <td><input type="text" class="form-control form-control-sm" name="occupation[]"></td>
+            <td><input type="text" class="form-control form-control-sm" name="education[]"></td>
+            <td>
+                <select class="form-select form-select-sm" name="philhealth[]" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="4ps[]" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" name="indigent[]" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </td>
+            <td><input type="text" class="form-control form-control-sm" name="medical_history[]"></td>
+            <td><button type="button" class="btn btn-sm btn-danger removeMember">Remove</button></td>
+        `;
+        
+        tableBody.appendChild(newRow);
+    }
+
+    function searchResidents(query) {
+        fetch(`census-backend.php?action=search_residents&q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                const resultsContainer = document.getElementById('searchResults');
+                resultsContainer.innerHTML = '';
+                
+                if (data.length === 0) {
+                    resultsContainer.innerHTML = '<div class="text-muted p-3">No residents found</div>';
+                    return;
+                }
+                
+                data.forEach(resident => {
+                    const resultItem = document.createElement('button');
+                    resultItem.className = 'list-group-item list-group-item-action resident-search-item';
+                    resultItem.dataset.resident = JSON.stringify(resident);
+                    resultItem.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${resident.text}</h6>
+                            <small>ID: ${resident.id}</small>
+                        </div>
+                        <small class="text-muted">${resident.address}</small>
+                    `;
+                    resultsContainer.appendChild(resultItem);
+                });
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                document.getElementById('searchResults').innerHTML = 
+                    '<div class="text-danger p-3">Search failed. Please try again.</div>';
+            });
+    }
+});
+</script>

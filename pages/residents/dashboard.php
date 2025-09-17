@@ -290,7 +290,7 @@ $activities = $conn->query($activityQuery);
                             <div class="card-body">
                                 <div class="list-group list-group-flush">
                                     <?php if ($alertsCount > 0): ?>
-                                        <a href="history.php" class="list-group-item list-group-item-action">
+                                        <a href="services-history.php" class="list-group-item list-group-item-action">
                                             <div class="d-flex">
                                                 <i class="fas fa-exclamation-circle text-danger me-3"></i>
                                                 <div>

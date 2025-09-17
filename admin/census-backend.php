@@ -1,16 +1,11 @@
 <?php
+// census-backend.php - Admin side
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');
 
-// Check if user is authenticated
-if (!isAuthenticated()) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
 
 // Get the request method
 $method = $_SERVER['REQUEST_METHOD'];
@@ -94,7 +89,7 @@ function handleDeleteRequest() {
     }
     
     $householdId = $_GET['id'];
-    $user_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['admin_id'];
     
     try {
         // Begin transaction

@@ -388,25 +388,21 @@ function getImagePath($imagePath) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Toggle sidebar
         if (document.getElementById('sidebarToggle')) {
             document.getElementById('sidebarToggle').addEventListener('click', function() {
                 document.querySelector('.wrapper').classList.toggle('sidebar-collapsed');
             });
         }
 
-        // Show single image in modal
         function showImageModal(imageSrc) {
             document.getElementById('modalImage').src = imageSrc;
             new bootstrap.Modal(document.getElementById('imageModal')).show();
         }
 
-        // Load announcement details into modal
         function loadAnnouncement(announcement, images) {
             document.getElementById('modalTitle').textContent = announcement.title;
             document.getElementById('modalContent').innerHTML = announcement.content.replace(/\n/g, '<br>');
             
-            // Load images
             const modalImages = document.getElementById('modalImages');
             modalImages.innerHTML = '';
             

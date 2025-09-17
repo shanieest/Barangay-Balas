@@ -64,10 +64,7 @@
             <label for="approve-notes" class="form-label">Approval Notes (Optional)</label>
             <textarea class="form-control" id="approve-notes" name="notes" rows="3" placeholder="Enter any notes for the approval..."></textarea>
           </div>
-          <div class="mb-3">
-            <label for="approve-schedule" class="form-label">Scheduled Date/Time</label>
-            <input type="date" class="form-control" id="approve-schedule" name="scheduled_datetime" required>
-          </div>
+  
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

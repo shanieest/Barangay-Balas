@@ -185,9 +185,11 @@ function handleAccountRequests() {
     $types = '';
 
     if ($id) {
-        $where[] = "ra.id = ?";
+        // ✅ Accept either account_id or resident_id
+        $where[] = "(ra.id = ? OR r.id = ?)";
         $params[] = $id;
-        $types .= 'i';
+        $params[] = $id;
+        $types .= 'ii';
     } else {
         if ($status !== 'all') {
             $where[] = "ra.account_status = ?";
@@ -241,8 +243,17 @@ function handleAccountRequests() {
         $requests[] = $row;
     }
 
-    $response['success'] = true;
-    $response['data'] = $requests;
+    if (empty($requests)) {
+        $response['success'] = false;
+        $response['message'] = $id 
+            ? "No account request found for ID $id"
+            : "No account requests found";
+        $response['data'] = [];
+    } else {
+        $response['success'] = true;
+        $response['data'] = $requests;
+    }
+
     $response['pending_count'] = $pending_count;
     $response['pagination'] = [
         'total' => $total,
@@ -253,6 +264,7 @@ function handleAccountRequests() {
 
     echo json_encode($response);
 }
+
 
 function handleAddResident() {
     global $conn, $response;
@@ -532,31 +544,38 @@ function handleDeleteResident() {
 function handleProcessRequest() {
     global $conn, $response;
     
-    // Changed from json_decode to $_POST since we're using FormData
-    $id = $_POST['id'] ?? null;
-    $action = $_POST['action'] ?? null;
-    
-    if (empty($id) || empty($action)) {
+    $id = intval($_POST['id'] ?? 0);
+    $action = $_POST['action'] ?? '';
+    $note = $_POST['note'] ?? '';
+
+    if (!$id || !$action) {
         throw new Exception("Request ID and action are required");
     }
     
-    $user_id = getUserId();
+    $user_id = intval(getUserId());
     $status = $action === 'approve' ? 'Approved' : 'Disapproved';
-    $note = $_POST['note'] ?? '';
-    
+
+    error_log("Processing request id=$id action=$action user_id=$user_id note=$note");
+
     $stmt = $conn->prepare("UPDATE resident_accounts SET 
         account_status = ?, processed_by = ?, date_processed = NOW(), notes = ?
         WHERE id = ?");
+
+    if (!$stmt) {
+        throw new Exception("Database prepare failed: " . $conn->error);
+    }
+
     $stmt->bind_param("sisi", $status, $user_id, $note, $id);
-    
+
     if (!$stmt->execute()) {
         throw new Exception("Failed to process request: " . $stmt->error);
     }
-    
+
     $response['success'] = true;
     $response['message'] = "Request {$action}d successfully";
     echo json_encode($response);
 }
+
 
 function handleExportResidents() {
     global $conn;
