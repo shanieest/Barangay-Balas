@@ -1,16 +1,12 @@
 <?php
-// census-backend.php - Admin side
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 
-// Set content type to JSON
 header('Content-Type: application/json');
 
 
-// Get the request method
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Handle different operations based on method and parameters
 switch ($method) {
     case 'GET':
         handleGetRequest();
@@ -30,55 +26,40 @@ switch ($method) {
         break;
 }
 
-// Close database connection
 $conn->close();
 
-/**
- * Handle GET requests
- */
+
 function handleGetRequest() {
     global $conn;
     
-    // Get household details
     if (isset($_GET['household_id'])) {
         $householdId = $_GET['household_id'];
         getHouseholdDetails($householdId);
     }
-    // Get household members
     elseif (isset($_GET['house_number']) && isset($_GET['purok'])) {
         $houseNumber = $_GET['house_number'];
         $purok = $_GET['purok'];
         getHouseholdMembers($houseNumber, $purok);
     }
-    // Get census data with filters
     else {
         getCensusData();
     }
 }
 
-/**
- * Handle POST requests (create new household)
- */
+
 function handlePostRequest() {
-    // This would handle creating new households
-    // Implementation depends on your form structure
+
     http_response_code(501);
     echo json_encode(['success' => false, 'message' => 'Not implemented']);
 }
 
-/**
- * Handle PUT requests (update household)
- */
+
 function handlePutRequest() {
-    // This would handle updating households
-    // Implementation depends on your form structure
+
     http_response_code(501);
     echo json_encode(['success' => false, 'message' => 'Not implemented']);
 }
 
-/**
- * Handle DELETE requests
- */
 function handleDeleteRequest() {
     global $conn;
     
@@ -92,10 +73,8 @@ function handleDeleteRequest() {
     $user_id = $_SESSION['admin_id'];
     
     try {
-        // Begin transaction
         $conn->begin_transaction();
         
-        // First, get the house number and purok to delete all members
         $stmt = $conn->prepare("SELECT house_number, purok FROM residents WHERE id = ?");
         $stmt->bind_param("i", $householdId);
         $stmt->execute();
@@ -109,12 +88,10 @@ function handleDeleteRequest() {
         $houseNumber = $household['house_number'];
         $purok = $household['purok'];
         
-        // Delete all members of this household
         $stmt = $conn->prepare("DELETE FROM residents WHERE house_number = ? AND purok = ?");
         $stmt->bind_param("ss", $houseNumber, $purok);
         $stmt->execute();
         
-        // Log the activity
         $activity = "Deleted household $houseNumber in Purok $purok";
         $stmt = $conn->prepare("INSERT INTO activity_logs (user_id, activity, ip_address, user_agent) VALUES (?, ?, ?, ?)");
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -122,22 +99,18 @@ function handleDeleteRequest() {
         $stmt->bind_param("isss", $user_id, $activity, $ip, $agent);
         $stmt->execute();
         
-        // Commit transaction
         $conn->commit();
         
         echo json_encode(['success' => true, 'message' => 'Household deleted successfully']);
         
     } catch (Exception $e) {
-        // Rollback transaction on error
         $conn->rollback();
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Error deleting household: ' . $e->getMessage()]);
     }
 }
 
-/**
- * Get household details
- */
+
 function getHouseholdDetails($householdId) {
     global $conn;
     
@@ -156,9 +129,7 @@ function getHouseholdDetails($householdId) {
     echo json_encode(['success' => true, 'household' => $household]);
 }
 
-/**
- * Get household members
- */
+
 function getHouseholdMembers($houseNumber, $purok) {
     global $conn;
     
@@ -174,25 +145,20 @@ function getHouseholdMembers($houseNumber, $purok) {
     echo json_encode(['success' => true, 'members' => $members]);
 }
 
-/**
- * Get census data with filtering and pagination
- */
+
 function getCensusData() {
     global $conn;
     
-    // Get parameters
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 25;
     $offset = ($page - 1) * $limit;
     
-    // Filter parameters
     $purok_filter = isset($_GET['purok']) ? $_GET['purok'] : '';
     $water_filter = isset($_GET['water_source']) ? $_GET['water_source'] : '';
     $toilet_filter = isset($_GET['toilet_facility']) ? $_GET['toilet_facility'] : '';
     $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
     $search = isset($_GET['search']) ? $_GET['search'] : '';
     
-    // Build WHERE clause for filters
     $where_conditions = [];
     $params = [];
     $types = '';
@@ -236,7 +202,6 @@ function getCensusData() {
         $where_sql = 'WHERE ' . implode(' AND ', $where_conditions);
     }
     
-    // Get total count of households
     $count_sql = "SELECT COUNT(DISTINCT CONCAT(r.house_number, '-', r.purok)) as total 
                   FROM residents r 
                   $where_sql";
@@ -250,11 +215,9 @@ function getCensusData() {
     $total_households = $count_result->fetch_assoc()['total'];
     $count_stmt->close();
     
-    // Reset params for main query
     $main_params = array_slice($params, 0, count($params));
     $main_types = $types;
     
-    // Get households data with pagination
     $sql = "SELECT r.*, 
                    (SELECT COUNT(*) FROM residents r2 
                     WHERE r2.house_number = r.house_number 
@@ -265,7 +228,6 @@ function getCensusData() {
             ORDER BY r.purok, r.house_number 
             LIMIT ? OFFSET ?";
     
-    // Add limit and offset to params
     $main_params[] = $limit;
     $main_params[] = $offset;
     $main_types .= 'ii';
@@ -279,7 +241,6 @@ function getCensusData() {
     $households = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
-    // Get statistics
     $stats_sql = "SELECT 
         (SELECT COUNT(DISTINCT CONCAT(house_number, '-', purok)) FROM residents) as total_households,
         (SELECT COUNT(*) FROM residents) as total_residents,
@@ -290,16 +251,13 @@ function getCensusData() {
     $stats = $stats_result->fetch_assoc();
     $stats_result->close();
     
-    // Calculate percentages
     $water_percentage = $stats['total_households'] > 0 ? round(($stats['water_coverage'] / $stats['total_households']) * 100) : 0;
     $toilet_percentage = $stats['total_households'] > 0 ? round(($stats['toilet_coverage'] / $stats['total_households']) * 100) : 0;
     
-    // Calculate pagination
     $total_pages = ceil($total_households / $limit);
     $showing_from = ($page - 1) * $limit + 1;
     $showing_to = min($page * $limit, $total_households);
     
-    // Return all data
     echo json_encode([
         'success' => true,
         'households' => $households,

@@ -9,7 +9,6 @@ let currentRequestFilter = 'all';
 let currentResidentSearch = '';
 const perPage = 10;
 
-// Function to safely get DOM elements
 function getElement(selector) {
     const el = document.querySelector(selector);
     if (!el) {
@@ -370,7 +369,7 @@ function addRequestButtonEventListeners() {
     });
 }
 
-// FIXED: Improved View resident function with better error handling
+// Function View resident
 function viewResident(id) {
     if (!id) {
         showToast('Invalid resident ID', 'danger');
@@ -429,7 +428,7 @@ function viewResident(id) {
         });
 }
 
-// FIXED: Improved Edit resident function
+//Edit resident function
 function editResident(id) {
     if (!id) {
         showToast('Invalid resident ID', 'danger');
@@ -641,7 +640,6 @@ function updateModalImage(modal, selector, src) {
 }
 
 // View request function
-// View request function
 function viewRequest(id) {
     if (!id) {
         showToast('Invalid request ID', 'danger');
@@ -692,7 +690,6 @@ function viewRequest(id) {
             showToast('Failed to load request details: ' + error.message, 'danger');
         });
 }
-
 
 // Display request data in modal 
 function displayRequestModal(request) {

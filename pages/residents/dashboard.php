@@ -2,7 +2,6 @@
 require_once '../../auth/auth.php';
 require_once '../../config/db.php';
 
-// Document Requests Count
 $docRequestsQuery = "SELECT COUNT(*) AS total FROM document_requests WHERE status = 'Pending'";
 $stmt = $conn->prepare($docRequestsQuery);
 $stmt->execute();
@@ -10,19 +9,17 @@ $docRequestsResult = $stmt->get_result();
 $docRequestsCount = $docRequestsResult->fetch_assoc()['total'] ?? 0;
 $stmt->close();
 
-// Latest Requests (per resident)
 $userId = $_SESSION['user_id'];
 $latestRequestsQuery = "SELECT document_type_id, purpose, status, date_requested 
                         FROM document_requests 
                         WHERE resident_id = ?
-                        ORDER BY date_requested DESC LIMIT 5";
+                        ORDER BY date_requested DESC LIMIT 3";
 $stmt = $conn->prepare($latestRequestsQuery);
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $latestRequests = $stmt->get_result();
 $stmt->close();
 
-// Announcements Count (last 7 days)
 $announcementsQuery = "SELECT COUNT(*) AS total FROM announcements 
                        WHERE date_posted >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
 $stmt = $conn->prepare($announcementsQuery);
@@ -31,16 +28,14 @@ $announcementsResult = $stmt->get_result();
 $announcementsCount = $announcementsResult->fetch_assoc()['total'] ?? 0;
 $stmt->close();
 
-// Latest Announcements
 $latestAnnouncementsQuery = "SELECT title, content, date_posted 
                              FROM announcements 
-                             ORDER BY date_posted DESC LIMIT 5";
+                             ORDER BY date_posted DESC LIMIT 3";
 $stmt = $conn->prepare($latestAnnouncementsQuery);
 $stmt->execute();
 $latestAnnouncements = $stmt->get_result();
 $stmt->close();
 
-// Alerts Count
 $alertsQuery = "SELECT COUNT(*) AS total FROM document_requests 
                 WHERE status IN ('Pending','Disapproved')
                 AND resident_id = ?";
@@ -52,11 +47,10 @@ $alertsCount = $alertsResult->fetch_assoc()['total'] ?? 0;
 $stmt->close();
 
 
-// Recent Activities
 $activityQuery = "SELECT activity, timestamp 
                   FROM activity_logs 
                     WHERE user_id = ?
-                  ORDER BY timestamp DESC LIMIT 5";
+                  ORDER BY timestamp DESC LIMIT 3";
 $stmt = $conn->prepare($activityQuery);
 $stmt->bind_param("i", $userId); 
 $stmt->execute();

@@ -1,9 +1,7 @@
 <?php
-//announcements.php client view - FIXED VERSION
 require_once '../../auth/auth.php';
 require_once '../../config/db.php'; 
 
-// Fixed SQL query to properly join with announcement_images table
 $sql = "SELECT a.id, a.title, a.content, a.date_posted, 
                CONCAT(u.first_name, ' ', u.last_name) AS posted_by,
                GROUP_CONCAT(ai.image_path) AS image_paths
@@ -14,16 +12,13 @@ $sql = "SELECT a.id, a.title, a.content, a.date_posted,
         ORDER BY a.date_posted DESC";
 $result = $conn->query($sql);
 
-// Helper function to check if image exists
 function getImagePath($imagePath) {
     if (!$imagePath) return null;
     
-    // Check if file exists
     if (file_exists('../../admin/' . $imagePath)) {
         return '../../admin/' . $imagePath;
     }
     
-    // If the path is already from admin folder
     if (file_exists($imagePath)) {
         return $imagePath;
     }
@@ -424,7 +419,6 @@ function getImagePath($imagePath) {
                 modalImages.appendChild(imageContainer);
             }
             
-            // Load metadata
             document.getElementById('modalMeta').innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
@@ -437,7 +431,6 @@ function getImagePath($imagePath) {
             `;
         }
 
-        // Show image gallery
         function showImageGallery(images) {
             const gallery = document.getElementById('imageGallery');
             gallery.innerHTML = '';

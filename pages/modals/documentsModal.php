@@ -136,6 +136,7 @@ if ($resident_id) {
 document.addEventListener("DOMContentLoaded", function () {
   const birthdateInput = document.getElementById("birthdate");
   const ageInput = document.getElementById("age");
+  const documentRequestForm = document.getElementById("documentRequestForm");
 
   function calculateAge() {
     const birthdate = new Date(birthdateInput.value);
@@ -158,6 +159,104 @@ document.addEventListener("DOMContentLoaded", function () {
   // Calculate immediately if there's already a value
   if (birthdateInput.value) {
     calculateAge();
+  }
+
+  // Handle form submission with AJAX
+  documentRequestForm.addEventListener("submit", function(e) {
+    e.preventDefault(); // Prevent default form submission
+    
+    // Clear any existing alerts in the modal
+    clearModalAlerts();
+    
+    const formData = new FormData(this);
+    const submitButton = this.querySelector('button[type="submit"]');
+    
+    // Disable submit button to prevent double submission
+    submitButton.disabled = true;
+    submitButton.textContent = 'Submitting...';
+    
+    fetch('/barangay-balas/services/certificates/submit_request.php', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest' // This tells the server it's an AJAX request
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        // Show success message inside modal
+        showModalAlert('success', data.message);
+        
+        // Reset form after a short delay to let user see the success message
+        setTimeout(() => {
+          documentRequestForm.reset();
+          // Reset age field as well
+          if (ageInput) ageInput.value = '';
+          
+          // Close modal after showing success
+          setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('documentRequestModal'));
+            if (modal) {
+              modal.hide();
+            }
+          }, 1500);
+        }, 1000);
+        
+      } else {
+        // Show error message inside modal
+        showModalAlert('error', data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showModalAlert('error', 'An error occurred while submitting the request.');
+    })
+    .finally(() => {
+      // Re-enable submit button
+      submitButton.disabled = false;
+      submitButton.textContent = 'Submit Request';
+    });
+  });
+
+  // Function to show alerts inside the modal
+  function showModalAlert(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `
+      <div class="alert ${alertClass} alert-dismissible fade show mb-3" role="alert" id="modalAlert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+    
+    // Find the modal body and insert alert at the top
+    const modalBody = document.querySelector('#documentRequestModal .modal-body');
+    if (modalBody) {
+      // Remove any existing alert first
+      clearModalAlerts();
+      
+      // Insert the alert at the beginning of modal body
+      modalBody.insertAdjacentHTML('afterbegin', alertHtml);
+      
+      // Scroll to top of modal to ensure alert is visible
+      modalBody.scrollTop = 0;
+    }
+  }
+
+  // Function to clear existing alerts in modal
+  function clearModalAlerts() {
+    const existingAlert = document.getElementById('modalAlert');
+    if (existingAlert) {
+      existingAlert.remove();
+    }
+  }
+
+  // Clear alerts when modal is opened
+  const documentModal = document.getElementById('documentRequestModal');
+  if (documentModal) {
+    documentModal.addEventListener('show.bs.modal', function() {
+      clearModalAlerts();
+    });
   }
 });
 </script>

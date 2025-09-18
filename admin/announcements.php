@@ -1,5 +1,4 @@
 <?php
-// announcements.php admin view
 require_once __DIR__.'/announcements-backend.php';
 
 $announcements = $conn->query(
@@ -126,7 +125,6 @@ if (!$announcements) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/announcement.js"></script>
-<!-- Image Modal -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content bg-transparent border-0">

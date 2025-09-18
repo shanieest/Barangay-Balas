@@ -1,25 +1,21 @@
     //modaal admin census
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
         });
         
-        // View household details
         document.querySelectorAll('.view-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const householdData = JSON.parse(this.getAttribute('data-household'));
                 
-                // Populate modal with household data
                 document.getElementById('modal-household-number').textContent = 'HH-' + householdData.purok + '-' + String(householdData.id).padStart(4, '0');
                 document.getElementById('modal-purok').textContent = 'Purok ' + householdData.purok;
                 document.getElementById('modal-address').textContent = householdData.address;
                 document.getElementById('modal-water-source').textContent = householdData.type_of_water_source || 'Not specified';
                 document.getElementById('modal-toilet-facility').textContent = householdData.type_of_toilet_facility || 'Not specified';
                 
-                // Fetch and display household members
                 fetch('census-backend.php?house_number=' + householdData.house_number + '&purok=' + householdData.purok)
                     .then(response => response.json())
                     .then(data => {
@@ -55,16 +51,13 @@
             });
         });
         
-        // Edit household
         document.querySelectorAll('.edit-btn').forEach(button => {
             button.addEventListener('click', function() {
                 var householdId = this.getAttribute('data-id');
-                // Redirect to edit page or show edit modal
                 window.location.href = 'edit_household.php?id=' + householdId;
             });
         });
         
-        // Delete household functionality
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -114,9 +107,7 @@
             });
         });
         
-        // Export to Excel functionality
         document.getElementById('exportExcelBtn').addEventListener('click', function() {
-            // Build export URL with current filters
             const params = new URLSearchParams({
                 export: 'excel',
                 purok: '<?php echo $purok_filter; ?>',
@@ -141,6 +132,6 @@
     function updateLimit(limit) {
         const url = new URL(window.location.href);
         url.searchParams.set('limit', limit);
-        url.searchParams.set('page', 1); // Reset to first page
+        url.searchParams.set('page', 1); 
         window.location.href = url.toString();
     }

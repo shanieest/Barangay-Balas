@@ -1,17 +1,14 @@
 <?php
 include 'includes/db.php';
 
-// Initialize variables with default values
 $total_households = 0;
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $purok_filter = isset($_GET['purok']) ? $_GET['purok'] : '';
 
-// Calculate offset for pagination
 $offset = ($page - 1) * $limit;
 
-// Build the base query
 $query = "SELECT h.*, r.first_name, r.last_name, r.middle_name, 
           COUNT(hm.resident_id) as member_count
           FROM households h
@@ -25,7 +22,6 @@ $count_query = "SELECT COUNT(DISTINCT h.id) as total
                 LEFT JOIN residents r ON hm.resident_id = r.id
                 WHERE 1=1";
 
-// ---------------- FILTERS ----------------
 $where_conditions = [];
 $filter_params = [];
 $filter_types = '';
@@ -46,14 +42,12 @@ if (!empty($search)) {
     $filter_types .= 'ssss';
 }
 
-// Apply filters
 if (!empty($where_conditions)) {
     $where_clause = " AND " . implode(" AND ", $where_conditions);
     $query .= $where_clause;
     $count_query .= $where_clause;
 }
 
-// ---------------- COUNT QUERY ----------------
 $stmt_count = $conn->prepare($count_query);
 if (!empty($filter_params)) {
     $stmt_count->bind_param($filter_types, ...$filter_params);
@@ -63,11 +57,10 @@ $result_count = $stmt_count->get_result();
 $total_row = $result_count->fetch_assoc();
 $total_households = $total_row['total'] ?? 0;
 
-// ---------------- MAIN QUERY ----------------
 $query .= " GROUP BY h.id ORDER BY h.purok, h.house_number LIMIT ? OFFSET ?";
 
 $main_params = $filter_params;
-$main_types  = $filter_types . 'ii'; // add types for limit + offset
+$main_types  = $filter_types . 'ii'; 
 $main_params[] = $limit;
 $main_params[] = $offset;
 
@@ -83,12 +76,10 @@ if ($result) {
     }
 }
 
-// Calculate pagination values
 $total_pages = ceil($total_households / $limit);
 $showing_from = ($page - 1) * $limit + 1;
 $showing_to = min($page * $limit, $total_households);
 
-// Function to build pagination links
 function buildPaginationLink($page, $limit, $purok, $search) {
     $params = [
         'page' => $page,
@@ -449,7 +440,6 @@ function updateLimit(newLimit) {
 </html>
 
 <?php
-// Close database connection
 if (isset($conn)) {
     $conn->close();
 }

@@ -1,5 +1,4 @@
 <?php
-// process_request.php - FIXED VERSION
 require 'includes/db.php';
 require 'includes/auth.php';
 require '../vendor/autoload.php';
@@ -16,10 +15,8 @@ $response = [
     'auto_download' => false
 ];
 
-// Get admin ID safely - FIXED: Use consistent variable name
 $current_admin_id = null;
 if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
-    // Validate that admin exists
     $admin_check = $conn->prepare("SELECT id FROM admin_users WHERE id = ?");
     $admin_check->bind_param('i', $_SESSION['user_id']);
     $admin_check->execute();
@@ -36,11 +33,9 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
     error_log("DEBUG: No user_id found in session");
 }
 
-// Debug session variables
 error_log("DEBUG: Session variables: " . print_r($_SESSION, true));
 error_log("DEBUG: Determined admin ID: " . $current_admin_id);
 
-// If no valid admin found, log this
 if ($current_admin_id === null) {
     error_log("Warning: No valid admin ID found in session for document processing");
 }
@@ -54,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
     try {
         $conn->begin_transaction();
 
-        // Fetch request + resident info
         $stmt = $conn->prepare("
             SELECT dr.*, dt.document_type, dr.first_name, dr.middle_name, dr.last_name, dr.email, dr.houseno, dr.purok
             FROM document_requests dr
@@ -71,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
 
         $status = ($action === 'approve') ? 'Approved' : 'Disapproved';
 
-        // Update request status - use current admin ID if available
         if ($current_admin_id !== null) {
             $stmt = $conn->prepare("UPDATE document_requests SET status = ?, notes = ?, processed_by = ?, date_processed = NOW() WHERE id = ?");
             $stmt->bind_param('ssii', $status, $notes, $current_admin_id, $request_id);
@@ -86,7 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             throw new Exception("Failed to update request status: " . $stmt->error);
         }
         
-        // Check if processed_by was actually updated
         if ($current_admin_id !== null) {
             $check_stmt = $conn->prepare("SELECT processed_by FROM document_requests WHERE id = ?");
             $check_stmt->bind_param('i', $request_id);
@@ -103,24 +95,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         if ($status === 'Approved') {
             $timestamp = time();
 
-            // Directories
             $outDir = __DIR__ . '/../public/uploads/generated_docs';
             $qrDir  = __DIR__ . '/../public/uploads/qr_codes';
             if (!is_dir($outDir)) mkdir($outDir, 0777, true);
             if (!is_dir($qrDir)) mkdir($qrDir, 0777, true);
 
-            // Load DOCX template
             $templatePath = __DIR__ . "/../services/certificates/templates/{$request['document_type']}.docx";
             if (!file_exists($templatePath)) throw new Exception("Template not found: ".$request['document_type']);
             $templateProcessor = new TemplateProcessor($templatePath);
 
-            // Generate QR
             $qr_code = bin2hex(random_bytes(8));
             $qrPath  = $qrDir . "/qr_{$request_id}_{$timestamp}.png";
             $verifyUrl = "verify.php?code={$qr_code}";
             QRcode::png($verifyUrl, $qrPath, QR_ECLEVEL_L, 4);
 
-            // Insert QR into DB
             $stmt = $conn->prepare("INSERT INTO document_qr_codes (request_id, qr_code, qr_code_image_path) VALUES (?, ?, ?)");
             $stmt->bind_param('iss', $request_id, $qr_code, $qrPath);
             if (!$stmt->execute()) {
@@ -128,7 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             }
             $stmt->close();
 
-            // Fill DOCX placeholders
             $templateProcessor->setValue('first_name', htmlspecialchars($request['first_name']));
             $templateProcessor->setValue('middle_name', htmlspecialchars($request['middle_name'] ?? ''));
             $templateProcessor->setValue('last_name', htmlspecialchars($request['last_name']));
@@ -140,11 +127,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                 'ratio' => false
             ]);
 
-            // Save DOCX
             $docxPath = $outDir . "/request_{$request_id}_{$timestamp}.docx";
             $templateProcessor->saveAs($docxPath);
 
-            // Convert DOCX → PDF
             $pdfPath = $outDir . "/request_{$request_id}_{$timestamp}.pdf";
             $libreOfficePath = '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"';
             $cmd = "$libreOfficePath --headless --convert-to pdf --outdir \"" . $outDir . "\" \"" . $docxPath . "\"";
@@ -153,7 +138,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                 throw new Exception("PDF generation via LibreOffice failed. Ensure LibreOffice is installed and path is correct.");
             }
 
-            // Save relative path to DB
             $relativePdfPath = "uploads/generated_docs/request_{$request_id}_{$timestamp}.pdf";
             $stmt = $conn->prepare("UPDATE document_requests SET document_file_path = ? WHERE id = ?");
             $stmt->bind_param('si', $relativePdfPath, $request_id);

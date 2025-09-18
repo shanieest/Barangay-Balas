@@ -1,5 +1,4 @@
 <?php
-// test_session.php - Use this to debug your session
 session_start();
 
 echo "<h2>Session Debug Information</h2>";
@@ -17,7 +16,6 @@ echo "empty(\$_SESSION['user_id']): " . (empty($_SESSION['user_id']) ? 'YES' : '
 echo "\$_SESSION['user_id'] value: " . ($_SESSION['user_id'] ?? 'NOT SET') . "\n";
 
 if (isset($_SESSION['user_id'])) {
-    // Test database connection
     require_once 'includes/db.php';
     
     $admin_check = $conn->prepare("SELECT id, username, first_name, last_name FROM admin_users WHERE id = ?");

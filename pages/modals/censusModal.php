@@ -287,7 +287,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle resident selection from search results
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('resident-search-item')) {
             const residentData = JSON.parse(e.target.dataset.resident);
@@ -367,7 +366,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function addExistingResidentRow(residentData) {
-        // Check if resident is already in the table
         const existingRows = document.querySelectorAll('#membersTable tbody tr[data-resident-id="' + residentData.id + '"]');
         if (existingRows.length > 0) {
             alert('This resident is already added to the household.');

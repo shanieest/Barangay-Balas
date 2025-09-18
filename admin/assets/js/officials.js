@@ -1,15 +1,11 @@
 
-//officials.js admin
 document.addEventListener('DOMContentLoaded', function() {
-    // Load officials data
     loadOfficials();
     
-    // Add event listeners for modals
     document.getElementById('addOfficialForm').addEventListener('submit', addOfficial);
     document.getElementById('editOfficialForm').addEventListener('submit', updateOfficial);
     document.getElementById('confirmDeleteBtn').addEventListener('click', deleteOfficial);
     
-    // Password confirmation validation
     document.getElementById('officialConfirmPassword').addEventListener('input', function() {
         const password = document.getElementById('officialPassword').value;
         const confirmPassword = this.value;
@@ -21,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
@@ -78,7 +73,6 @@ function loadOfficials() {
                 tableBody.appendChild(row);
             });
             
-            // Add event listeners to buttons
             addButtonEventListeners();
         })
         .catch(error => {
@@ -94,7 +88,6 @@ function loadOfficials() {
 }
 
 function addButtonEventListeners() {
-    // Edit buttons
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -102,7 +95,6 @@ function addButtonEventListeners() {
         });
     });
     
-    // Delete buttons
     document.querySelectorAll('.delete-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -117,7 +109,6 @@ function addButtonEventListeners() {
         });
     });
     
-    // Reinitialize tooltips for new buttons
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
@@ -190,19 +181,16 @@ function addOfficial(e) {
         password: password
     };
     
-    // Validate required fields
     if (!formData.first_name || !formData.last_name || !formData.position || !formData.email) {
         showAlert('Please fill in all required fields', 'error');
         return;
     }
     
-    // Validate email format
     if (!isValidEmail(formData.email)) {
         showAlert('Please enter a valid email address', 'error');
         return;
     }
     
-    // Validate contact number if provided
     if (formData.contact_number && !isValidPhoneNumber(formData.contact_number)) {
         showAlert('Contact number must be 11 digits', 'error');
         return;
@@ -270,19 +258,16 @@ function updateOfficial(e) {
         formData.password = password;
     }
     
-    // Validate required fields
     if (!formData.first_name || !formData.last_name || !formData.position || !formData.email) {
         showAlert('Please fill in all required fields', 'error');
         return;
     }
     
-    // Validate email format
     if (!isValidEmail(formData.email)) {
         showAlert('Please enter a valid email address', 'error');
         return;
     }
     
-    // Validate contact number if provided
     if (formData.contact_number && !isValidPhoneNumber(formData.contact_number)) {
         showAlert('Contact number must be 11 digits', 'error');
         return;
@@ -339,7 +324,7 @@ function deleteOfficial() {
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
     
     fetch(`barangay-officials-backend.php?action=delete_official&id=${encodeURIComponent(id)}`, {
-        method: 'GET' // Using GET as per your original code structure
+        method: 'GET' 
     })
     .then(response => {
         if (!response.ok) {

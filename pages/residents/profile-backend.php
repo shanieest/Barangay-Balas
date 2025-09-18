@@ -10,8 +10,15 @@ if (!isset($_SESSION['user_id'])) {
 $userId = $_SESSION['user_id'];
 $message = '';
 
+function logActivity($conn, $userId, $activity) {
+    $sql = "INSERT INTO activity_logs (user_id, activity) VALUES (?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("is", $userId, $activity);
+    $stmt->execute();
+    $stmt->close();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    // Validate CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $message = "Security error. Please try again.";
         header("Location: profile.php?message=" . urlencode($message));
@@ -19,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
     
     if ($_POST['action'] === "update_profile") {
-        // Get and sanitize form data
         $first_name = trim($_POST['first_name']);
         $middle_name = trim($_POST['middle_name']);
         $last_name = trim($_POST['last_name']);
@@ -66,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         
         if ($stmt->execute()) {
             $message = "Profile updated successfully!";
+            logActivity($conn, $userId, "Updated profile information");
         } else {
             $message = "Error updating profile: " . $conn->error;
         }
@@ -75,14 +82,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     } 
     elseif ($_POST['action'] === "upload_photo") {
-        // Handle photo upload
         if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
-            // File upload handling
             $file = $_FILES['profile_photo'];
             $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
-            $max_size = 5 * 1024 * 1024; // 5MB
+            $max_size = 5 * 1024 * 1024; 
             
-            // Validate file type
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $file_type = finfo_file($finfo, $file['tmp_name']);
             finfo_close($finfo);
@@ -90,11 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if (!in_array($file_type, $allowed_types)) {
                 $message = "Invalid file type. Only JPG, PNG and GIF are allowed.";
             } 
-            // Validate file size
             else if ($file['size'] > $max_size) {
                 $message = "File too large. Maximum size is 5MB.";
             } 
-            // Process the upload
             else {
                 $upload_dir = '../../uploads/profiles/';
                 if (!file_exists($upload_dir)) {
@@ -114,7 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $destination = $upload_dir . $filename;
                 
                 if (move_uploaded_file($file['tmp_name'], $destination)) {
-                    // Update database with new photo path
                     $relative_path = 'uploads/profiles/' . $filename;
                     $update_sql = "UPDATE residents SET photo_path = ? WHERE id = ?";
                     $stmt = $conn->prepare($update_sql);
@@ -122,8 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     
                     if ($stmt->execute()) {
                         $message = "Profile photo updated successfully!";
+                        logActivity($conn, $userId, "Updated profile photo");
                         
-                        // Delete old photo if it exists and is not the default placeholder
                         if (!empty($old_photo_path) && 
                             file_exists('../../' . $old_photo_path) && 
                             !str_contains($old_photo_path, 'via.placeholder.com')) {
@@ -131,7 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         }
                     } else {
                         $message = "Error updating database: " . $conn->error;
-                        // Delete the uploaded file if database update failed
                         unlink($destination);
                     }
                     $stmt->close();

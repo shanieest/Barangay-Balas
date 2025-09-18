@@ -1,19 +1,14 @@
-// Service Modal Event Handlers
 document.addEventListener('DOMContentLoaded', function() {
-    // View Service Modal
     $('#viewServiceModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var reservationId = button.data('id');
         
-        // Reset all conditional sections
         $('#scheduled-datetime-section').hide();
         $('#processed-by-section').hide();
         $('#rejection-reason-section').hide();
         
-        // Show loading state
         $('#view-reservation-id, #view-resident-name, #view-service-type, #view-reservation-date, #view-duration, #view-status, #view-purpose, #view-contact, #view-email, #view-date-requested, #view-notes').text('Loading...');
         
-        // Fetch reservation details via AJAX
         $.ajax({
             url: 'reservation-backend.php?action=get&id=' + reservationId,
             type: 'GET',
@@ -22,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     var reservation = data.reservation;
                     
-                    // Basic details
                     $('#view-reservation-id').text('SR-' + String(reservation.id).padStart(3, '0'));
                     $('#view-resident-name').text(reservation.resident_name || 'N/A');
                     $('#view-service-type').html(reservation.service_types || 'N/A');
@@ -35,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#view-date-requested').text(reservation.date_requested || 'N/A');
                     $('#view-notes').text(reservation.notes || 'No additional notes');
                     
-                    // Show/hide conditional fields based on data availability
                     if (reservation.scheduled_datetime) {
                         $('#view-scheduled-datetime').text(reservation.scheduled_datetime);
                         $('#scheduled-datetime-section').show();
@@ -64,49 +57,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Approve Service Modal
     $('#approveServiceModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var reservationId = button.data('id');
         
-        // Reset form
         $('#approve-service-id').val(reservationId);
         $('#approve-notes').val('');
         
-        // Set minimum datetime to current time
         var now = new Date();
-        // Adjust for timezone offset to get local time
         var localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
         $('#approve-schedule').attr('min', localDateTime.toISOString().slice(0, 16));
         $('#approve-schedule').val('');
     });
 
-    // Reject Service Modal  
     $('#rejectServiceModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var reservationId = button.data('id');
         
-        // Reset form
         $('#reject-service-id').val(reservationId);
         $('#reject-reason').val('');
     });
 
-    // Update Service Modal
     $('#updateServiceModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var reservationId = button.data('id');
         
-        // Reset form
         $('#update-service-id').val(reservationId);
         $('#update-status').val('');
         $('#update-notes').val('');
     });
 
-    // Form Submissions with improved error handling
     $('#approveServiceForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Disable submit button to prevent double submission
         var submitBtn = $(this).find('button[type="submit"]');
         var originalText = submitBtn.html();
         submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
@@ -118,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'POST',
             data: formData,
             dataType: 'json',
-            timeout: 10000, // 10 second timeout
+            timeout: 10000, 
             success: function(response) {
                 if (response.success) {
                     alert('Service reservation approved successfully!');
@@ -138,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             },
             complete: function() {
-                // Re-enable submit button
                 submitBtn.prop('disabled', false).html(originalText);
             }
         });
@@ -147,14 +129,12 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#rejectServiceForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Validate required fields
         var rejectionReason = $('#reject-reason').val().trim();
         if (!rejectionReason) {
             alert('Please provide a reason for rejection.');
             return;
         }
         
-        // Disable submit button
         var submitBtn = $(this).find('button[type="submit"]');
         var originalText = submitBtn.html();
         submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
@@ -194,14 +174,12 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#updateServiceForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Validate required fields
         var status = $('#update-status').val();
         if (!status) {
             alert('Please select a status.');
             return;
         }
         
-        // Disable submit button
         var submitBtn = $(this).find('button[type="submit"]');
         var originalText = submitBtn.html();
         submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
@@ -238,7 +216,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Clear form data when modals are hidden
     $('#approveServiceModal, #rejectServiceModal, #updateServiceModal').on('hidden.bs.modal', function() {
         $(this).find('form')[0].reset();
     });

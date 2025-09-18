@@ -1,4 +1,4 @@
-//modal - DEBUG VERSION
+//modal
 document.addEventListener('DOMContentLoaded', function() {
  
     const viewRequestModal = document.getElementById('viewRequestModal');
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(`get-request-details.php?id=${requestId}`)
                 .then(res => res.json())
                 .then(data => {
-                    // DEBUG: Log the entire response to console
+                  
                     console.log('Full API Response:', data);
                     console.log('Processed By Value:', data.processed_by);
                     
@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         (data.account_status == 'Approved' ? 'success' : 
                          (data.account_status == 'Pending' ? 'warning' : 'danger'));
                     
-                    // DEBUG: Check if the processed_by element exists and log what we're setting
                     const processedByElement = document.getElementById('viewProcessedBy');
                     console.log('Processed By Element Found:', processedByElement);
                     if (processedByElement) {
@@ -41,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('viewPurpose').textContent = data.purpose;
                     document.getElementById('viewNotes').textContent = data.notes || 'No notes provided';
 
-                    // Status badge and download button
                     const statusBadge = document.getElementById('viewStatusBadge');
                     const downloadBtn = document.getElementById('downloadDocumentBtn');
                     statusBadge.textContent = data.status;
@@ -61,7 +59,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(err => {
                     console.error('Error fetching request details:', err);
-                    // DEBUG: Show the actual error response
                     console.error('Full error:', err);
                 });
         });
@@ -86,9 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert("✅ " + data.message);
+                    alert(" " + data.message);
 
-                    // Auto-download PDF when checkbox is checked
                     if (data.auto_download && data.file_path) {
                         const downloadUrl = `download-document.php?id=${document.getElementById('approveRequestId').value}`;
                         const link = document.createElement('a');
@@ -99,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.body.removeChild(link);
                     }
 
-                    // Update "Download Document" button in view modal
                     const downloadBtn = document.getElementById('downloadDocumentBtn');
                     if (data.file_path) {
                         downloadBtn.href = `download-document.php?id=${document.getElementById('approveRequestId').value}`;
@@ -117,7 +112,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Disapprove Modal
     const disapproveModal = document.getElementById('disapproveRequestModal');
     const disapproveForm = document.getElementById('disapproveForm');
 
@@ -137,9 +131,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert("❌ Request disapproved!");
+                    alert("Request disapproved!");
                     location.reload();
-                } else alert("❌ Error: " + data.message);
+                } else alert("Error: " + data.message);
             })
             .catch(err => {
                 console.error('Disapprove error:', err);

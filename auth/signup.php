@@ -252,9 +252,9 @@ if (isset($_SESSION['login_error'])) {
                                     <label for="birthdate">Birthdate</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                                         </div>
-                                        <input type="text" class="form-control datepicker" id="birthdate" name="birthdate" placeholder="MM/DD/YYYY" required>
+                                        <input type="date" class="form-control" id="birthdate" name="birthdate" required>
                                     </div>
                                 </div>
                                 <div class="form-group col-md-6">
@@ -267,7 +267,6 @@ if (isset($_SESSION['login_error'])) {
                                         <option value="" selected disabled>Select sex</option>
                                         <option value="male">Male</option>
                                         <option value="female">Female</option>
-                                        <option value="other">Other</option>
                                     </select>
                                 </div>
                             </div>

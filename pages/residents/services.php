@@ -215,13 +215,13 @@ require_once '../../config/db.php';
                             </div>
                         </div>
 
-                        <!-- Reservation of Tent -->
+                        <!-- Reservation Others -->
                         <div class="col-md-4 mb-4">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-campground fa-3x text-warning mb-3"></i>
-                                    <h5>Barangay Tent</h5>
-                                    <p class="text-muted">Reserve a barangay tent</p>
+                                    <h5>Barangay Services</h5>
+                                    <p class="text-muted">Other Services</p>
                                     <button class="btn btn-warning btn-sm" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#tentReservationModal">
@@ -251,7 +251,7 @@ require_once '../../config/db.php';
                                     </ul>
                                 </div>
                                 <div class="col-md-6">
-                                    <h6><i class="fas fa-campground text-warning me-2"></i>Barangay Tent</h6>
+                                    <h6><i class="fas fa-campground text-warning me-2"></i>Other Barangay Services</h6>
                                     <ul class="list-unstyled ms-3">
                                         <li>• Perfect for outdoor events</li>
                                         <li>• Family gatherings and celebrations</li>
@@ -263,8 +263,9 @@ require_once '../../config/db.php';
                             <hr>
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                <strong>Note:</strong> All reservations are subject to approval by barangay officials. 
-                                You will be contacted within 24-48 hours regarding your reservation status.
+                                <strong>Note:</strong> All reservations are subject to approval by Administrator.
+                                You will be contacted within 24 hours regarding your reservation status.
+                                However, priority will be given to emergency requests.
                             </div>
                         </div>
                     </div>

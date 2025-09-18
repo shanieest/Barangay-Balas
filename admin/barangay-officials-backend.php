@@ -196,7 +196,6 @@ function handleAddOfficial() {
             }
         }
         
-        // Admin user account
         $stmt = $conn->prepare("INSERT INTO admin_users 
             (username, password, first_name, last_name, middle_name, email, contact_number, position, role)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Official')");

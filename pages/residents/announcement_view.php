@@ -423,28 +423,23 @@ if ($announcement['image_paths']) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Toggle sidebar
         if (document.getElementById('sidebarToggle')) {
             document.getElementById('sidebarToggle').addEventListener('click', function() {
                 document.querySelector('.wrapper').classList.toggle('sidebar-collapsed');
             });
         }
 
-        // Show single image in modal
         function showImageModal(imageSrc) {
             document.getElementById('modalImage').src = imageSrc;
             new bootstrap.Modal(document.getElementById('imageModal')).show();
         }
 
-        // Show image gallery
         function showImageGallery() {
             new bootstrap.Modal(document.getElementById('galleryModal')).show();
         }
 
-        // Copy announcement link
         function copyToClipboard() {
             navigator.clipboard.writeText(window.location.href).then(function() {
-                // Show success message
                 const btn = event.target.closest('button');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<i class="bi bi-check me-2"></i>Copied!';
@@ -459,7 +454,6 @@ if ($announcement['image_paths']) {
             });
         }
 
-        // Share on WhatsApp
         function shareWhatsApp() {
             const title = <?= json_encode($announcement['title']) ?>;
             const url = window.location.href;
@@ -467,7 +461,6 @@ if ($announcement['image_paths']) {
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
-        // Share on Facebook
         function shareFacebook() {
             const url = window.location.href;
             window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');

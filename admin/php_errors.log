@@ -360,3 +360,157 @@ Stack trace:
 [17-Sep-2025 04:43:01 Europe/Berlin] Using provided age: 26
 [17-Sep-2025 04:43:01 Europe/Berlin] Final values - birthdate: 1999-03-04, age: 26
 [17-Sep-2025 04:43:01 Europe/Berlin] Resident inserted with ID: 57
+[17-Sep-2025 08:13:06 Europe/Berlin] Processing request id=41 action=approve user_id=1 note=
+[17-Sep-2025 08:42:42 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Francis
+    [lastName] => Dianelo
+    [middleName] => Dianelo
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 0933333333
+    [email] => 09333333333@gmail.com
+    [houseNumber] => 111
+    [purok] => 1
+    [address] => House 111, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 1983-04-20
+    [age] => 42
+    [password] => dianelo1
+)
+
+[17-Sep-2025 08:42:42 Europe/Berlin] Using provided age: 42
+[17-Sep-2025 08:42:42 Europe/Berlin] Final values - birthdate: 1983-04-20, age: 42
+[17-Sep-2025 08:42:42 Europe/Berlin] Resident inserted with ID: 59
+[17-Sep-2025 08:42:42 Europe/Berlin] Add Resident Error: Duplicate entry '09333333333@gmail.com' for key 'email'
+[17-Sep-2025 08:47:43 Europe/Berlin] Processing request id=43 action=approve user_id=1 note=Haha debug
+[17-Sep-2025 09:18:54 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Klein
+    [lastName] => Klein
+    [middleName] => Klei
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 91234567890
+    [email] => klei@gmail.com
+    [houseNumber] => 11
+    [purok] => 1
+    [address] => House 11, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2003-11-11
+    [age] => 21
+    [password] => 12345678
+)
+
+[17-Sep-2025 09:18:54 Europe/Berlin] Using provided age: 21
+[17-Sep-2025 09:18:54 Europe/Berlin] Final values - birthdate: 2003-11-11, age: 21
+[17-Sep-2025 09:18:54 Europe/Berlin] Resident inserted with ID: 61
+[18-Sep-2025 03:25:04 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Lorenzo
+    [middleName] => Chan
+    [suffix] => 
+    [sex] => male
+    [contactNumber] => 91234567890
+    [email] => marvin@gmail.com
+    [houseNumber] => 1
+    [purok] => 1
+    [address] => House 1, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2003-11-11
+    [age] => 21
+    [password] => 12345678
+)
+
+[18-Sep-2025 03:25:04 Europe/Berlin] Using provided age: 21
+[18-Sep-2025 03:25:04 Europe/Berlin] Final values - birthdate: 2003-11-11, age: 21
+[18-Sep-2025 03:25:04 Europe/Berlin] Resident inserted with ID: 42
+[18-Sep-2025 08:41:17 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[18-Sep-2025 08:41:26 Europe/Berlin] Processing request id=38 action=reject user_id=1 note=hahah
+[18-Sep-2025 08:44:31 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Lorenzo
+    [middleName] => Chan
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 91234567890
+    [email] => marvin@gmail.com
+    [houseNumber] => 1
+    [purok] => 1
+    [address] => House 1, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2001-11-11
+    [age] => 23
+    [password] => 12345678
+)
+
+[18-Sep-2025 08:44:31 Europe/Berlin] Using provided age: 23
+[18-Sep-2025 08:44:31 Europe/Berlin] Final values - birthdate: 2001-11-11, age: 23
+[18-Sep-2025 08:44:31 Europe/Berlin] Resident inserted with ID: 43
+[18-Sep-2025 08:44:31 Europe/Berlin] Add Resident Error: Duplicate entry 'marvin@gmail.com' for key 'email'
+[18-Sep-2025 08:44:38 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Lorenzo
+    [middleName] => Chan
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 91234567890
+    [email] => marvina@gmail.com
+    [houseNumber] => 1
+    [purok] => 1
+    [address] => House 1, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2001-11-11
+    [age] => 23
+    [password] => 12345678
+)
+
+[18-Sep-2025 08:44:38 Europe/Berlin] Using provided age: 23
+[18-Sep-2025 08:44:38 Europe/Berlin] Final values - birthdate: 2001-11-11, age: 23
+[18-Sep-2025 08:44:38 Europe/Berlin] Resident inserted with ID: 44
+[18-Sep-2025 09:40:07 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Lorenzo
+    [middleName] => Chan
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 91234567890
+    [email] => marvin@gmail.com
+    [houseNumber] => 1
+    [purok] => 1
+    [address] => House 1, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2003-11-11
+    [age] => 21
+    [password] => 12345678
+)
+
+[18-Sep-2025 09:40:07 Europe/Berlin] Using provided age: 21
+[18-Sep-2025 09:40:07 Europe/Berlin] Final values - birthdate: 2003-11-11, age: 21
+[18-Sep-2025 09:40:07 Europe/Berlin] Resident inserted with ID: 45
+[18-Sep-2025 09:40:07 Europe/Berlin] Add Resident Error: Duplicate entry 'marvin@gmail.com' for key 'email'
+[18-Sep-2025 09:50:12 Europe/Berlin] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Marvin
+    [lastName] => Lorenzo
+    [middleName] => Chan
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 91234567890
+    [email] => marvin@gmail.com
+    [houseNumber] => 1
+    [purok] => 1
+    [address] => House 1, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2002-11-11
+    [age] => 22
+    [password] => 12345678
+)
+
+[18-Sep-2025 09:50:12 Europe/Berlin] Using provided age: 22
+[18-Sep-2025 09:50:12 Europe/Berlin] Final values - birthdate: 2002-11-11, age: 22
+[18-Sep-2025 09:50:12 Europe/Berlin] Resident inserted with ID: 46

@@ -39,7 +39,6 @@ function handleUpdateProfile($user_id) {
     
     $data = $_POST;
     
-    // Validate required fields
     $required = ['first_name', 'last_name', 'email'];
     foreach ($required as $field) {
         if (empty($data[$field])) {
@@ -47,7 +46,6 @@ function handleUpdateProfile($user_id) {
         }
     }
 
-    // Ensure contact_number always exists
     $contact_number = isset($data['contact_number']) ? trim($data['contact_number']) : '';
 
     $stmt = $conn->prepare("UPDATE admin_users SET 

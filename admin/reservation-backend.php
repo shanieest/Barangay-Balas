@@ -1,5 +1,4 @@
 <?php
-// reservation-backend.php
 require_once 'includes/db.php';
 require_once 'includes/auth.php';
 requireAuth();
@@ -73,7 +72,6 @@ function handleGet() {
     $result = $stmt->get_result();
     
     if ($row = $result->fetch_assoc()) {
-        // Format service types with badges
         $service_types = '';
         if ($row['service_names']) {
             $services = explode(', ', $row['service_names']);
@@ -89,7 +87,6 @@ function handleGet() {
             }
         }
         
-        // Format status badge
         $status_badge = match($row['status']) {
             'Pending' => '<span class="badge bg-warning">' . $row['status'] . '</span>',
             'Approved' => '<span class="badge bg-success">' . $row['status'] . '</span>',
@@ -143,7 +140,6 @@ function handleApprove() {
     
     $conn->begin_transaction();
     
-    // Check if reservation exists and is pending
     $check_sql = "SELECT id, status, resident_name FROM service_reservations WHERE id = ?";
     $check_stmt = $conn->prepare($check_sql);
     $check_stmt->bind_param("i", $reservation_id);
@@ -159,7 +155,6 @@ function handleApprove() {
         throw new Exception('Only pending reservations can be approved');
     }
     
-    // Update reservation status
     $update_sql = "UPDATE service_reservations 
                    SET status = 'Approved', 
                        notes = ?, 
@@ -175,7 +170,6 @@ function handleApprove() {
         throw new Exception('Failed to update reservation status');
     }
     
-    // Log activity
     logActivity($admin_id, "Approved service reservation (ID: $reservation_id)", $conn);
     
     $conn->commit();
@@ -209,7 +203,6 @@ function handleReject() {
     
     $conn->begin_transaction();
     
-    // Check if reservation exists and is pending
     $check_sql = "SELECT id, status FROM service_reservations WHERE id = ?";
     $check_stmt = $conn->prepare($check_sql);
     $check_stmt->bind_param("i", $reservation_id);

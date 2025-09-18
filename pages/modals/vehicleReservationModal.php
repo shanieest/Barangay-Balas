@@ -27,13 +27,13 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">Contact Number <span class="text-danger">*</span></label>
               <input type="text" name="contact_number" class="form-control" 
-                     pattern="[0-9]{11}" placeholder="09XXXXXXXXX" required>
+                     pattern="[0-9]{11}" placeholder="" required>
               <div class="form-text">Enter 11-digit mobile number</div>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Email Address</label>
               <input type="email" name="email" class="form-control" 
-                     placeholder="your.email@example.com">
+                     placeholder="">
             </div>
           </div>
 

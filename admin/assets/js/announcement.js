@@ -1,33 +1,26 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Set today's date as default for add form
     const today = new Date().toISOString().split('T')[0];
     const addDateField = document.getElementById('announcementDate');
     if (addDateField) {
         addDateField.value = today;
     }
 
-    // Initialize tooltips
     const tooltipElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltipElements.forEach(element => {
         new bootstrap.Tooltip(element);
     });
 
-    // Setup form validation
     setupFormValidation();
     
-    // Setup character counters
     setupCharacterCounter('announcementContent', 1000);
     setupCharacterCounter('editAnnouncementContent', 1000);
     
-    // Setup form submissions
     setupFormSubmissions();
 
-    // Setup image preview for file inputs
     setupImagePreview('announcementImages', 'addImagePreview');
     setupImagePreview('editannouncementImages', 'editImagePreview');
 });
 
-// Form validation setup
 function setupFormValidation() {
     const forms = ['addAnnouncementForm', 'editAnnouncementForm'];
     
@@ -56,7 +49,6 @@ function setupFormValidation() {
     });
 }
 
-// Character counter setup
 function setupCharacterCounter(textareaId, maxLength) {
     const textarea = document.getElementById(textareaId);
     if (!textarea) return;
@@ -82,12 +74,10 @@ function setupCharacterCounter(textareaId, maxLength) {
     updateCounter();
 }
 
-// Image preview setup
 function setupImagePreview(inputId, previewId) {
     const input = document.getElementById(inputId);
     if (!input) return;
 
-    // Create preview container if it doesn't exist
     let previewContainer = document.getElementById(previewId);
     if (!previewContainer) {
         previewContainer = document.createElement('div');
@@ -134,15 +124,12 @@ function setupImagePreview(inputId, previewId) {
     });
 }
 
-// Remove image preview
 function removeImagePreview(button, index) {
     const previewItem = button.parentElement;
     const input = previewItem.closest('.mb-3').querySelector('input[type="file"]');
     
-    // Remove the preview
     previewItem.remove();
     
-    // Create new file list without the removed file
     const dt = new DataTransfer();
     const files = Array.from(input.files);
     
@@ -155,9 +142,7 @@ function removeImagePreview(button, index) {
     input.files = dt.files;
 }
 
-// Form submission handlers
 function setupFormSubmissions() {
-    // Add announcement form
     const saveBtn = document.getElementById('saveAnnouncementBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', function() {
@@ -165,7 +150,6 @@ function setupFormSubmissions() {
         });
     }
     
-    // Update announcement form  
     const updateBtn = document.getElementById('updateAnnouncementBtn');
     if (updateBtn) {
         updateBtn.addEventListener('click', function() {
@@ -173,7 +157,6 @@ function setupFormSubmissions() {
         });
     }
     
-    // Delete announcement form
     const deleteBtn = document.getElementById('deleteAnnouncementBtn');
     if (deleteBtn) {
         deleteBtn.addEventListener('click', function() {
@@ -182,34 +165,28 @@ function setupFormSubmissions() {
     }
 }
 
-// Submit add announcement form
 function submitAddForm() {
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = 'announcements-backend.php';
     form.enctype = 'multipart/form-data';
     
-    // Get form data
     const title = document.getElementById('announcementTitle').value;
     const content = document.getElementById('announcementContent').value;
     const date = document.getElementById('announcementDate').value;
     const imagesInput = document.getElementById('announcementImages');
     
-    // Validate required fields
     if (!title.trim() || !content.trim() || !date) {
         showAlert('Please fill in all required fields.', 'danger');
         return;
     }
     
-    // Add hidden fields
     addHiddenField(form, 'addAnnouncement', '1');
     addHiddenField(form, 'title', title);
     addHiddenField(form, 'content', content);
     addHiddenField(form, 'date', date);
     
-    // Add multiple image files if selected
     if (imagesInput && imagesInput.files.length > 0) {
-        // Clone the file input to preserve the multiple files
         const clonedInput = imagesInput.cloneNode(true);
         clonedInput.style.display = 'none';
         form.appendChild(clonedInput);
@@ -219,14 +196,12 @@ function submitAddForm() {
     form.submit();
 }
 
-// Submit edit announcement form
 function submitEditForm() {
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = 'announcements-backend.php';
     form.enctype = 'multipart/form-data';
     
-    // Get form data
     const id = window.currentEditId;
     const title = document.getElementById('editAnnouncementTitle').value;
     const content = document.getElementById('editAnnouncementContent').value;
@@ -234,13 +209,11 @@ function submitEditForm() {
     const imagesInput = document.getElementById('editannouncementImages');
     const currentImage = window.currentImagePath || '';
     
-    // Validate required fields
     if (!title.trim() || !content.trim() || !date) {
         showAlert('Please fill in all required fields.', 'danger');
         return;
     }
     
-    // Add hidden fields
     addHiddenField(form, 'editAnnouncement', '1');
     addHiddenField(form, 'id', id);
     addHiddenField(form, 'title', title);
@@ -248,7 +221,6 @@ function submitEditForm() {
     addHiddenField(form, 'date', date);
     addHiddenField(form, 'current_image', currentImage);
     
-    // Add multiple image files if selected
     if (imagesInput && imagesInput.files.length > 0) {
         const clonedInput = imagesInput.cloneNode(true);
         clonedInput.style.display = 'none';
@@ -259,7 +231,6 @@ function submitEditForm() {
     form.submit();
 }
 
-// Submit delete announcement form
 function submitDeleteForm() {
     const form = document.createElement('form');
     form.method = 'POST';
@@ -274,7 +245,6 @@ function submitDeleteForm() {
     form.submit();
 }
 
-// Helper function to add hidden fields
 function addHiddenField(form, name, value) {
     const input = document.createElement('input');
     input.type = 'hidden';
@@ -283,18 +253,14 @@ function addHiddenField(form, name, value) {
     form.appendChild(input);
 }
 
-// Edit announcement modal handler
 function editAnnouncement(announcementData) {
-    // Store current data globally for form submission
     window.currentEditId = announcementData.id;
     window.currentImagePath = announcementData.image_paths;
     
-    // Populate form fields
     document.getElementById('editAnnouncementTitle').value = announcementData.title;
     document.getElementById('editAnnouncementContent').value = announcementData.content;
     document.getElementById('editAnnouncementDate').value = announcementData.date_posted;
     
-    // Clear any previous file selection and preview
     const editImagesInput = document.getElementById('editannouncementImages');
     if (editImagesInput) {
         editImagesInput.value = '';
@@ -304,7 +270,6 @@ function editAnnouncement(announcementData) {
         }
     }
     
-    // Update current image info
     const currentImageInfo = document.getElementById('currentImageInfo');
     if (announcementData.image_paths) {
         const images = announcementData.image_paths.split(',');
@@ -315,28 +280,21 @@ function editAnnouncement(announcementData) {
         currentImageInfo.innerHTML = '<em>No current images</em>';
     }
     
-    // Show modal
     const modal = new bootstrap.Modal(document.getElementById('editAnnouncementModal'));
     modal.show();
 }
 
-// Delete announcement modal handler
 function deleteAnnouncement(id, title, date) {
-    // Store current data globally for form submission
     window.currentDeleteId = id;
     
-    // Populate modal content
     document.getElementById('deleteAnnouncementTitle').textContent = title;
     document.getElementById('deleteAnnouncementDate').textContent = new Date(date).toLocaleDateString();
     
-    // Show modal
     const modal = new bootstrap.Modal(document.getElementById('deleteAnnouncementModal'));
     modal.show();
 }
 
-// Show image modal
 function showImageModal(imagePath) {
-    // Create image modal if it doesn't exist
     let imageModal = document.getElementById('imageViewModal');
     if (!imageModal) {
         imageModal = createImageModal();
@@ -350,7 +308,6 @@ function showImageModal(imagePath) {
     modal.show();
 }
 
-// Create image view modal
 function createImageModal() {
     const modalHtml = `
         <div class="modal fade" id="imageViewModal" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
@@ -373,7 +330,6 @@ function createImageModal() {
     return div.firstElementChild;
 }
 
-// Utility function to show alerts
 function showAlert(message, type = 'info') {
     const alertHtml = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -382,14 +338,12 @@ function showAlert(message, type = 'info') {
         </div>
     `;
     
-    // Find container to insert alert
     const container = document.querySelector('.container-fluid') || document.querySelector('main');
     if (container) {
         const alertDiv = document.createElement('div');
         alertDiv.innerHTML = alertHtml;
         container.insertBefore(alertDiv.firstElementChild, container.firstElementChild);
         
-        // Auto-dismiss after 5 seconds
         setTimeout(() => {
             const alert = container.querySelector('.alert');
             if (alert) {

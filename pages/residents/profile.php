@@ -436,7 +436,6 @@ if (empty($_SESSION['csrf_token'])) {
             }
         });
         
-        // Clear preview when modal is closed
         document.getElementById('photoUploadModal').addEventListener('hidden.bs.modal', function () {
             document.getElementById('imagePreview').style.display = 'none';
             document.getElementById('photoUploadForm').reset();

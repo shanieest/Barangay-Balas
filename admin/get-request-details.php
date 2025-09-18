@@ -1,5 +1,4 @@
 <?php
-// get-request-details.php - DEBUG VERSION
 require_once 'includes/db.php';
 
 if (!isset($_GET['id'])) {
@@ -10,17 +9,14 @@ if (!isset($_GET['id'])) {
 
 $request_id = intval($_GET['id']);
 
-// DEBUG: First, let's see what's in the document_requests table
 $debug_stmt = $conn->prepare("SELECT id, status, processed_by, date_processed FROM document_requests WHERE id = ?");
 $debug_stmt->bind_param('i', $request_id);
 $debug_stmt->execute();
 $debug_result = $debug_stmt->get_result();
 $debug_data = $debug_result->fetch_assoc();
 
-// Log this information
 error_log("DEBUG - Request $request_id: status=" . $debug_data['status'] . ", processed_by=" . $debug_data['processed_by'] . ", date_processed=" . $debug_data['date_processed']);
 
-// Main query with detailed debugging
 $stmt = $conn->prepare("
     SELECT dr.*, dt.document_type, 
            a.id as admin_id,
@@ -52,18 +48,15 @@ if ($result->num_rows === 0) {
 
 $request = $result->fetch_assoc();
 
-// DEBUG: Log what we got from the admin join
 error_log("DEBUG - Admin join result: admin_id=" . $request['admin_id'] . ", admin_first_name=" . $request['admin_first_name'] . ", processed_by_name=" . $request['processed_by_name']);
 
 $stmt->close();
 
-// Determine processed_by text
 $processed_by_text = 'Not processed yet';
 if ($request['processed_by']) {
     if ($request['processed_by_name'] && $request['processed_by_username']) {
         $processed_by_text = $request['processed_by_name'] . ' (' . $request['processed_by_username'] . ')';
     } else {
-        // Fallback: if join failed but we have processed_by ID, try to get admin info separately
         $admin_fallback = $conn->prepare("SELECT first_name, last_name, username FROM admin_users WHERE id = ?");
         $admin_fallback->bind_param('i', $request['processed_by']);
         $admin_fallback->execute();
@@ -79,7 +72,6 @@ if ($request['processed_by']) {
     }
 }
 
-// Format the response
 $response = [
     'id' => $request['id'],
     'document_type' => $request['document_type'] ?: 'Unknown',
@@ -95,12 +87,10 @@ $response = [
     'account_status' => $request['account_status'] ?: 'N/A',
     'processed_by' => $processed_by_text,
     'document_path' => $request['document_file_path'] ?? null,
-    // DEBUG: Add raw values for troubleshooting
     'debug_processed_by_id' => $request['processed_by'],
     'debug_admin_found' => $request['processed_by_name'] ? true : false
 ];
 
-// DEBUG: Log the final response
 error_log("DEBUG - Final processed_by: " . $processed_by_text);
 
 header('Content-Type: application/json');
