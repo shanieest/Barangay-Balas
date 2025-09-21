@@ -75,7 +75,14 @@ $service_status_filter = match($service_tab) {
 
 $service_placeholders = str_repeat('?,', count($service_status_filter) - 1) . '?';
 $service_sql = "SELECT sr.*, 
-                   GROUP_CONCAT(st.service_name SEPARATOR ', ') as service_names,
+                   GROUP_CONCAT(
+                       CONCAT(st.service_name, 
+                              CASE WHEN sri.quantity > 1 
+                                   THEN CONCAT(' (x', sri.quantity, ')') 
+                                   ELSE '' 
+                              END
+                       ) SEPARATOR ', '
+                   ) as service_names,
                    CONCAT(r.first_name, ' ', r.last_name) AS resident_name,
                    CONCAT(sr.reservation_date_start, 
                           CASE WHEN sr.reservation_date_end != sr.reservation_date_start 
@@ -105,14 +112,29 @@ while ($row = $service_result->fetch_assoc()) {
     if ($row['service_names']) {
         $services = explode(', ', $row['service_names']);
         foreach ($services as $service) {
-            $badge_class = match($service) {
+            // Check if service has quantity info
+            if (strpos($service, '(x') !== false) {
+                $service_parts = explode(' (x', $service);
+                $service_name = $service_parts[0];
+                $quantity = str_replace(')', '', $service_parts[1]);
+                $quantity_text = 'x' . $quantity;
+            } else {
+                $service_name = $service;
+                $quantity_text = '';
+            }
+            
+            $badge_class = match($service_name) {
                 'Tent' => 'bg-primary',
                 'Vehicle' => 'bg-info', 
-                'Sound System' => 'bg-warning',
+                'Sound System' => 'bg-warning text-dark',
                 'Tables and Chairs' => 'bg-success',
                 default => 'bg-secondary'
             };
-            $service_badges .= '<span class="badge ' . $badge_class . ' me-1">' . htmlspecialchars($service) . '</span>';
+            
+            $service_badges .= '<span class="badge ' . $badge_class . ' me-1">' . 
+                              htmlspecialchars($service_name) . 
+                              ($quantity_text ? ' <small>' . $quantity_text . '</small>' : '') . 
+                              '</span>';
         }
     }
     $row['service_badges'] = $service_badges;
@@ -179,8 +201,17 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
   <style>
-    .service-badge { font-size: 0.8rem; margin-left: 5px; }
-    .table td { vertical-align: middle; }
+    .service-badge { 
+      font-size: 0.8rem; 
+      margin-left: 5px; 
+    }
+    .service-badge small {
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    .table td { 
+      vertical-align: middle; 
+    }
     .pagination-info {
       font-size: 0.9em;
       color: #6c757d;
@@ -362,7 +393,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                   <tr>
                     <th>Reservation ID</th>
                     <th>Resident</th>
-                    <th>Service Type</th>
+                    <th>Service Type & Quantity</th>
                     <th>Reservation Date</th>
                     <th>Duration</th>
                     <?php if ($service_tab === 'pending'): ?>

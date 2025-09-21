@@ -514,3 +514,6 @@ Stack trace:
 [18-Sep-2025 09:50:12 Europe/Berlin] Using provided age: 22
 [18-Sep-2025 09:50:12 Europe/Berlin] Final values - birthdate: 2002-11-11, age: 22
 [18-Sep-2025 09:50:12 Europe/Berlin] Resident inserted with ID: 46
+[19-Sep-2025 04:40:56 Europe/Berlin] Processing request id=38 action=approve user_id=1 note=
+[19-Sep-2025 05:50:01 Europe/Berlin] Processing request id=43 action=approve user_id=1 note=
+[19-Sep-2025 05:50:12 Europe/Berlin] Processing request id=39 action=approve user_id=1 note=

@@ -36,7 +36,8 @@
 <!-- Hero Section -->
 <section class="hero-section">
   <div class="container">
-    <h1 class="display-4 fw-bolder">Barangay Balas Online Management System</h1>
+    <h1 class="display-4 fw-bolder">Barangay Balas</h1>
+    <h1 class="display-4 fw-bolder">Online Services and Management System</h1>
     <p class="lead">Serving the community of Balas, Mexico, Pampanga</p>
   </div>
 </section>
@@ -84,7 +85,7 @@
       $announcements = $res->fetch_all(MYSQLI_ASSOC);
       $hasAnnouncements = count($announcements) > 0;
 
-      // Helper for image display - Fixed path construction
+     
     function news_img($image_paths) {
     if (!$image_paths || !trim($image_paths)) {
         return 'assets/img/news-placeholder.jpg';
@@ -93,12 +94,11 @@
     $images = explode(',', $image_paths);
     $firstImage = trim($images[0]);
 
-    // Try with admin folder prefix
     if (file_exists(__DIR__ . '/admin/' . $firstImage)) {
         return 'admin/' . $firstImage;
     }
 
-    // Fallback: if stored path works directly
+
     if (file_exists(__DIR__ . '/' . $firstImage)) {
         return $firstImage;
     }
@@ -115,7 +115,7 @@
            data-bs-interval="5000"
            data-bs-pause="hover">
 
-        <!-- Indicators -->
+  
         <div class="carousel-indicators">
           <?php foreach ($announcements as $i => $_): ?>
             <button type="button"

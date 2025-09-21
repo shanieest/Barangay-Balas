@@ -1,6 +1,6 @@
 <?php
-require_once '../../config/db.php';
-require_once '../../auth/auth.php';
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../auth/auth.php';
 
 $userId = $_SESSION['user_id'] ?? null;
 $user = null;
@@ -33,12 +33,23 @@ if ($userId) {
     $stmt->close();
 }
 
-// Default profile photo if none
-$profilePhoto = $user && $user['photo_path'] 
-    ? $user['photo_path'] 
-    : "https://via.placeholder.com/40";
+
+$profilePhoto = "https://via.placeholder.com/40"; // default
+
+if ($user && !empty($user['photo_path'])) {
+    $photoPath = $user['photo_path'];
+
+    if (preg_match('/^https?:\/\//', $photoPath)) {
+
+        $profilePhoto = $photoPath;
+    } else {
+
+        $profilePhoto = "/barangay-balas/" . htmlspecialchars($photoPath);
+    }
+}
+
 $userName = $user 
-    ? $user['first_name'] . " " . $user['last_name'] 
+    ? htmlspecialchars($user['first_name'] . " " . $user['last_name']) 
     : "User";
 ?>
 
@@ -86,7 +97,7 @@ $userName = $user
                     <?php endif; ?>
 
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-center text-primary" href="all_notifications.php">View All Notifications</a></li>
+                    <li><a class="dropdown-item text-center text-primary" href="/barangay-balas/pages/all_notifications.php">View All Notifications</a></li>
                 </ul>
             </div>
 
@@ -96,12 +107,12 @@ $userName = $user
                         id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="<?php echo $profilePhoto; ?>" 
                          alt="Profile" class="rounded-circle me-2" width="40" height="40">
-                    <span><?php echo htmlspecialchars($userName); ?></span>
+                    <span><?php echo $userName; ?></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="/barangay-balas/pages/profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="../../auth/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    <li><a class="dropdown-item" href="/barangay-balas/auth/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                 </ul>
             </div>
         </div>

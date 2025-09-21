@@ -86,7 +86,6 @@ if ($resident_id) {
                 <option value="">-- Select --</option>
                 <option value="male" <?= $resident_data && $resident_data['sex'] == 'male' ? 'selected' : '' ?>>Male</option>
                 <option value="female" <?= $resident_data && $resident_data['sex'] == 'female' ? 'selected' : '' ?>>Female</option>
-                <option value="other" <?= $resident_data && $resident_data['sex'] == 'other' ? 'selected' : '' ?>>Other</option>
               </select>
             </div>
             <div class="col-md-6 mb-3">
