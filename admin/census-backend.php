@@ -1,4 +1,5 @@
 <?php
+// Enhanced census-backend.php with improved relationship detection
 require_once 'includes/db.php';
 require_once 'includes/auth.php';
 require_once '../vendor/autoload.php'; 
@@ -26,8 +27,15 @@ switch($action) {
     case 'get_statistics':
         getStatisticsEnhanced();
         break;
-    case 'update_relationship':
-        updateRelationship();
+    // Removed edit capabilities - census is read-only for admins
+    // case 'update_relationship':
+    //     updateRelationship();
+    //     break;
+    // case 'auto_detect_relationships':
+    //     autoDetectAllRelationships();
+    //     break;
+    case 'get_household_details':
+        getHouseholdDetails();
         break;
     default:
         echo json_encode(['error' => 'Invalid action']);
@@ -60,7 +68,7 @@ function getHouseholdsEnhanced() {
     
     $whereClause = implode(' AND ', $whereConditions);
     
-    // Get households with complete member data
+    // Enhanced household query with better relationship handling
     $household_query = "
         SELECT 
             house_number,
@@ -69,6 +77,7 @@ function getHouseholdsEnhanced() {
             MIN(id) as household_id,
             GROUP_CONCAT(
                 CONCAT(
+                    id, '|',
                     first_name, '|', 
                     COALESCE(middle_name, ''), '|', 
                     last_name, '|',
@@ -82,7 +91,7 @@ function getHouseholdsEnhanced() {
                     COALESCE(contact_number, 'N/A'), '|',
                     COALESCE(email, 'N/A'), '|',
                     COALESCE(philhealth_number, 'N/A'), '|',
-                    COALESCE(relationship_to_head, 'MEMBER'), '|',
+                    COALESCE(relationship_to_head, 'UNDETERMINED'), '|',
                     is_indigent, '|',
                     is_4ps_member, '|',
                     COALESCE(medical_history, 'None'), '|',
@@ -97,6 +106,7 @@ function getHouseholdsEnhanced() {
                         WHEN relationship_to_head IN ('BROTHER', 'SISTER') THEN 4
                         WHEN relationship_to_head IN ('GRANDFATHER', 'GRANDMOTHER') THEN 5
                         WHEN relationship_to_head IN ('GRANDSON', 'GRANDDAUGHTER') THEN 6
+                        WHEN relationship_to_head IS NULL THEN 10
                         ELSE 7
                     END,
                     age DESC
@@ -124,32 +134,64 @@ function getHouseholdsEnhanced() {
         $members = [];
         $member_data = explode(':::', $row['members_data']);
         
+        // Auto-detect relationships if not set
+        $household_members = [];
         foreach ($member_data as $member) {
             $member_info = explode('|', $member);
-            if (count($member_info) >= 18) {
-                $full_name = trim($member_info[0] . ' ' . $member_info[1] . ' ' . $member_info[2]);
-                if (!empty($member_info[3])) {
-                    $full_name .= ' ' . $member_info[3]; // suffix
-                }
-                
-                $members[] = [
-                    'name' => trim($full_name),
-                    'age' => $member_info[4],
-                    'sex' => ucfirst($member_info[5]),
-                    'civil_status' => ucfirst($member_info[6]),
-                    'education' => $member_info[7],
-                    'religion' => $member_info[8],
-                    'occupation' => $member_info[9],
-                    'contact' => $member_info[10],
-                    'email' => $member_info[11],
-                    'philhealth' => $member_info[12] != 'N/A' ? 'Member' : 'Not Registered',
-                    'relationship' => $member_info[13] ?: 'MEMBER',
-                    'is_indigent' => $member_info[14] == '1',
-                    'is_4ps' => $member_info[15] == '1',
-                    'medical_history' => $member_info[16],
-                    'birthdate' => $member_info[17]
+            if (count($member_info) >= 19) {
+                $household_members[] = [
+                    'id' => $member_info[0],
+                    'first_name' => $member_info[1],
+                    'middle_name' => $member_info[2],
+                    'last_name' => $member_info[3],
+                    'suffix' => $member_info[4],
+                    'age' => (int)$member_info[5],
+                    'sex' => $member_info[6],
+                    'civil_status' => $member_info[7],
+                    'education' => $member_info[8],
+                    'religion' => $member_info[9],
+                    'occupation' => $member_info[10],
+                    'contact' => $member_info[11],
+                    'email' => $member_info[12],
+                    'philhealth' => $member_info[13],
+                    'relationship' => $member_info[14],
+                    'is_indigent' => $member_info[15] == '1',
+                    'is_4ps' => $member_info[16] == '1',
+                    'medical_history' => $member_info[17],
+                    'birthdate' => $member_info[18]
                 ];
             }
+        }
+        
+        // Apply smart detection only in read-only mode for viewing
+        // Relationships are determined by the system but not editable by admin
+        $household_members = smartRelationshipDetection($household_members, $row['house_number'], $row['purok'], false);
+        
+        // Format for display
+        foreach ($household_members as $member) {
+            $full_name = trim($member['first_name'] . ' ' . $member['middle_name'] . ' ' . $member['last_name']);
+            if (!empty($member['suffix'])) {
+                $full_name .= ' ' . $member['suffix'];
+            }
+            
+            $members[] = [
+                'id' => $member['id'],
+                'name' => trim($full_name),
+                'age' => $member['age'],
+                'sex' => ucfirst($member['sex']),
+                'civil_status' => ucfirst($member['civil_status']),
+                'education' => $member['education'],
+                'religion' => $member['religion'],
+                'occupation' => $member['occupation'],
+                'contact' => $member['contact'],
+                'email' => $member['email'],
+                'philhealth' => $member['philhealth'] != 'N/A' ? 'Member' : 'Not Registered',
+                'relationship' => $member['relationship'] ?: 'UNDETERMINED',
+                'is_indigent' => $member['is_indigent'],
+                'is_4ps' => $member['is_4ps'],
+                'medical_history' => $member['medical_history'],
+                'birthdate' => $member['birthdate']
+            ];
         }
         
         $households[] = [
@@ -179,6 +221,259 @@ function getHouseholdsEnhanced() {
     ]);
 }
 
+// Smart relationship detection algorithm (read-only for admin viewing)
+function smartRelationshipDetection($members, $house_number, $purok, $updateDatabase = false) {
+    global $conn;
+    
+    if (empty($members)) return $members;
+    
+    // Sort members by priority for head selection
+    usort($members, function($a, $b) {
+        // Priority: married adults > single adults > minors
+        $a_priority = getHeadPriority($a);
+        $b_priority = getHeadPriority($b);
+        
+        if ($a_priority == $b_priority) {
+            return $b['age'] - $a['age']; // Older first if same priority
+        }
+        return $a_priority - $b_priority; // Lower priority number = higher priority
+    });
+    
+    $head_assigned = false;
+    $spouse_assigned = false;
+    
+    foreach ($members as &$member) {
+        // Skip if relationship already determined and not UNDETERMINED
+        if (!empty($member['relationship']) && $member['relationship'] !== 'UNDETERMINED' && $member['relationship'] !== null) {
+            if ($member['relationship'] === 'HEAD') $head_assigned = true;
+            if ($member['relationship'] === 'SPOUSE') $spouse_assigned = true;
+            continue;
+        }
+        
+        // Assign HEAD (highest priority adult)
+        if (!$head_assigned && $member['age'] >= 18) {
+            $member['relationship'] = 'HEAD';
+            $head_assigned = true;
+            // Only update database if explicitly allowed (not for admin viewing)
+            if ($updateDatabase) {
+                updateMemberRelationship($member['id'], 'HEAD');
+            }
+            continue;
+        }
+        
+        // Assign SPOUSE (married person of opposite sex to head, if exists)
+        if ($head_assigned && !$spouse_assigned && $member['age'] >= 18) {
+            $head_member = array_filter($members, function($m) { return $m['relationship'] === 'HEAD'; });
+            $head_member = reset($head_member);
+            
+            if ($head_member && 
+                $member['civil_status'] === 'married' && 
+                $head_member['civil_status'] === 'married' &&
+                $member['sex'] !== $head_member['sex']) {
+                $member['relationship'] = 'SPOUSE';
+                $spouse_assigned = true;
+                if ($updateDatabase) {
+                    updateMemberRelationship($member['id'], 'SPOUSE');
+                }
+                continue;
+            }
+        }
+        
+        // Determine other relationships based on age and context
+        if ($member['age'] < 18) {
+            // Children
+            $member['relationship'] = $member['sex'] === 'male' ? 'SON' : 'DAUGHTER';
+        } elseif ($member['age'] >= 60) {
+            // Likely parents/grandparents
+            $older_adults = array_filter($members, function($m) use ($member) { 
+                return $m['age'] > $member['age'] && $m['age'] >= 18; 
+            });
+            
+            if (empty($older_adults)) {
+                $member['relationship'] = $member['sex'] === 'male' ? 'GRANDFATHER' : 'GRANDMOTHER';
+            } else {
+                $member['relationship'] = $member['sex'] === 'male' ? 'FATHER' : 'MOTHER';
+            }
+        } else {
+            // Adult children or siblings
+            $head_age = 0;
+            foreach ($members as $m) {
+                if ($m['relationship'] === 'HEAD') {
+                    $head_age = $m['age'];
+                    break;
+                }
+            }
+            
+            $age_difference = abs($member['age'] - $head_age);
+            
+            if ($age_difference < 10) {
+                // Likely sibling
+                $member['relationship'] = $member['sex'] === 'male' ? 'BROTHER' : 'SISTER';
+            } else {
+                // Likely adult child
+                $member['relationship'] = $member['sex'] === 'male' ? 'SON' : 'DAUGHTER';
+            }
+        }
+        
+        // Only update database if explicitly allowed
+        if ($updateDatabase) {
+            updateMemberRelationship($member['id'], $member['relationship']);
+        }
+    }
+    
+    return $members;
+}
+
+function getHeadPriority($member) {
+    // Lower number = higher priority
+    if ($member['age'] >= 18 && $member['civil_status'] === 'married') return 1;
+    if ($member['age'] >= 25 && $member['civil_status'] === 'single') return 2;
+    if ($member['age'] >= 18) return 3;
+    return 4; // minors
+}
+
+function updateMemberRelationship($member_id, $relationship) {
+    global $conn;
+    $query = "UPDATE residents SET relationship_to_head = ? WHERE id = ?";
+    $stmt = mysqli_prepare($conn, $query);
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "si", $relationship, $member_id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
+}
+
+function getHouseholdDetails() {
+    global $conn;
+    
+    $household_id = $_GET['id'] ?? '';
+    
+    if (empty($household_id)) {
+        echo json_encode(['error' => 'Household ID is required']);
+        return;
+    }
+    
+    // Parse household ID (format: HH-PUROK-HOUSE_NUMBER)
+    $parts = explode('-', $household_id);
+    if (count($parts) < 3) {
+        echo json_encode(['error' => 'Invalid household ID format']);
+        return;
+    }
+    
+    $purok = $parts[1];
+    $house_number = ltrim($parts[2], '0'); // Remove leading zeros
+    
+    $query = "
+        SELECT 
+            r.*,
+            CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name, COALESCE(CONCAT(' ', suffix), '')) as full_name
+        FROM residents r
+        WHERE house_number = ? AND purok = ? AND resident_status = 'Active'
+        ORDER BY 
+            CASE 
+                WHEN relationship_to_head = 'HEAD' THEN 0
+                WHEN relationship_to_head = 'SPOUSE' THEN 1
+                ELSE 2
+            END,
+            age DESC
+    ";
+    
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, "ss", $house_number, $purok);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    $members = [];
+    $household_stats = [
+        'has_indigent' => false,
+        'has_4ps' => false,
+        'senior_count' => 0,
+        'total_members' => 0
+    ];
+    
+    while ($row = mysqli_fetch_assoc($result)) {
+        $members[] = [
+            'name' => $row['full_name'],
+            'relationship' => $row['relationship_to_head'] ?: 'UNDETERMINED',
+            'age' => $row['age'],
+            'occupation' => $row['occupation'] ?: 'N/A',
+            'is_indigent' => $row['is_indigent'] == 1,
+            'is_4ps' => $row['is_4ps_member'] == 1,
+            'philhealth' => !empty($row['philhealth_number']) ? 'Member' : 'Not Registered'
+        ];
+        
+        if ($row['is_indigent']) $household_stats['has_indigent'] = true;
+        if ($row['is_4ps_member']) $household_stats['has_4ps'] = true;
+        if ($row['age'] >= 60) $household_stats['senior_count']++;
+        $household_stats['total_members']++;
+    }
+    
+    $response = [
+        'house_number' => $house_number,
+        'purok' => $purok,
+        'members' => $members,
+        'household_type' => determineHouseholdType($members),
+        ...$household_stats
+    ];
+    
+    echo json_encode($response);
+}
+
+function determineHouseholdType($members) {
+    if (count($members) === 1) return 'Single Person';
+    
+    $has_head = false;
+    $has_spouse = false;
+    $has_children = false;
+    $has_extended = false;
+    
+    foreach ($members as $member) {
+        switch ($member['relationship']) {
+            case 'HEAD':
+                $has_head = true;
+                break;
+            case 'SPOUSE':
+                $has_spouse = true;
+                break;
+            case 'SON':
+            case 'DAUGHTER':
+                $has_children = true;
+                break;
+            case 'FATHER':
+            case 'MOTHER':
+            case 'GRANDFATHER':
+            case 'GRANDMOTHER':
+            case 'BROTHER':
+            case 'SISTER':
+                $has_extended = true;
+                break;
+        }
+    }
+    
+    if ($has_extended) return 'Extended Family';
+    if ($has_head && $has_spouse && $has_children) return 'Nuclear Family';
+    if ($has_head && $has_spouse) return 'Nuclear Family';
+    if ($has_head && $has_children) return 'Single Parent Family';
+    
+    return 'Composite';
+}
+
+// These functions are commented out - admins cannot edit census data
+/*
+function autoDetectAllRelationships() {
+    // Admin editing disabled
+    echo json_encode(['error' => 'Census editing is not available for administrators']);
+}
+
+function updateRelationship() {
+    // Admin editing disabled  
+    echo json_encode(['error' => 'Census editing is not available for administrators']);
+}
+*/
+
+// ... (rest of the existing functions: exportToExcelEnhanced, getStatisticsEnhanced, updateRelationship)
+// Keep all other existing functions as they are
+
 function exportToExcelEnhanced() {
     global $conn;
     
@@ -192,7 +487,7 @@ function exportToExcelEnhanced() {
     $spreadsheet->getProperties()
         ->setCreator('Barangay Balas Management System')
         ->setTitle('Complete Census Data Export')
-        ->setDescription('Comprehensive Household Census Data with all information');
+        ->setDescription('Comprehensive Household Census Data with Family Relationships');
     
     // Title
     $sheet->setCellValue('A1', 'BARANGAY BALAS - COMPREHENSIVE HOUSEHOLD CENSUS REPORT');
@@ -205,7 +500,7 @@ function exportToExcelEnhanced() {
     $sheet->mergeCells('A2:S2');
     $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     
-    // Headers - Complete census data
+    // Headers
     $headers = [
         'A4' => 'House Number',
         'B4' => 'Purok', 
@@ -239,7 +534,7 @@ function exportToExcelEnhanced() {
         ->getStartColor()->setRGB('4472C4');
     $sheet->getStyle('A4:S4')->getFont()->getColor()->setRGB('FFFFFF');
     
-    // Get all census data
+    // Get all census data with proper relationships
     $query = "
         SELECT 
             r.*,
@@ -273,23 +568,12 @@ function exportToExcelEnhanced() {
     }
     
     $row = 5;
-    $current_household = '';
-    $household_member_count = 0;
     
     while ($data = mysqli_fetch_assoc($result)) {
-        $household_key = $data['house_number'] . '-' . $data['purok'];
-        
-        // Check if this is a new household for member count
-        if ($household_key !== $current_household) {
-            $current_household = $household_key;
-            $household_member_count = 0;
-        }
-        $household_member_count++;
-        
         // Determine relationship if not set
-        $relationship = $data['relationship_to_head'] ?: 'MEMBER';
+        $relationship = $data['relationship_to_head'] ?: 'UNDETERMINED';
         
-        // Fill complete data
+        // Fill data
         $sheet->setCellValue("A$row", $data['house_number']);
         $sheet->setCellValue("B$row", $data['purok']);
         $sheet->setCellValue("C$row", $data['full_name']);
@@ -330,64 +614,9 @@ function exportToExcelEnhanced() {
     $sheet->getStyle("A4:S" . ($row - 1))->getBorders()->getAllBorders()
         ->setBorderStyle(Border::BORDER_THIN);
     
-    // Enhanced Summary section
-    $summary_row = $row + 2;
-    $sheet->setCellValue("A$summary_row", 'DETAILED STATISTICS');
-    $sheet->mergeCells("A$summary_row:D$summary_row");
-    $sheet->getStyle("A$summary_row")->getFont()->setBold(true);
-    
-    // Get comprehensive statistics
-    $stats_query = "
-        SELECT 
-            COUNT(DISTINCT house_number, purok) as total_households,
-            COUNT(*) as total_residents,
-            SUM(CASE WHEN sex = 'male' THEN 1 ELSE 0 END) as male_population,
-            SUM(CASE WHEN sex = 'female' THEN 1 ELSE 0 END) as female_population,
-            SUM(CASE WHEN age < 18 THEN 1 ELSE 0 END) as children,
-            SUM(CASE WHEN age >= 18 AND age < 60 THEN 1 ELSE 0 END) as adults,
-            SUM(CASE WHEN age >= 60 THEN 1 ELSE 0 END) as seniors,
-            SUM(CASE WHEN is_indigent = 1 THEN 1 ELSE 0 END) as indigent_count,
-            SUM(CASE WHEN is_4ps_member = 1 THEN 1 ELSE 0 END) as fourps_count,
-            SUM(CASE WHEN philhealth_number IS NOT NULL AND philhealth_number != '' THEN 1 ELSE 0 END) as philhealth_members
-        FROM residents 
-        WHERE resident_status = 'Active'
-    ";
-    $stats_result = mysqli_query($conn, $stats_query);
-    $stats = mysqli_fetch_assoc($stats_result);
-    
-    $summary_row++;
-    $sheet->setCellValue("A$summary_row", 'Total Households:');
-    $sheet->setCellValue("B$summary_row", $stats['total_households']);
-    $sheet->setCellValue("C$summary_row", 'Total Residents:');
-    $sheet->setCellValue("D$summary_row", $stats['total_residents']);
-    
-    $summary_row++;
-    $sheet->setCellValue("A$summary_row", 'Male Population:');
-    $sheet->setCellValue("B$summary_row", $stats['male_population']);
-    $sheet->setCellValue("C$summary_row", 'Female Population:');
-    $sheet->setCellValue("D$summary_row", $stats['female_population']);
-    
-    $summary_row++;
-    $sheet->setCellValue("A$summary_row", 'Children (0-17):');
-    $sheet->setCellValue("B$summary_row", $stats['children']);
-    $sheet->setCellValue("C$summary_row", 'Adults (18-59):');
-    $sheet->setCellValue("D$summary_row", $stats['adults']);
-    
-    $summary_row++;
-    $sheet->setCellValue("A$summary_row", 'Seniors (60+):');
-    $sheet->setCellValue("B$summary_row", $stats['seniors']);
-    $sheet->setCellValue("C$summary_row", 'Indigent Families:');
-    $sheet->setCellValue("D$summary_row", $stats['indigent_count']);
-    
-    $summary_row++;
-    $sheet->setCellValue("A$summary_row", '4Ps Members:');
-    $sheet->setCellValue("B$summary_row", $stats['fourps_count']);
-    $sheet->setCellValue("C$summary_row", 'PhilHealth Members:');
-    $sheet->setCellValue("D$summary_row", $stats['philhealth_members']);
-    
     // Output file
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="Barangay_Balas_Complete_Census_' . date('Y-m-d') . '.xlsx"');
+    header('Content-Disposition: attachment;filename="Barangay_Balas_Census_With_Relationships_' . date('Y-m-d') . '.xlsx"');
     header('Cache-Control: max-age=0');
     
     $writer = new Xlsx($spreadsheet);
@@ -410,7 +639,8 @@ function getStatisticsEnhanced() {
             SUM(CASE WHEN is_indigent = 1 THEN 1 ELSE 0 END) as indigent_families,
             SUM(CASE WHEN is_4ps_member = 1 THEN 1 ELSE 0 END) as fourps_members,
             SUM(CASE WHEN philhealth_number IS NOT NULL AND philhealth_number != '' THEN 1 ELSE 0 END) as philhealth_members,
-            SUM(CASE WHEN relationship_to_head = 'HEAD' THEN 1 ELSE 0 END) as household_heads
+            SUM(CASE WHEN relationship_to_head = 'HEAD' THEN 1 ELSE 0 END) as household_heads,
+            SUM(CASE WHEN relationship_to_head IS NULL OR relationship_to_head = '' THEN 1 ELSE 0 END) as undetermined_relationships
         FROM residents 
         WHERE resident_status = 'Active'
     ";
@@ -440,53 +670,6 @@ function updateRelationship() {
         echo json_encode(['success' => true, 'message' => 'Relationship updated successfully']);
     } else {
         echo json_encode(['error' => 'Failed to update relationship']);
-    }
-}
-
-// Function to auto-determine relationships based on household data
-function autoDetectRelationships($house_number, $purok) {
-    global $conn;
-    
-    // Get all members of the household ordered by age
-    $query = "
-        SELECT id, age, sex, civil_status 
-        FROM residents 
-        WHERE house_number = ? AND purok = ? AND resident_status = 'Active'
-        ORDER BY 
-            CASE WHEN civil_status = 'married' THEN 0 ELSE 1 END,
-            age DESC
-    ";
-    
-    $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "ss", $house_number, $purok);
-    mysqli_stmt_execute($stmt);
-    $members = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-    
-    if (empty($members)) return;
-    
-    // Set the first (oldest married or oldest overall) as HEAD
-    $update_query = "UPDATE residents SET relationship_to_head = ? WHERE id = ?";
-    $update_stmt = mysqli_prepare($conn, $update_query);
-    
-    foreach ($members as $index => $member) {
-        $relationship = 'MEMBER'; // default
-        
-        if ($index === 0) {
-            $relationship = 'HEAD';
-        } elseif ($index === 1 && $member['civil_status'] === 'married') {
-            $relationship = 'SPOUSE';
-        } elseif ($index > 1 || ($index === 1 && $member['civil_status'] !== 'married')) {
-            // For children, determine based on age and household head's age
-            if ($member['age'] < 18) {
-                $relationship = ($member['sex'] === 'male') ? 'SON' : 'DAUGHTER';
-            } else {
-                // Adult children or other relations need manual review
-                $relationship = 'MEMBER';
-            }
-        }
-        
-        mysqli_stmt_bind_param($update_stmt, "si", $relationship, $member['id']);
-        mysqli_stmt_execute($update_stmt);
     }
 }
 ?>
