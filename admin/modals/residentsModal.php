@@ -322,14 +322,7 @@
                                             <p class="text-muted mb-0 resident-sex"></p>
                                         </div>
                                     </div>
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Civil Status:</strong></p>
-                                        </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 resident-civil-status"></p>
-                                        </div>
-                                    </div>
+                                   
                                 </div>
                                 <div class="col-md-6">
                                     <div class="row mb-3">

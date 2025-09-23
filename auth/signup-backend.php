@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Generate address
     $houseNumber = $_POST['houseNumber'] ?? '';
     $purok = $_POST['purok'] ?? '';
-    $address = "House $houseNumber, Purok $purok, Balas, Mexico, Pampanga, Philippines";
+    $address = "House $houseNumber, $purok, Balas, Mexico, Pampanga, Philippines";
 
     // Process file upload
     $validIdPath = '';

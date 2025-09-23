@@ -1,320 +1,367 @@
 <?php
-// Enhanced census-backend.php with better duplicate prevention
+require_once '../../auth/auth.php';
 require_once '../../config/db.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '../../../vendor/autoload.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $household_id = $_POST['household_id'] ?? null;
-    $house_number = $_POST['householdNo'] ?? '';
-    $purok = $_POST['purok'] ?? '';
-    $water_source = $_POST['waterSource'] ?? '';
-    $toilet_facility = $_POST['toilet'] ?? '';
-    $current_user_id = $_SESSION['user_id'] ?? null;
-    
-    // Begin transaction
-    $conn->begin_transaction();
-    
-    try {
-        // 1. ENHANCED HOUSEHOLD DUPLICATE CHECK
-        $existing_household = null;
-        if ($household_id) {
-            // Use existing household ID
-            $existing_household = ['id' => $household_id];
-        } else {
-            // Check for existing household by house_number AND purok combination
-            $check_stmt = $conn->prepare("SELECT id FROM households WHERE house_number = ? AND purok = ? LIMIT 1");
-            $check_stmt->bind_param("ss", $house_number, $purok);
-            $check_stmt->execute();
-            $result = $check_stmt->get_result();
-            if ($result && $result->num_rows > 0) {
-                $existing_household = $result->fetch_assoc();
-                $household_id = $existing_household['id'];
-            }
-            $check_stmt->close();
-        }
-        
-        // Update or create household information
-        if ($household_id) {
-            $stmt = $conn->prepare("UPDATE households SET house_number = ?, purok = ?, 
-                                  type_of_water_source = ?, type_of_toilet_facility = ? 
-                                  WHERE id = ?");
-            $stmt->bind_param("ssssi", $house_number, $purok, $water_source, $toilet_facility, $household_id);
-        } else {
-            $stmt = $conn->prepare("INSERT INTO households (house_number, purok, 
-                                  type_of_water_source, type_of_toilet_facility) 
-                                  VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("ssss", $house_number, $purok, $water_source, $toilet_facility);
-        }
-        
-        $stmt->execute();
-        $stmt->close();
-        
-        if (!$household_id) {
-            $household_id = $conn->insert_id;
-        }
-        
-        // 2. ENHANCED MEMBER PROCESSING WITH COMPREHENSIVE DUPLICATE PREVENTION
-        $member_ids = $_POST['member_id'] ?? [];
-        $existing_members = $_POST['existing_member'] ?? [];
-        $names = $_POST['name'] ?? [];
-        $relationships = $_POST['relationship'] ?? [];
-        $ages = $_POST['age'] ?? [];
-        $genders = $_POST['gender'] ?? [];
-        $civil_statuses = $_POST['civil_status'] ?? [];
-        $occupations = $_POST['occupation'] ?? [];
-        $educations = $_POST['education'] ?? [];
-        $philhealths = $_POST['philhealth'] ?? [];
-        $_4ps = $_POST['4ps'] ?? [];
-        $indigents = $_POST['indigent'] ?? [];
-        $medical_histories = $_POST['medical_history'] ?? [];
-        
-        // Track processed residents to avoid duplicates in this submission
-        $processed_residents = [];
-        
-        // Process each member with enhanced duplicate detection
-        for ($i = 0; $i < count($names); $i++) {
-            if (empty(trim($names[$i]))) continue;
-            
-            $resident_id = null;
-            
-            // Priority 1: Use existing member ID if provided
-            if (!empty($existing_members[$i])) {
-                $resident_id = intval($existing_members[$i]);
-            }
-            // Priority 2: Use member_id if provided (for updates)
-            elseif (!empty($member_ids[$i])) {
-                $resident_id = intval($member_ids[$i]);
-            }
-            // Priority 3: ENHANCED SEARCH for existing resident
-            else {
-                $resident_id = findExistingResident($names[$i], $house_number, $purok, $conn);
-            }
-            
-            // Skip if this resident was already processed in this submission
-            if ($resident_id && in_array($resident_id, $processed_residents)) {
-                continue;
-            }
-            
-            // If no existing resident found, create a new one
-            if (!$resident_id) {
-                $resident_id = createNewResident($names[$i], $ages[$i], $genders[$i], 
-                    $civil_statuses[$i], $house_number, $purok, $conn);
-            }
-            
-            // 3. ENHANCED HOUSEHOLD MEMBER DUPLICATE CHECK
-            if (!isResidentAlreadyInHousehold($household_id, $resident_id, $conn)) {
-                // Add new household member
-                addHouseholdMember($household_id, $resident_id, $relationships[$i], $ages[$i], 
-                    $civil_statuses[$i], $educations[$i], $occupations[$i], $philhealths[$i], 
-                    $_4ps[$i], $indigents[$i], $medical_histories[$i], $current_user_id, $conn);
-            } else {
-                // Update existing household member
-                updateHouseholdMember($household_id, $resident_id, $relationships[$i], $ages[$i], 
-                    $civil_statuses[$i], $educations[$i], $occupations[$i], $philhealths[$i], 
-                    $_4ps[$i], $indigents[$i], $medical_histories[$i], $current_user_id, $conn);
-            }
-            
-            // Mark this resident as processed
-            $processed_residents[] = $resident_id;
-        }
-        
-        // Log census activity
-        logCensusActivity($current_user_id, $house_number, $purok, $conn);
-        
-        // Commit transaction
-        $conn->commit();
-        
-        // Update session with household_id
-        $_SESSION['household_id'] = $household_id;
-        
-        // Redirect with success message
-        header("Location: census.php?success=1&household_id=" . $household_id);
-        exit();
-        
-    } catch (Exception $e) {
-        // Rollback transaction on error
-        $conn->rollback();
-        
-        // Redirect with error message
-        header("Location: census.php?error=1&message=" . urlencode($e->getMessage()));
-        exit();
-    }
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+
+
+
+header('Content-Type: application/json');
+
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+switch($action) {
+    case 'export_household':
+        exportHouseholdData();
+        break;
+    case 'get_household_data':
+        getHouseholdData();
+        break;
+    default:
+        echo json_encode(['error' => 'Invalid action']);
+        break;
 }
 
-// ENHANCED HELPER FUNCTIONS
-
-function findExistingResident($full_name, $house_number, $purok, $conn) {
-    $name_parts = explode(' ', trim($full_name), 2);
-    $first_name = $name_parts[0] ?? '';
-    $last_name = $name_parts[1] ?? '';
+function exportHouseholdData() {
+    global $conn;
     
-    // Search with multiple criteria for better matching
-    $search_stmt = $conn->prepare("
-        SELECT id FROM residents 
-        WHERE (first_name = ? AND last_name = ?) 
-           OR (house_number = ? AND purok = ? AND first_name = ?)
-           OR (CONCAT(first_name, ' ', last_name) = ?)
+    $resident_id = $_SESSION['user_id'];
+    
+    // Get current resident's house info
+    $resident_query = "SELECT house_number, purok FROM residents WHERE id = ?";
+    $stmt = mysqli_prepare($conn, $resident_query);
+    mysqli_stmt_bind_param($stmt, "i", $resident_id);
+    mysqli_stmt_execute($stmt);
+    $resident_info = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    
+    if (!$resident_info) {
+        echo json_encode(['error' => 'Resident not found']);
+        return;
+    }
+    
+    // Create new spreadsheet
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    
+    // Set document properties
+    $spreadsheet->getProperties()
+        ->setCreator('Barangay Balas Management System')
+        ->setTitle('My Household Census Report')
+        ->setDescription('Personal Household Census Data');
+    
+    // Title
+    $sheet->setCellValue('A1', 'MY HOUSEHOLD CENSUS REPORT');
+    $sheet->mergeCells('A1:J1');
+    $sheet->getStyle('A1')->getFont()->setSize(18)->setBold(true);
+    $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    
+    // Household Info
+    $sheet->setCellValue('A2', 'House Number: #' . $resident_info['house_number'] . ', ' . $resident_info['purok'] . ', Barangay Balas');
+    $sheet->mergeCells('A2:J2');
+    $sheet->getStyle('A2')->getFont()->setSize(12)->setBold(true);
+    $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    
+    // Date
+    $sheet->setCellValue('A3', 'Generated on: ' . date('F d, Y h:i A'));
+    $sheet->mergeCells('A3:J3');
+    $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    
+    // Headers
+    $headers = [
+        'A5' => 'House Number',
+        'B5' => 'Purok', 
+        'C5' => 'Full Name',
+        'D5' => 'Relationship to Head',
+        'E5' => 'Age',
+        'F5' => 'Sex',
+        'G5' => 'Birthdate',
+        'H5' => 'Civil Status',
+        'I5' => 'Educational Attainment',
+        'J5' => 'Religion',
+        'K5' => 'Occupation',
+        'L5' => 'Contact Number',
+        'M5' => 'Email',
+        'N5' => 'PhilHealth Status',
+        'O5' => 'Indigent Status',
+        'P5' => '4Ps Member',
+        'Q5' => 'Medical History',
+        'R5' => 'Household Size',
+        'S5' => 'Address'
+    ];
+    
+    foreach ($headers as $cell => $header) {
+        $sheet->setCellValue($cell, $header);
+    }
+    
+    // Style headers
+    $sheet->getStyle('A5:J5')->getFont()->setBold(true);
+    $sheet->getStyle('A5:J5')->getFill()
+        ->setFillType(Fill::FILL_SOLID)
+        ->getStartColor()->setRGB('4472C4');
+    $sheet->getStyle('A5:J5')->getFont()->getColor()->setRGB('FFFFFF');
+    $sheet->getStyle('A5:J5')->getBorders()->getAllBorders()
+        ->setBorderStyle(Border::BORDER_THIN);
+    
+    // Get household members
+    $query = "
+        SELECT 
+            r.*,
+            CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) as full_name
+        FROM residents r
+        WHERE house_number = ? 
+        AND purok = ? 
+        AND resident_status = 'Active'
         ORDER BY 
             CASE 
-                WHEN first_name = ? AND last_name = ? THEN 1
-                WHEN house_number = ? AND purok = ? THEN 2
-                ELSE 3
-            END
-        LIMIT 1
-    ");
+                WHEN LOWER(civil_status) = 'married' AND age = (
+                    SELECT MIN(age) FROM residents r2 
+                    WHERE r2.house_number = r.house_number 
+                    AND r2.purok = r.purok 
+                    AND LOWER(r2.civil_status) = 'married'
+                    AND r2.resident_status = 'Active'
+                ) THEN 0
+                ELSE age
+            END,
+            age
+    ";
     
-    $search_stmt->bind_param("ssssssssss", 
-        $first_name, $last_name, $house_number, $purok, $first_name, 
-        $full_name, $first_name, $last_name, $house_number, $purok
-    );
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, "ss", $resident_info['house_number'], $resident_info['purok']);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     
-    $search_stmt->execute();
-    $result = $search_stmt->get_result();
+    $row = 6;
+    $member_count = 0;
     
-    if ($result && $result->num_rows > 0) {
-        $resident_data = $result->fetch_assoc();
-        $search_stmt->close();
-        return $resident_data['id'];
-    }
-    
-    $search_stmt->close();
-    return null;
-}
-
-function createNewResident($full_name, $age, $gender, $civil_status, $house_number, $purok, $conn) {
-    $name_parts = explode(' ', trim($full_name), 2);
-    $first_name = $name_parts[0] ?? '';
-    $last_name = $name_parts[1] ?? '';
-    
-    $birth_year = date('Y') - intval($age);
-    $birthdate = $birth_year . '-01-01';
-    $address = "House $house_number, Purok $purok, Balas, Mexico, Pampanga, Philippines";
-    
-    $create_stmt = $conn->prepare("INSERT INTO residents 
-        (first_name, last_name, sex, birthdate, age, civil_status, house_number, purok, 
-         address, verification_status, contact_number, email) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Unverified', '0', '0')");
-    
-    $create_stmt->bind_param("ssssissss", 
-        $first_name, $last_name, $gender, $birthdate, $age, 
-        $civil_status, $house_number, $purok, $address
-    );
-    
-    $create_stmt->execute();
-    $resident_id = $conn->insert_id;
-    $create_stmt->close();
-    
-    return $resident_id;
-}
-
-function isResidentAlreadyInHousehold($household_id, $resident_id, $conn) {
-    $check_stmt = $conn->prepare("SELECT id FROM household_members WHERE household_id = ? AND resident_id = ? LIMIT 1");
-    $check_stmt->bind_param("ii", $household_id, $resident_id);
-    $check_stmt->execute();
-    $result = $check_stmt->get_result();
-    $exists = $result && $result->num_rows > 0;
-    $check_stmt->close();
-    
-    return $exists;
-}
-
-function addHouseholdMember($household_id, $resident_id, $relationship, $age, $civil_status, 
-                           $education, $occupation, $philhealth, $_4ps, $indigent, $medical_history, 
-                           $current_user_id, $conn) {
-    
-    $member_stmt = $conn->prepare("INSERT INTO household_members 
-        (household_id, resident_id, relationship_to_head, age, civil_status, 
-         educational_attainment, occupation, philhealth_number, is_4ps_member, 
-         is_indigent, medical_history, is_primary_member, added_by_resident_id) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    
-    $has_philhealth = ($philhealth === 'Yes') ? $philhealth : NULL;
-    $is_4ps = ($_4ps === 'Yes') ? 1 : 0;
-    $is_indigent_val = ($indigent === 'Yes') ? 1 : 0;
-    $is_primary = ($relationship === 'Head') ? 1 : 0;
-    
-    $member_stmt->bind_param("iisisssssissi", 
-        $household_id, $resident_id, $relationship, $age, 
-        $civil_status, $education, $occupation, 
-        $has_philhealth, $is_4ps, $is_indigent_val, $medical_history, 
-        $is_primary, $current_user_id
-    );
-    
-    $member_stmt->execute();
-    $member_stmt->close();
-}
-
-function updateHouseholdMember($household_id, $resident_id, $relationship, $age, $civil_status, 
-                              $education, $occupation, $philhealth, $_4ps, $indigent, $medical_history, 
-                              $current_user_id, $conn) {
-    
-    $update_stmt = $conn->prepare("UPDATE household_members SET 
-        relationship_to_head = ?, age = ?, civil_status = ?, 
-        educational_attainment = ?, occupation = ?, philhealth_number = ?, 
-        is_4ps_member = ?, is_indigent = ?, medical_history = ?, is_primary_member = ?,
-        added_by_resident_id = ?, date_added = CURRENT_TIMESTAMP
-        WHERE household_id = ? AND resident_id = ?");
-    
-    $has_philhealth = ($philhealth === 'Yes') ? $philhealth : NULL;
-    $is_4ps = ($_4ps === 'Yes') ? 1 : 0;
-    $is_indigent_val = ($indigent === 'Yes') ? 1 : 0;
-    $is_primary = ($relationship === 'Head') ? 1 : 0;
-    
-    $update_stmt->bind_param("sisssssissiii", 
-        $relationship, $age, $civil_status, $education, 
-        $occupation, $has_philhealth, $is_4ps, $is_indigent_val, 
-        $medical_history, $is_primary, $current_user_id, $household_id, $resident_id
-    );
-    
-    $update_stmt->execute();
-    $update_stmt->close();
-}
-
-function logCensusActivity($user_id, $house_number, $purok, $conn) {
-    $activity_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, activity, ip_address, user_agent) VALUES (?, ?, ?, ?)");
-    $activity = "Updated census data for household $house_number in Purok $purok";
-    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    $agent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
-    $activity_stmt->bind_param("isss", $user_id, $activity, $ip, $agent);
-    $activity_stmt->execute();
-    $activity_stmt->close();
-}
-
-// AJAX endpoint for resident search
-if (isset($_GET['action']) && $_GET['action'] === 'search_residents') {
-    $query = $_GET['q'] ?? '';
-    $results = [];
-    
-    if (strlen($query) >= 2) {
-        $search_stmt = $conn->prepare("
-            SELECT id, first_name, last_name, house_number, purok, verification_status
-            FROM residents 
-            WHERE verification_status = 'Verified' 
-              AND (CONCAT(first_name, ' ', last_name) LIKE ? 
-                   OR first_name LIKE ? 
-                   OR last_name LIKE ?)
-            ORDER BY last_name, first_name
-            LIMIT 10
-        ");
+    while ($data = mysqli_fetch_assoc($result)) {
+        $member_count++;
         
-        $search_query = "%$query%";
-        $search_stmt->bind_param("sss", $search_query, $search_query, $search_query);
-        $search_stmt->execute();
-        $result = $search_stmt->get_result();
-        
-        while ($row = $result->fetch_assoc()) {
-            $results[] = [
-                'id' => $row['id'],
-                'text' => $row['first_name'] . ' ' . $row['last_name'],
-                'address' => 'House ' . $row['house_number'] . ', Purok ' . $row['purok']
-            ];
+        // Determine relationship
+        $relationship = 'MEMBER';
+        if ($member_count === 1) {
+            $relationship = 'HEAD OF FAMILY';
+        } elseif ($member_count === 2 && strtolower($data['civil_status']) === 'married') {
+            $relationship = 'SPOUSE';
+        } elseif ($member_count > 2) {
+            $relationship = (strtolower($data['sex']) === 'male') ? 'SON' : 'DAUGHTER';
         }
         
-        $search_stmt->close();
+        // PhilHealth status
+        $philhealth_status = 'Not Registered';
+        if (!empty($data['philhealth_number'])) {
+            $philhealth_status = 'Member';
+        } elseif ($data['age'] < 18) {
+            $philhealth_status = 'Dependent';
+        }
+        
+        // Fill data
+        $sheet->setCellValue("A$row", $data['full_name']);
+        $sheet->setCellValue("B$row", $relationship);
+        $sheet->setCellValue("C$row", $data['age']);
+        $sheet->setCellValue("D$row", ucfirst($data['sex']));
+        $sheet->setCellValue("E$row", ucfirst($data['civil_status']) ?: 'Single');
+        $sheet->setCellValue("F$row", $data['educational_attainment'] ?: 'N/A');
+        $sheet->setCellValue("G$row", $data['occupation'] ?: 'N/A');
+        $sheet->setCellValue("H$row", $data['contact_number']);
+        $sheet->setCellValue("I$row", $data['email'] ?: 'N/A');
+        $sheet->setCellValue("J$row", $philhealth_status);
+        
+        // Highlight head of household
+        if ($relationship === 'HEAD OF FAMILY') {
+            $sheet->getStyle("A$row:J$row")->getFont()->setBold(true);
+            $sheet->getStyle("A$row:J$row")->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setRGB('E7F3FF');
+        }
+        
+        $row++;
     }
     
-    header('Content-Type: application/json');
-    echo json_encode($results);
-    exit();
+    // Add borders to data
+    if ($member_count > 0) {
+        $sheet->getStyle("A6:J" . ($row - 1))->getBorders()->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN);
+    }
+    
+    // Summary section
+    $summary_row = $row + 2;
+    $sheet->setCellValue("A$summary_row", 'HOUSEHOLD SUMMARY');
+    $sheet->mergeCells("A$summary_row:D$summary_row");
+    $sheet->getStyle("A$summary_row")->getFont()->setBold(true)->setSize(14);
+    
+    // Calculate statistics
+    $adults = 0;
+    $children = 0;
+    $working_members = 0;
+    $males = 0;
+    $females = 0;
+    
+    mysqli_data_seek($result, 0); // Reset result pointer
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, "ss", $resident_info['house_number'], $resident_info['purok']);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    while ($member = mysqli_fetch_assoc($result)) {
+        if ($member['age'] >= 18) {
+            $adults++;
+            if (!empty($member['occupation']) && 
+                strtolower($member['occupation']) !== 'student' && 
+                strtolower($member['occupation']) !== 'n/a') {
+                $working_members++;
+            }
+        } else {
+            $children++;
+        }
+        
+        if (strtolower($member['sex']) === 'male') {
+            $males++;
+        } else {
+            $females++;
+        }
+    }
+    
+    $summary_row++;
+    $sheet->setCellValue("A$summary_row", 'Total Family Members:');
+    $sheet->setCellValue("B$summary_row", $member_count);
+    $summary_row++;
+    $sheet->setCellValue("A$summary_row", 'Adults (18+ years):');
+    $sheet->setCellValue("B$summary_row", $adults);
+    $summary_row++;
+    $sheet->setCellValue("A$summary_row", 'Children (Under 18):');
+    $sheet->setCellValue("B$summary_row", $children);
+    $summary_row++;
+    $sheet->setCellValue("A$summary_row", 'Working Members:');
+    $sheet->setCellValue("B$summary_row", $working_members);
+    $summary_row++;
+    $sheet->setCellValue("A$summary_row", 'Male Members:');
+    $sheet->setCellValue("B$summary_row", $males);
+    $summary_row++;
+    $sheet->setCellValue("A$summary_row", 'Female Members:');
+    $sheet->setCellValue("B$summary_row", $females);
+    
+    // Auto-size columns
+    foreach (range('A', 'J') as $column) {
+        $sheet->getColumnDimension($column)->setAutoSize(true);
+    }
+    
+    // Footer
+    $footer_row = $summary_row + 3;
+    $sheet->setCellValue("A$footer_row", 'This document is generated electronically by the Barangay Balas Management System.');
+    $sheet->mergeCells("A$footer_row:J$footer_row");
+    $sheet->getStyle("A$footer_row")->getFont()->setItalic(true)->setSize(10);
+    $sheet->getStyle("A$footer_row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    
+    // Output file
+    $filename = 'My_Household_Census_' . $resident_info['house_number'] . '_' . $resident_info['purok'] . '_' . date('Y-m-d') . '.xlsx';
+    
+    // Clear any output buffer
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Cache-Control: max-age=1');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+    header('Cache-Control: cache, must-revalidate');
+    header('Pragma: public');
+    
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
+}
+
+function getHouseholdData() {
+    global $conn;
+    
+    $resident_id = $_SESSION['resident_id'];
+    
+    // Get current resident's house info
+    $resident_query = "SELECT house_number, purok FROM residents WHERE id = ?";
+    $stmt = mysqli_prepare($conn, $resident_query);
+    mysqli_stmt_bind_param($stmt, "i", $resident_id);
+    mysqli_stmt_execute($stmt);
+    $resident_info = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    
+    if (!$resident_info) {
+        echo json_encode(['error' => 'Resident not found']);
+        return;
+    }
+    
+    // Get all household members
+    $query = "
+        SELECT 
+            r.*,
+            CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) as full_name
+        FROM residents r
+        WHERE house_number = ? 
+        AND purok = ? 
+        AND resident_status = 'Active'
+        ORDER BY 
+            CASE 
+                WHEN LOWER(civil_status) = 'married' AND age = (
+                    SELECT MIN(age) FROM residents r2 
+                    WHERE r2.house_number = r.house_number 
+                    AND r2.purok = r.purok 
+                    AND LOWER(r2.civil_status) = 'married'
+                    AND r2.resident_status = 'Active'
+                ) THEN 0
+                ELSE age
+            END,
+            age
+    ";
+    
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, "ss", $resident_info['house_number'], $resident_info['purok']);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    $members = [];
+    $member_count = 0;
+    
+    while ($member = mysqli_fetch_assoc($result)) {
+        $member_count++;
+        
+        // Determine relationship
+        $relationship = 'MEMBER';
+        if ($member_count === 1) {
+            $relationship = 'HEAD';
+        } elseif ($member_count === 2 && strtolower($member['civil_status']) === 'married') {
+            $relationship = 'SPOUSE';
+        } elseif ($member_count > 2) {
+            $relationship = (strtolower($member['sex']) === 'male') ? 'SON' : 'DAUGHTER';
+        }
+        
+        $members[] = [
+            'id' => $member['id'],
+            'full_name' => $member['full_name'],
+            'age' => $member['age'],
+            'sex' => ucfirst($member['sex']),
+            'civil_status' => ucfirst($member['civil_status']) ?: 'Single',
+            'occupation' => $member['occupation'] ?: 'N/A',
+            'educational_attainment' => $member['educational_attainment'] ?: 'N/A',
+            'contact_number' => $member['contact_number'],
+            'email' => $member['email'] ?: 'N/A',
+            'philhealth_status' => !empty($member['philhealth_number']) ? 'Member' : ($member['age'] < 18 ? 'Dependent' : 'Not Registered'),
+            'relationship' => $relationship,
+            'is_head' => $relationship === 'HEAD'
+        ];
+    }
+    
+    echo json_encode([
+        'house_number' => $resident_info['house_number'],
+        'purok' => $resident_info['purok'],
+        'members' => $members,
+        'total_members' => $member_count
+    ]);
 }
 ?>

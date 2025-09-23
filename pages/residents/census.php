@@ -1,61 +1,68 @@
 <?php
+// public/census.php - Residents' Household Census Page
 require_once '../../auth/auth.php';
-require_once __DIR__ . '/../../config/db.php';
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once '../../config/db.php';
 
-$household_data = [];
-$household_members = [];
 
-$householdId = $_SESSION['household_id'] ?? ($_GET['household_id'] ?? null);
+// Get resident's household data
+$resident_id = $_SESSION['user_id'];
+$household_query = "
+    SELECT 
+        r.*,
+        CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) as full_name,
+        house_number,
+        purok,
+        address
+    FROM residents r
+    WHERE id = ?
+";
+$stmt = mysqli_prepare($conn, $household_query);
+mysqli_stmt_bind_param($stmt, "i", $resident_id);
+mysqli_stmt_execute($stmt);
+$current_resident = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 
-if ($householdId) {
-    $stmt = $conn->prepare("
-        SELECT id, house_number, purok, type_of_water_source, type_of_toilet_facility
-        FROM households
-        WHERE id = ? LIMIT 1
-    ");
-    $stmt->bind_param("i", $householdId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $household_data = $result ? ($result->fetch_assoc() ?? []) : [];
-    $stmt->close();
+// Get all household members
+$family_query = "
+    SELECT 
+        r.*,
+        CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) as full_name
+    FROM residents r
+    WHERE house_number = ? 
+    AND purok = ? 
+    AND resident_status = 'Active'
+    ORDER BY 
+        CASE 
+            WHEN LOWER(civil_status) = 'married' AND age = (
+                SELECT MIN(age) FROM residents r2 
+                WHERE r2.house_number = r.house_number 
+                AND r2.purok = r.purok 
+                AND LOWER(r2.civil_status) = 'married'
+                AND r2.resident_status = 'Active'
+            ) THEN 0
+            ELSE age
+        END,
+        age
+";
+$stmt = mysqli_prepare($conn, $family_query);
+mysqli_stmt_bind_param($stmt, "ss", $current_resident['house_number'], $current_resident['purok']);
+mysqli_stmt_execute($stmt);
+$family_members = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
 
-    $stmt = $conn->prepare("
-        SELECT 
-            hm.id as member_id,
-            r.id as resident_id,
-            r.first_name, 
-            r.last_name, 
-            hm.relationship_to_head, 
-            r.sex, 
-            hm.civil_status,
-            hm.occupation, 
-            hm.educational_attainment, 
-            hm.philhealth_number,
-            hm.is_4ps_member, 
-            hm.is_indigent, 
-            hm.medical_history,
-            hm.age
-        FROM household_members hm
-        JOIN residents r ON hm.resident_id = r.id
-        WHERE hm.household_id = ?
-        ORDER BY hm.relationship_to_head = 'Head' DESC, r.last_name ASC, r.first_name ASC
-    ");
-    $stmt->bind_param("i", $householdId);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $household_members = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
-    $stmt->close();
-}
+// Calculate statistics
+$total_members = count($family_members);
+$adults = 0;
+$children = 0;
+$working_members = 0;
 
-// Get all verified residents for the dropdown
-$all_residents = [];
-$res_stmt = $conn->prepare("SELECT id, first_name, last_name FROM residents WHERE verification_status = 'Verified' ORDER BY last_name, first_name");
-if ($res_stmt) {
-    $res_stmt->execute();
-    $result = $res_stmt->get_result();
-    $all_residents = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    $res_stmt->close();
+foreach ($family_members as $member) {
+    if ($member['age'] >= 18) {
+        $adults++;
+        if (!empty($member['occupation']) && strtolower($member['occupation']) !== 'student' && strtolower($member['occupation']) !== 'n/a') {
+            $working_members++;
+        }
+    } else {
+        $children++;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -63,27 +70,26 @@ if ($res_stmt) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Census Data - Barangay Balas Portal</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>My Household - Barangay Balas Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Your existing CSS styles */
         :root {
-            --primary-blue:  #0033cc;
+            --primary-blue: #0033cc;
             --secondary-blue: #3a7cb9;
             --accent-red: #e63946;
             --accent-yellow: #ffbe0b;
             --light-gray: #f8f9fa;
             --dark-gray: #343a40;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        
+
         .sidebar {
             background: linear-gradient(180deg, var(--primary-blue), var(--secondary-blue));
             color: white;
@@ -133,49 +139,243 @@ if ($res_stmt) {
         .main-content {
             margin-left: 250px;
             transition: all 0.3s;
+            width: calc(100% - 250px);
         }
         
         .top-navbar {
             background-color: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
         }
-        
-        .content-area {
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            min-height: calc(100vh - 70px);
         }
-        
-        .card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+        .header-card {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            border-radius: 20px;
+            color: white;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0,51,204,0.2);
+        }
+
+        .export-section {
+            background: linear-gradient(135deg, var(--accent-yellow) 0%, #ffd60a 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            color: var(--dark-gray);
+        }
+
+        .export-btn {
+            background: rgba(0,0,0,0.1);
+            border: 2px solid rgba(0,0,0,0.2);
+            color: var(--dark-gray);
+            padding: 12px 30px;
+            border-radius: 25px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .export-btn:hover {
+            background: rgba(0,0,0,0.2);
+            border-color: rgba(0,0,0,0.3);
+            color: var(--dark-gray);
+            transform: translateY(-2px);
+        }
+
+        .member-card {
+            background: white;
+            border-radius: 15px;
             margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: all 0.3s;
             border: none;
         }
-        
-        .card-header {
-            background-color: white;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+        .member-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .member-header {
+            padding: 20px;
+            border-bottom: 2px solid #f8f9fa;
+            position: relative;
+        }
+
+        .head-member {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+        }
+
+        .head-member::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-yellow);
+        }
+
+        .member-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent-yellow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--dark-gray);
+            margin-right: 15px;
+        }
+
+        .head-avatar {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .relationship-badge {
+            background: var(--accent-yellow);
+            color: var(--dark-gray);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .head-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .member-details {
+            padding: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
             font-weight: 600;
-            padding: 15px 20px;
+            color: var(--dark-gray);
+            display: flex;
+            align-items: center;
         }
-        
-        .btn-primary {
-            background-color: var(--primary-blue);
-            border-color: var(--primary-blue);
+
+        .detail-label i {
+            margin-right: 8px;
+            color: var(--primary-blue);
+            width: 16px;
         }
-        
-        .btn-warning {
-            background-color: var(--accent-yellow);
-            border-color: var(--accent-yellow);
-            color: #333;
+
+        .detail-value {
+            color: #6c757d;
+            font-weight: 500;
         }
-        
-        .btn-danger {
-            background-color: var(--accent-red);
-            border-color: var(--accent-red);
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
         }
-        
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .amenities-card {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .amenity-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .amenity-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .amenity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #28a745;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 80px;
@@ -187,19 +387,24 @@ if ($res_stmt) {
             
             .main-content {
                 margin-left: 80px;
+                width: calc(100% - 80px);
             }
             
-            .sidebar-header h3 {
-                display: none;
+            .main-container {
+                padding: 10px;
             }
             
-            .sidebar-menu li {
+            .header-card {
+                padding: 20px;
+            }
+            
+            .member-header {
+                flex-direction: column;
                 text-align: center;
             }
             
-            .sidebar-menu li i {
-                margin-right: 0;
-                font-size: 1.2rem;
+            .member-avatar {
+                margin: 0 auto 15px;
             }
         }
     </style>
@@ -211,121 +416,241 @@ if ($res_stmt) {
 
         <!-- Main Content -->
         <div class="main-content">
-            <?php include '../../includes/navbar.php'?>
+            <?php include '../../includes/navbar.php'?> 
+            
+            <!-- Loading Overlay -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="text-center">
+                    <div class="loading-spinner mb-3"></div>
+                    <h5>Generating Your Household Report...</h5>
+                    <p class="text-muted">Please wait while we prepare your Excel file</p>
+                </div>
+            </div>
 
-            <div class="content-area">
-                <h2 class="mb-4">Census Data</h2>
-                
-                <?php if (isset($_GET['success'])): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        Household information updated successfully!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if (isset($_GET['error'])): ?>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        Error updating household information: <?= htmlspecialchars($_GET['message'] ?? 'Unknown error') ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <?php endif; ?>
-                
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>Household Information</span>
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#updateHouseholdModal">
-                            Update Household
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <h5 class="mb-0">Household Details</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <p><strong>Household No:</strong> <?= htmlspecialchars($household_data['house_number'] ?? 'N/A'); ?></p>
-                                                <p><strong>Purok:</strong> <?= htmlspecialchars($household_data['purok'] ?? 'N/A'); ?></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <h5 class="mb-0">Household Amenities</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <p><strong>Water Source:</strong> <?= htmlspecialchars($household_data['type_of_water_source'] ?? 'N/A'); ?></p>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <p><strong>Toilet Facility:</strong> <?= htmlspecialchars($household_data['type_of_toilet_facility'] ?? 'N/A'); ?></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+            <!-- Main Content Area -->
+            <div class="main-container">
+                <!-- Header -->
+                <div class="header-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="display-6 fw-bold mb-2">
+                                <i class="fas fa-home me-3"></i>My Household
+                            </h1>
+                            <p class="mb-0 opacity-75 fs-5">House #<?php echo htmlspecialchars($current_resident['house_number']); ?>, Purok <?php echo htmlspecialchars($current_resident['purok']); ?>, Barangay Balas</p>
+                            <small class="opacity-75">Household ID: HH-<?php echo substr($current_resident['purok'], -1); ?>-<?php echo str_pad($current_resident['house_number'], 4, '0', STR_PAD_LEFT); ?></small>
                         </div>
-
-                        <h5 class="mb-3">Household Members</h5>
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Relationship</th>
-                                        <th>Age</th>
-                                        <th>Gender</th>
-                                        <th>Civil Status</th>
-                                        <th>Occupation</th>
-                                        <th>Education</th>
-                                        <th>PhilHealth</th>
-                                        <th>4Ps</th>
-                                        <th>Indigent</th>
-                                        <th>Medical History</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (!empty($household_members)): ?>
-                                        <?php foreach ($household_members as $member): ?>
-                                            <tr>
-                                                <td><?= htmlspecialchars(trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''))); ?></td>
-                                                <td><?= htmlspecialchars($member['relationship_to_head'] ?? ''); ?></td>
-                                                <td><?= htmlspecialchars($member['age'] ?? ''); ?></td>
-                                                <td><?= htmlspecialchars(ucfirst($member['sex'] ?? '')); ?></td>
-                                                <td><?= htmlspecialchars($member['civil_status'] ?? ''); ?></td>
-                                                <td><?= htmlspecialchars($member['occupation'] ?? ''); ?></td>
-                                                <td><?= htmlspecialchars($member['educational_attainment'] ?? ''); ?></td>
-                                                <td><?= (!empty($member['philhealth_number'])) ? 'Yes' : 'No'; ?></td>
-                                                <td><?= !empty($member['is_4ps_member']) ? 'Yes' : 'No'; ?></td>
-                                                <td><?= !empty($member['is_indigent']) ? 'Yes' : 'No'; ?></td>
-                                                <td><?= htmlspecialchars($member['medical_history'] ?? ''); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <tr><td colspan="11" class="text-center">No household members found</td></tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
+                        <div class="col-md-4 text-end mt-3 mt-md-0">
+                            <div class="d-flex flex-column align-items-end">
+                                <div class="badge bg-light text-dark fs-6 mb-2"><?php echo $total_members; ?> Family Member<?php echo $total_members > 1 ? 's' : ''; ?></div>
+                                <small class="opacity-75">Last Updated: <?php echo date('F d, Y'); ?></small>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Export Section -->
+                <div class="export-section">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-2">
+                                <i class="fas fa-file-excel me-2"></i>Download Your Household Report
+                            </h4>
+                            <p class="mb-0">Get a complete Excel report of your family's census information for official use</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn export-btn" onclick="exportHouseholdData()">
+                                <i class="fas fa-download me-2"></i>Export My Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Household Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number"><?php echo $total_members; ?></div>
+                        <div class="stat-label">Family Members</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?php echo $adults; ?></div>
+                        <div class="stat-label">Adults</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?php echo $children; ?></div>
+                        <div class="stat-label">Children</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?php echo $working_members; ?></div>
+                        <div class="stat-label">Working Members</div>
+                    </div>
+                </div>
+
+                <!-- Family Members -->
+                <div class="row">
+                    <div class="col-12">
+                        <h4 class="mb-4">
+                            <i class="fas fa-users me-2"></i>Family Members
+                        </h4>
+                    </div>
+                </div>
+
+                <?php foreach ($family_members as $index => $member): 
+                    // Determine relationship
+                    $relationship = 'MEMBER';
+                    if ($index === 0) {
+                        $relationship = 'HEAD';
+                    } elseif ($index === 1 && strtolower($member['civil_status']) === 'married') {
+                        $relationship = 'SPOUSE';
+                    } elseif ($index > 1 || ($index === 1 && strtolower($member['civil_status']) !== 'married')) {
+                        $relationship = (strtolower($member['sex']) === 'male') ? 'SON' : 'DAUGHTER';
+                    }
+                    
+                    $isHead = ($relationship === 'HEAD');
+                    $initials = '';
+                    $names = explode(' ', $member['full_name']);
+                    foreach ($names as $name) {
+                        if (!empty($name)) {
+                            $initials .= strtoupper(substr($name, 0, 1));
+                        }
+                    }
+                    $initials = substr($initials, 0, 2);
+                ?>
+
+                <!-- Family Member Card -->
+                <div class="member-card">
+                    <div class="member-header <?php echo $isHead ? 'head-member' : ''; ?>">
+                        <div class="d-flex align-items-center">
+                            <div class="member-avatar <?php echo $isHead ? 'head-avatar' : ''; ?>"><?php echo $initials; ?></div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1"><?php echo htmlspecialchars($member['full_name']); ?></h5>
+                                <p class="mb-0 <?php echo $isHead ? 'opacity-75' : 'text-muted'; ?>"><?php echo $isHead ? 'Head of Family' : ucwords(strtolower($relationship)); ?></p>
+                            </div>
+                            <span class="relationship-badge <?php echo $isHead ? 'head-badge' : ''; ?>"><?php echo $relationship; ?></span>
+                        </div>
+                    </div>
+                    <div class="member-details">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <span class="detail-label">
+                                        <i class="fas fa-birthday-cake"></i>Age
+                                    </span>
+                                    <span class="detail-value"><?php echo $member['age']; ?> years old</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">
+                                        <i class="fas fa-<?php echo $member['sex'] === 'male' ? 'mars' : 'venus'; ?>"></i>Gender
+                                    </span>
+                                    <span class="detail-value"><?php echo ucfirst($member['sex']); ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">
+                                        <i class="fas fa-heart"></i>Civil Status
+                                    </span>
+                                    <span class="detail-value"><?php echo ucfirst($member['civil_status']) ?: 'Single'; ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">
+                                        <i class="fas fa-briefcase"></i>Occupation
+                                    </span>
+                                    <span class="detail-value"><?php echo $member['occupation'] ?: 'N/A'; ?></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <span class="detail-label">
+                                        <i class="fas fa-graduation-cap"></i>Education
+                                    </span>
+                                    <span class="detail-value"><?php echo $member['educational_attainment'] ?: 'N/A'; ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">
+                                        <i class="fas fa-phone"></i>Contact
+                                    </span>
+                                    <span class="detail-value"><?php echo $member['contact_number'] ?: 'N/A'; ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">
+                                        <i class="fas fa-envelope"></i>Email
+                                    </span>
+                                    <span class="detail-value"><?php echo $member['email'] ?: 'N/A'; ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">
+                                        <i class="fas fa-id-card"></i>PhilHealth
+                                    </span>
+                                    <span class="detail-value <?php echo !empty($member['philhealth_number']) ? 'text-success' : 'text-warning'; ?>">
+                                        <?php echo !empty($member['philhealth_number']) ? 'Member' : ($member['age'] < 18 ? 'Dependent' : 'Not Registered'); ?>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <?php endforeach; ?>
             </div>
         </div>
     </div>
 
-    <?php include "../../pages/modals/censusModal.php"; ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="assets/js/census-resident.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.querySelector('.wrapper').classList.toggle('sidebar-collapsed');
+        function exportHouseholdData() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'flex';
+
+            // Create form and submit
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'census-backend.php';
+            form.style.display = 'none';
+            
+            const actionInput = document.createElement('input');
+            actionInput.name = 'action';
+            actionInput.value = 'export_household';
+            
+            form.appendChild(actionInput);
+            document.body.appendChild(form);
+            
+            form.submit();
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.body.removeChild(form);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Export Successful!',
+                    text: 'Your household report has been downloaded successfully.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }, 2000);
+        }
+        
+        // Mobile sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            function toggleSidebar() {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('expanded');
+                }
+            }
+            
+            const sidebarItems = document.querySelectorAll('.sidebar-menu li');
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        toggleSidebar();
+                    }
+                });
+            });
         });
     </script>
 </body>

@@ -3,16 +3,20 @@ require_once __DIR__ . '/includes/auth.php';
 requireAuth();
 require_once __DIR__ . '/includes/db.php';
 
+date_default_timezone_set('Asia/Manila');
+
 function timeAgo($datetime) {
-    $time = strtotime($datetime);
-    $diff = time() - $time;
+    $dt = new DateTime($datetime, new DateTimeZone('Asia/Manila'));
+    $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
+
+    $diff = $now->getTimestamp() - $dt->getTimestamp();
 
     if ($diff < 60) return $diff . ' seconds ago';
     elseif ($diff < 3600) return floor($diff / 60) . ' minutes ago';
     elseif ($diff < 86400) return floor($diff / 3600) . ' hours ago';
     elseif ($diff < 604800) return floor($diff / 86400) . ' days ago';
     elseif ($diff < 2419200) return floor($diff / 604800) . ' weeks ago';
-    return date('M d, Y', $time);
+    return $dt->format('M d, Y');
 }
 
 if (isset($_POST['addAnnouncement'])) {
@@ -20,13 +24,14 @@ if (isset($_POST['addAnnouncement'])) {
     $content = trim($_POST['content']);
     $date = $_POST['date'];
     $userId = $_SESSION['admin_id'];
+    $now = date('Y-m-d H:i:s');
 
     if (empty($title) || empty($content) || empty($date)) {
         $_SESSION['error'] = "All fields except image are required.";
     } else {
         if (!isset($_SESSION['error'])) {
-            $stmt = $conn->prepare("INSERT INTO announcements (title, content, date_posted, posted_by, created_at) VALUES (?, ?, ?, ?, NOW())");
-            $stmt->bind_param("sssi", $title, $content, $date, $userId);
+            $stmt = $conn->prepare("INSERT INTO announcements (title, content, date_posted, posted_by, created_at) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssis", $title, $content, $now, $userId, $now);
 
             if ($stmt->execute()) {
                 $announcementId = $stmt->insert_id;
@@ -46,7 +51,6 @@ if (isset($_POST['addAnnouncement'])) {
                                 $filename = time() . "_" . uniqid() . "." . $extension;
                                 $targetFile = $targetDir . $filename;
                                 if (move_uploaded_file($_FILES['images']['tmp_name'][$key], $targetFile)) {
-                                    // Insert image path into announcement_images table
                                     $imgStmt = $conn->prepare("INSERT INTO announcement_images (announcement_id, image_path) VALUES (?, ?)");
                                     $imgStmt->bind_param("is", $announcementId, $targetFile);
                                     $imgStmt->execute();
@@ -74,13 +78,14 @@ if (isset($_POST['editAnnouncement'])) {
     $title = trim($_POST['title']);
     $content = trim($_POST['content']);
     $date = $_POST['date'];
+    $now = date('Y-m-d H:i:s'); 
 
     if ($id <= 0 || empty($title) || empty($content) || empty($date)) {
         $_SESSION['error'] = "Invalid data provided.";
     } else {
         if (!isset($_SESSION['error'])) {
-            $stmt = $conn->prepare("UPDATE announcements SET title = ?, content = ?, date_posted = ?, updated_at = NOW() WHERE id = ?");
-            $stmt->bind_param("sssi", $title, $content, $date, $id);
+            $stmt = $conn->prepare("UPDATE announcements SET title = ?, content = ?, date_posted = ?, updated_at = ? WHERE id = ?");
+            $stmt->bind_param("ssssi", $title, $content, $date, $now, $id);
 
             if ($stmt->execute()) {
                 if (!empty($_FILES['images']['name'][0])) {
@@ -123,6 +128,7 @@ if (isset($_POST['deleteAnnouncement'])) {
     if ($id <= 0) {
         $_SESSION['error'] = "Invalid announcement ID.";
     } else {
+        // Delete images
         $imgStmt = $conn->prepare("SELECT image_path FROM announcement_images WHERE announcement_id = ?");
         $imgStmt->bind_param("i", $id);
         $imgStmt->execute();
@@ -134,6 +140,7 @@ if (isset($_POST['deleteAnnouncement'])) {
         }
         $imgStmt->close();
 
+        // Delete announcement
         $delStmt = $conn->prepare("DELETE FROM announcements WHERE id = ?");
         $delStmt->bind_param("i", $id);
         if ($delStmt->execute()) {
@@ -146,3 +153,4 @@ if (isset($_POST['deleteAnnouncement'])) {
     header("Location: announcements.php");
     exit();
 }
+?>

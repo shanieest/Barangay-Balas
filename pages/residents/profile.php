@@ -208,6 +208,19 @@ if (empty($_SESSION['csrf_token'])) {
             border-radius: 10px;
         }
         
+        .section-divider {
+            border-top: 2px solid var(--light-gray);
+            margin: 30px 0 20px 0;
+            padding-top: 20px;
+        }
+        
+        .section-title {
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
                 width: 80px;
@@ -284,97 +297,192 @@ if (empty($_SESSION['csrf_token'])) {
                                     <input type="hidden" name="action" value="update_profile">
                                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                                     
+                                    <!-- Basic Information -->
+                                    <div class="section-title"><i class="fas fa-user me-2"></i>Basic Information</div>
                                     <div class="row mb-3">
-                                        <div class="col-md-4">
-                                            <label class="form-label">First Name</label>
+                                        <div class="col-md-3">
+                                            <label class="form-label">First Name <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="first_name" value="<?= htmlspecialchars($profile['first_name'] ?? '') ?>" required>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <label class="form-label">Middle Name</label>
                                             <input type="text" class="form-control" name="middle_name" value="<?= htmlspecialchars($profile['middle_name'] ?? '') ?>">
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Last Name</label>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="last_name" value="<?= htmlspecialchars($profile['last_name'] ?? '') ?>" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Suffix</label>
+                                            <select class="form-select" name="suffix">
+                                                <option value="">None</option>
+                                                <option value="Jr." <?= ($profile['suffix'] ?? '') == 'Jr.' ? 'selected' : '' ?>>Jr.</option>
+                                                <option value="Sr." <?= ($profile['suffix'] ?? '') == 'Sr.' ? 'selected' : '' ?>>Sr.</option>
+                                                <option value="II" <?= ($profile['suffix'] ?? '') == 'II' ? 'selected' : '' ?>>II</option>
+                                                <option value="III" <?= ($profile['suffix'] ?? '') == 'III' ? 'selected' : '' ?>>III</option>
+                                                <option value="IV" <?= ($profile['suffix'] ?? '') == 'IV' ? 'selected' : '' ?>>IV</option>
+                                            </select>
                                         </div>
                                     </div>
                                     
                                     <div class="row mb-3">
                                         <div class="col-md-4">
-                                            <label class="form-label">Birthdate</label>
-                                            <input type="date" class="form-control" name="birthdate" value="<?= $profile['birthdate'] ?? '' ?>">
+                                            <label class="form-label">Birthdate <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" name="birthdate" value="<?= $profile['birthdate'] ?? '' ?>" required>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Gender</label>
-                                            <select class="form-select" name="sex">
+                                            <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                            <select class="form-select" name="sex" required>
+                                                <option value="">Select Gender</option>
                                                 <option value="male" <?= ($profile['sex'] ?? '') == 'male' ? 'selected' : '' ?>>Male</option>
                                                 <option value="female" <?= ($profile['sex'] ?? '') == 'female' ? 'selected' : '' ?>>Female</option>
                                             </select>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Civil Status</label>
-                                            <select class="form-select" name="civil_status">
+                                            <label class="form-label">Civil Status <span class="text-danger">*</span></label>
+                                            <select class="form-select" name="civil_status" required>
+                                                <option value="">Select Status</option>
                                                 <option value="Single" <?= ($profile['civil_status'] ?? '') == 'Single' ? 'selected' : '' ?>>Single</option>
                                                 <option value="Married" <?= ($profile['civil_status'] ?? '') == 'Married' ? 'selected' : '' ?>>Married</option>
                                                 <option value="Widowed" <?= ($profile['civil_status'] ?? '') == 'Widowed' ? 'selected' : '' ?>>Widowed</option>
                                                 <option value="Separated" <?= ($profile['civil_status'] ?? '') == 'Separated' ? 'selected' : '' ?>>Separated</option>
+                                                <option value="Divorced" <?= ($profile['civil_status'] ?? '') == 'Divorced' ? 'selected' : '' ?>>Divorced</option>
                                             </select>
                                         </div>
                                     </div>
                                     
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Email</label>
-                                            <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($profile['email'] ?? '') ?>">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Mobile Number</label>
-                                            <input type="tel" class="form-control" name="contact_number" value="<?= htmlspecialchars($profile['contact_number'] ?? '') ?>">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-md-4">
-                                            <label class="form-label">House Number</label>
-                                            <input type="text" class="form-control" name="house_number" value="<?= htmlspecialchars($profile['house_number'] ?? '') ?>" required>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Purok</label>
-                                            <select class="form-select" name="purok" id="purokSelect">
-                                                <option value="1" <?= ($profile['purok'] ?? '') == '1' ? 'selected' : '' ?>>1</option>
-                                                <option value="2" <?= ($profile['purok'] ?? '') == '2' ? 'selected' : '' ?>>2</option>
-                                                <option value="3" <?= ($profile['purok'] ?? '') == '3' ? 'selected' : '' ?>>3</option>
-                                                <option value="4" <?= ($profile['purok'] ?? '') == '4' ? 'selected' : '' ?>>4</option>
-                                                <option value="5" <?= ($profile['purok'] ?? '') == '5' ? 'selected' : '' ?>>5</option>
-                                                <option value="6" <?= ($profile['purok'] ?? '') == '6' ? 'selected' : '' ?>>6</option>
-                                                <option value="7" <?= ($profile['purok'] ?? '') == '7' ? 'selected' : '' ?>>7</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Occupation</label>
-                                            <input type="text" class="form-control" name="occupation" value="<?= htmlspecialchars($profile['occupation'] ?? '') ?>">
+                                    <!-- Contact Information -->
+                                    <div class="section-divider">
+                                        <div class="section-title"><i class="fas fa-phone me-2"></i>Contact Information</div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Email Address</label>
+                                                <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($profile['email'] ?? '') ?>">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                                                <input type="tel" class="form-control" name="contact_number" value="<?= htmlspecialchars($profile['contact_number'] ?? '') ?>" required>
+                                            </div>
                                         </div>
                                     </div>
                                     
-                                    <div class="mb-3">
-                                        <label class="form-label">Address</label>
-                                        <input type="text" class="form-control" name="address" id="addressInput" value="<?= htmlspecialchars($profile['address'] ?? '') ?>" required>
+                                    <!-- Address Information -->
+                                    <div class="section-divider">
+                                        <div class="section-title"><i class="fas fa-home me-2"></i>Address Information</div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label">House Number <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="house_number" value="<?= htmlspecialchars($profile['house_number'] ?? '') ?>" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Purok <span class="text-danger">*</span></label>
+                                                <select class="form-select" name="purok" id="purokSelect" required>
+                                                    <option value="">Select Purok</option>
+                                                    <option value="1" <?= ($profile['purok'] ?? '') == '1' ? 'selected' : '' ?>>Purok 1</option>
+                                                    <option value="2" <?= ($profile['purok'] ?? '') == '2' ? 'selected' : '' ?>>Purok 2</option>
+                                                    <option value="3" <?= ($profile['purok'] ?? '') == '3' ? 'selected' : '' ?>>Purok 3</option>
+                                                    <option value="4" <?= ($profile['purok'] ?? '') == '4' ? 'selected' : '' ?>>Purok 4</option>
+                                                    <option value="5" <?= ($profile['purok'] ?? '') == '5' ? 'selected' : '' ?>>Purok 5</option>
+                                                    <option value="6" <?= ($profile['purok'] ?? '') == '6' ? 'selected' : '' ?>>Purok 6</option>
+                                                    <option value="7" <?= ($profile['purok'] ?? '') == '7' ? 'selected' : '' ?>>Purok 7</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Resident Status</label>
+                                                <select class="form-select" name="resident_status">
+                                                    <option value="Active" <?= ($profile['resident_status'] ?? 'Active') == 'Active' ? 'selected' : '' ?>>Active</option>
+                                                    <option value="Inactive" <?= ($profile['resident_status'] ?? '') == 'Inactive' ? 'selected' : '' ?>>Inactive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Complete Address <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="address" id="addressInput" value="<?= htmlspecialchars($profile['address'] ?? '') ?>" required>
+                                        </div>
                                     </div>
                                     
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Educational Attainment</label>
-                                            <input type="text" class="form-control" name="educational_attainment" value="<?= htmlspecialchars($profile['educational_attainment'] ?? '') ?>">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Religion</label>
-                                            <input type="text" class="form-control" name="religion" value="<?= htmlspecialchars($profile['religion'] ?? '') ?>">
+                                    <!-- Educational & Professional Information -->
+                                    <div class="section-divider">
+                                        <div class="section-title"><i class="fas fa-graduation-cap me-2"></i>Educational & Professional Information</div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Educational Attainment</label>
+                                                <select class="form-select" name="educational_attainment">
+                                                    <option value="">Select Educational Level</option>
+                                                    <option value="No Formal Education" <?= ($profile['educational_attainment'] ?? '') == 'No Formal Education' ? 'selected' : '' ?>>No Formal Education</option>
+                                                    <option value="Elementary" <?= ($profile['educational_attainment'] ?? '') == 'Elementary' ? 'selected' : '' ?>>Elementary</option>
+                                                    <option value="Elementary Graduate" <?= ($profile['educational_attainment'] ?? '') == 'Elementary Graduate' ? 'selected' : '' ?>>Elementary Graduate</option>
+                                                    <option value="High School" <?= ($profile['educational_attainment'] ?? '') == 'High School' ? 'selected' : '' ?>>High School</option>
+                                                    <option value="High School Graduate" <?= ($profile['educational_attainment'] ?? '') == 'High School Graduate' ? 'selected' : '' ?>>High School Graduate</option>
+                                                    <option value="Vocational" <?= ($profile['educational_attainment'] ?? '') == 'Vocational' ? 'selected' : '' ?>>Vocational</option>
+                                                    <option value="College" <?= ($profile['educational_attainment'] ?? '') == 'College' ? 'selected' : '' ?>>College</option>
+                                                    <option value="College Graduate" <?= ($profile['educational_attainment'] ?? '') == 'College Graduate' ? 'selected' : '' ?>>College Graduate</option>
+                                                    <option value="Post Graduate" <?= ($profile['educational_attainment'] ?? '') == 'Post Graduate' ? 'selected' : '' ?>>Post Graduate</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Occupation</label>
+                                                <input type="text" class="form-control" name="occupation" value="<?= htmlspecialchars($profile['occupation'] ?? '') ?>" placeholder="e.g. Teacher, Farmer, Student">
+                                            </div>
                                         </div>
                                     </div>
                                     
-                                    <div class="d-flex justify-content-end">
-                                        <button type="reset" class="btn btn-outline-secondary me-2">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <!-- Personal Information -->
+                                    <div class="section-divider">
+                                        <div class="section-title"><i class="fas fa-info-circle me-2"></i>Personal Information</div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Religion</label>
+                                                <input type="text" class="form-control" name="religion" value="<?= htmlspecialchars($profile['religion'] ?? '') ?>" placeholder="e.g. Roman Catholic, Islam, Protestant">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">PhilHealth Number</label>
+                                                <input type="text" class="form-control" name="philhealth_number" value="<?= htmlspecialchars($profile['philhealth_number'] ?? '') ?>" placeholder="12-345678901-2">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Social Services -->
+                                    <div class="section-divider">
+                                        <div class="section-title"><i class="fas fa-heart me-2"></i>Social Services</div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="is_indigent" id="is_indigent" value="1" <?= (!empty($profile['is_indigent']) && $profile['is_indigent'] == 1) ? 'checked' : '' ?>>
+                                                    <label class="form-check-label" for="is_indigent">
+                                                        <strong>Indigent Member</strong>
+                                                        <small class="text-muted d-block">Member of an indigent family</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="is_4ps_member" id="is_4ps_member" value="1" <?= (!empty($profile['is_4ps_member']) && $profile['is_4ps_member'] == 1) ? 'checked' : '' ?>>
+                                                    <label class="form-check-label" for="is_4ps_member">
+                                                        <strong>4Ps Member</strong>
+                                                        <small class="text-muted d-block">Pantawid Pamilyang Pilipino Program beneficiary</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Medical Information -->
+                                    <div class="section-divider">
+                                        <div class="section-title"><i class="fas fa-notes-medical me-2"></i>Medical Information</div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Medical History</label>
+                                            <textarea class="form-control" name="medical_history" rows="4" placeholder="Please list any chronic conditions, allergies, medications, or other relevant medical information..."><?= htmlspecialchars($profile['medical_history'] ?? '') ?></textarea>
+                                            <div class="form-text">Optional: This information helps us provide better services and emergency response.</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-end mt-4">
+                                        <button type="reset" class="btn btn-outline-secondary me-2">Reset Form</button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Save Changes
+                                        </button>
                                     </div>
                                 </form>
                             </div>
@@ -441,27 +549,46 @@ if (empty($_SESSION['csrf_token'])) {
             document.getElementById('photoUploadForm').reset();
         });
         
-        document.getElementById('purokSelect').addEventListener('change', function() {
+        // Auto-generate address when house number or purok changes
+        function updateAddress() {
             const houseNumber = document.querySelector('input[name="house_number"]').value;
-            const purok = this.value;
-            const barangay = "Barangay Balas";
-            
-            if (houseNumber) {
-                document.getElementById('addressInput').value = `${houseNumber}, Purok ${purok}, ${barangay}`;
-            } else {
-                document.getElementById('addressInput').value = `Purok ${purok}, ${barangay}`;
-            }
-        });
-        
-        document.querySelector('input[name="house_number"]').addEventListener('change', function() {
-            const houseNumber = this.value;
             const purok = document.getElementById('purokSelect').value;
-            const barangay = "Barangay Balas";
+            const barangay = "Barangay Balas, Mabalacat City, Pampanga";
             
-            if (houseNumber) {
-                document.getElementById('addressInput').value = `${houseNumber}, Purok ${purok}, ${barangay}`;
+            let address = "";
+            if (houseNumber && purok) {
+                address = `${houseNumber}, Purok ${purok}, ${barangay}`;
+            } else if (purok) {
+                address = `Purok ${purok}, ${barangay}`;
+            } else if (houseNumber) {
+                address = `${houseNumber}, ${barangay}`;
             } else {
-                document.getElementById('addressInput').value = `Purok ${purok}, ${barangay}`;
+                address = barangay;
+            }
+            
+            document.getElementById('addressInput').value = address;
+        }
+        
+        document.getElementById('purokSelect').addEventListener('change', updateAddress);
+        document.querySelector('input[name="house_number"]').addEventListener('input', updateAddress);
+        
+        // Form validation
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            const requiredFields = this.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
             }
         });
     </script>

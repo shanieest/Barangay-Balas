@@ -8,7 +8,7 @@ $announcements = $conn->query(
      LEFT JOIN admin_users u ON a.posted_by = u.id
      LEFT JOIN announcement_images ai ON a.id = ai.announcement_id
      GROUP BY a.id
-     ORDER BY a.date_posted DESC"
+     ORDER BY a.created_at DESC"
 );
 
 if (!$announcements) {
@@ -43,6 +43,12 @@ if (!$announcements) {
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
     <?php if (isset($error)): ?>
         <div class="alert alert-danger alert-dismissible fade show">
             <?= $error ?>
@@ -61,8 +67,8 @@ if (!$announcements) {
             <?php if (is_object($announcements) && $announcements->num_rows > 0): ?>
                 <div class="table-responsive">
                 <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
+                    <thead class="table table-striped table-hover table-dark">
+                        <tr class="table table-striped table-hover table-dark">
                             <th>#</th><th>Title</th><th>Content</th><th>Image</th>
                             <th>Date Posted</th><th>Posted By</th><th>Actions</th>
                         </tr>
@@ -90,7 +96,15 @@ if (!$announcements) {
                                 }
                                 ?>
                             </td>
-                            <td><small class="text-muted"><?= timeAgo($row['date_posted']) ?></small></td>
+                            <td>
+                                <small class="text-muted">
+                                    <?= timeAgo($row['created_at']) ?>
+                                </small>
+                                <br>
+                                <small class="text-muted">
+                                    <?= date('M d, Y', strtotime($row['date_posted'])) ?>
+                                </small>
+                            </td>
                             <td><?= htmlspecialchars($row['first_name']." ".$row['last_name']) ?></td>
                             <td>
                                 <div class="btn-group">
@@ -125,19 +139,37 @@ if (!$announcements) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/announcement.js"></script>
+
+<!-- Image Modal for viewing full images -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content bg-transparent border-0">
-      <img id="modalImage" src="" class="img-fluid rounded shadow" alt="Announcement Image">
+      <div class="modal-header border-0">
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-0">
+        <img id="modalImage" src="" class="img-fluid rounded shadow" alt="Announcement Image" style="max-height: 80vh;">
+      </div>
     </div>
   </div>
 </div>
+
+<script src="assets/js/script.js"></script>
+
 <script>
 function showImageModal(src) {
     document.getElementById('modalImage').src = src;
     var modal = new bootstrap.Modal(document.getElementById('imageModal'));
     modal.show();
 }
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
 </script>
 </body>
 </html>

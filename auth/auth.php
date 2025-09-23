@@ -1,7 +1,8 @@
 <?php
 // auth.php
-session_start();
-
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 function logout() {
     session_unset();
     session_destroy();
@@ -22,3 +23,5 @@ if (isset($_SESSION['last_activity'])) {
     }
 }
 $_SESSION['last_activity'] = time();
+
+?>
