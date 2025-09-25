@@ -1,8 +1,57 @@
 <?php
-// public/census.php - Residents' Household Census Page
+// public/census.php - Residents' Household Census Page with Relationship Management
 require_once '../../auth/auth.php';
 require_once '../../config/db.php';
 
+// Handle relationship updates
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    if ($_POST['action'] === 'update_relationship') {
+        $member_id = intval($_POST['member_id']);
+        $relationship = mysqli_real_escape_string($conn, $_POST['relationship']);
+        
+        $update_query = "UPDATE residents SET relationship_to_head = ? WHERE id = ?";
+        $stmt = mysqli_prepare($conn, $update_query);
+        mysqli_stmt_bind_param($stmt, "si", $relationship, $member_id);
+        
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'error' => mysqli_error($conn)]);
+        }
+        exit;
+    }
+    
+    if ($_POST['action'] === 'batch_update_relationships') {
+        $updates = json_decode($_POST['updates'], true);
+        $success = true;
+        
+        mysqli_begin_transaction($conn);
+        
+        try {
+            foreach ($updates as $update) {
+                $member_id = intval($update['member_id']);
+                $relationship = mysqli_real_escape_string($conn, $update['relationship']);
+                
+                $update_query = "UPDATE residents SET relationship_to_head = ? WHERE id = ?";
+                $stmt = mysqli_prepare($conn, $update_query);
+                mysqli_stmt_bind_param($stmt, "si", $relationship, $member_id);
+                
+                if (!mysqli_stmt_execute($stmt)) {
+                    throw new Exception(mysqli_error($conn));
+                }
+            }
+            
+            mysqli_commit($conn);
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            mysqli_rollback($conn);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
+}
 
 // Get resident's household data
 $resident_id = $_SESSION['user_id'];
@@ -32,21 +81,48 @@ $family_query = "
     AND resident_status = 'Active'
     ORDER BY 
         CASE 
-            WHEN LOWER(civil_status) = 'married' AND age = (
-                SELECT MIN(age) FROM residents r2 
-                WHERE r2.house_number = r.house_number 
-                AND r2.purok = r.purok 
-                AND LOWER(r2.civil_status) = 'married'
-                AND r2.resident_status = 'Active'
-            ) THEN 0
-            ELSE age
+            WHEN relationship_to_head = 'Head of Household' OR relationship_to_head IS NULL THEN 0
+            WHEN relationship_to_head = 'Spouse' THEN 1
+            ELSE 2
         END,
-        age
+        age DESC
 ";
 $stmt = mysqli_prepare($conn, $family_query);
 mysqli_stmt_bind_param($stmt, "ss", $current_resident['house_number'], $current_resident['purok']);
 mysqli_stmt_execute($stmt);
 $family_members = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+
+// Determine head of household if not set
+$head_found = false;
+foreach ($family_members as $member) {
+    if ($member['relationship_to_head'] === 'Head of Household') {
+        $head_found = true;
+        break;
+    }
+}
+
+// If no head found, set the oldest married person or oldest person as head
+if (!$head_found && !empty($family_members)) {
+    $head_candidate = $family_members[0];
+    foreach ($family_members as $member) {
+        if (strtolower($member['civil_status']) === 'married' && $member['age'] >= $head_candidate['age']) {
+            $head_candidate = $member;
+            break;
+        }
+    }
+    
+    // Update the head
+    $update_head_query = "UPDATE residents SET relationship_to_head = 'Head of Household' WHERE id = ?";
+    $stmt = mysqli_prepare($conn, $update_head_query);
+    mysqli_stmt_bind_param($stmt, "i", $head_candidate['id']);
+    mysqli_stmt_execute($stmt);
+    
+    // Refresh data
+    $stmt = mysqli_prepare($conn, $family_query);
+    mysqli_stmt_bind_param($stmt, "ss", $current_resident['house_number'], $current_resident['purok']);
+    mysqli_stmt_execute($stmt);
+    $family_members = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
 
 // Calculate statistics
 $total_members = count($family_members);
@@ -64,6 +140,32 @@ foreach ($family_members as $member) {
         $children++;
     }
 }
+
+// Relationship options
+$relationship_options = [
+    'Head of Household',
+    'Spouse',
+    'Son',
+    'Daughter', 
+    'Father',
+    'Mother',
+    'Brother',
+    'Sister',
+    'Grandfather',
+    'Grandmother',
+    'Grandson',
+    'Granddaughter',
+    'Uncle',
+    'Aunt',
+    'Nephew',
+    'Niece',
+    'Cousin',
+    'Son-in-law',
+    'Daughter-in-law',
+    'Father-in-law',
+    'Mother-in-law',
+    'Other'
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -191,107 +293,116 @@ foreach ($family_members as $member) {
             transform: translateY(-2px);
         }
 
-        .member-card {
-            background: white;
+        /* Relationship Management Styles */
+        .relationship-card {
+            border: 2px solid #e9ecef;
             border-radius: 15px;
+            transition: all 0.3s ease;
             margin-bottom: 20px;
+            background: white;
             box-shadow: 0 8px 25px rgba(0,0,0,0.08);
             overflow: hidden;
-            transition: all 0.3s;
-            border: none;
         }
-
-        .member-card:hover {
-            transform: translateY(-5px);
+        
+        .relationship-card:hover {
+            border-color: var(--primary-blue);
             box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
         }
-
-        .member-header {
-            padding: 20px;
-            border-bottom: 2px solid #f8f9fa;
-            position: relative;
+        
+        .relationship-card.is-head {
+            border-color: #198754;
+            background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
         }
-
-        .head-member {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
-            color: white;
-        }
-
-        .head-member::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--accent-yellow);
-        }
-
+        
         .member-avatar {
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: var(--accent-yellow);
+            background: linear-gradient(45deg, var(--primary-blue), var(--secondary-blue));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            color: white;
             font-weight: bold;
-            color: var(--dark-gray);
+            font-size: 1.2rem;
             margin-right: 15px;
         }
-
+        
         .head-avatar {
-            background: rgba(255,255,255,0.2);
-            color: white;
+            background: linear-gradient(45deg, #198754, #20c997);
+        }
+        
+        .relationship-select {
+            min-width: 180px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 8px 12px;
+            transition: all 0.3s;
         }
 
-        .relationship-badge {
-            background: var(--accent-yellow);
-            color: var(--dark-gray);
-            padding: 5px 15px;
+        .relationship-select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(0, 51, 204, 0.25);
+        }
+        
+        .save-btn {
+            background: linear-gradient(45deg, var(--primary-blue), var(--secondary-blue));
+            border: none;
+            border-radius: 8px;
+            padding: 8px 20px;
+            color: white;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 51, 204, 0.3);
+            color: white;
+        }
+        
+        .head-indicator {
+            background: linear-gradient(45deg, #198754, #20c997);
+            color: white;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: bold;
         }
-
-        .head-badge {
-            background: rgba(255,255,255,0.2);
-            color: white;
+        
+        .relationship-management-section {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8efff 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid var(--primary-blue);
         }
 
-        .member-details {
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
             padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
 
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .detail-item:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: var(--dark-gray);
-            display: flex;
-            align-items: center;
-        }
-
-        .detail-label i {
-            margin-right: 8px;
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
             color: var(--primary-blue);
-            width: 16px;
         }
 
-        .detail-value {
+        .stat-label {
             color: #6c757d;
-            font-weight: 500;
+            margin-top: 5px;
         }
 
         .loading-overlay {
@@ -321,61 +432,6 @@ foreach ($family_members as $member) {
             100% { transform: rotate(360deg); }
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--primary-blue);
-        }
-
-        .stat-label {
-            color: #6c757d;
-            margin-top: 5px;
-        }
-
-        .amenities-card {
-            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-
-        .amenity-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .amenity-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .amenity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #28a745;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-        }
-
         @media (max-width: 768px) {
             .sidebar {
                 width: 80px;
@@ -398,13 +454,18 @@ foreach ($family_members as $member) {
                 padding: 20px;
             }
             
-            .member-header {
+            .relationship-card .row {
                 flex-direction: column;
                 text-align: center;
             }
             
             .member-avatar {
                 margin: 0 auto 15px;
+            }
+            
+            .relationship-select {
+                margin: 10px 0;
+                width: 100%;
             }
         }
     </style>
@@ -422,8 +483,8 @@ foreach ($family_members as $member) {
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="text-center">
                     <div class="loading-spinner mb-3"></div>
-                    <h5>Generating Your Household Report...</h5>
-                    <p class="text-muted">Please wait while we prepare your Excel file</p>
+                    <h5>Processing...</h5>
+                    <p class="text-muted">Please wait</p>
                 </div>
             </div>
 
@@ -485,119 +546,241 @@ foreach ($family_members as $member) {
                     </div>
                 </div>
 
-                <!-- Family Members -->
-                <div class="row">
-                    <div class="col-12">
-                        <h4 class="mb-4">
-                            <i class="fas fa-users me-2"></i>Family Members
-                        </h4>
+                <!-- Relationship Management Section -->
+                <div class="relationship-management-section">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="fas fa-users-cog text-primary me-3" style="font-size: 2rem;"></i>
+                        <div>
+                            <h3 class="mb-1">Manage Household Relationships</h3>
+                            <p class="text-muted mb-0">Set family relationships for accurate census records</p>
+                        </div>
                     </div>
-                </div>
-
-                <?php foreach ($family_members as $index => $member): 
-                    // Determine relationship
-                    $relationship = 'MEMBER';
-                    if ($index === 0) {
-                        $relationship = 'HEAD';
-                    } elseif ($index === 1 && strtolower($member['civil_status']) === 'married') {
-                        $relationship = 'SPOUSE';
-                    } elseif ($index > 1 || ($index === 1 && strtolower($member['civil_status']) !== 'married')) {
-                        $relationship = (strtolower($member['sex']) === 'male') ? 'SON' : 'DAUGHTER';
-                    }
                     
-                    $isHead = ($relationship === 'HEAD');
-                    $initials = '';
-                    $names = explode(' ', $member['full_name']);
-                    foreach ($names as $name) {
-                        if (!empty($name)) {
-                            $initials .= strtoupper(substr($name, 0, 1));
-                        }
-                    }
-                    $initials = substr($initials, 0, 2);
-                ?>
-
-                <!-- Family Member Card -->
-                <div class="member-card">
-                    <div class="member-header <?php echo $isHead ? 'head-member' : ''; ?>">
-                        <div class="d-flex align-items-center">
-                            <div class="member-avatar <?php echo $isHead ? 'head-avatar' : ''; ?>"><?php echo $initials; ?></div>
-                            <div class="flex-grow-1">
-                                <h5 class="mb-1"><?php echo htmlspecialchars($member['full_name']); ?></h5>
-                                <p class="mb-0 <?php echo $isHead ? 'opacity-75' : 'text-muted'; ?>"><?php echo $isHead ? 'Head of Family' : ucwords(strtolower($relationship)); ?></p>
-                            </div>
-                            <span class="relationship-badge <?php echo $isHead ? 'head-badge' : ''; ?>"><?php echo $relationship; ?></span>
-                        </div>
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Important:</strong> Make sure to designate one person as the "Head of Household" and set appropriate relationships for all family members.
                     </div>
-                    <div class="member-details">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="detail-item">
-                                    <span class="detail-label">
-                                        <i class="fas fa-birthday-cake"></i>Age
-                                    </span>
-                                    <span class="detail-value"><?php echo $member['age']; ?> years old</span>
+
+                    <!-- Household Members with Relationship Management -->
+                    <div id="householdMembers">
+                        <?php foreach ($family_members as $member): 
+                            $is_head = ($member['relationship_to_head'] === 'Head of Household');
+                            $initials = '';
+                            $names = explode(' ', $member['full_name']);
+                            foreach ($names as $name) {
+                                if (!empty($name)) {
+                                    $initials .= strtoupper(substr($name, 0, 1));
+                                }
+                            }
+                            $initials = substr($initials, 0, 2);
+                        ?>
+                        <div class="relationship-card <?php echo $is_head ? 'is-head' : ''; ?> p-4">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <div class="member-avatar <?php echo $is_head ? 'head-avatar' : ''; ?>"><?php echo $initials; ?></div>
                                 </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">
-                                        <i class="fas fa-<?php echo $member['sex'] === 'male' ? 'mars' : 'venus'; ?>"></i>Gender
-                                    </span>
-                                    <span class="detail-value"><?php echo ucfirst($member['sex']); ?></span>
+                                <div class="col">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <h5 class="mb-0 me-2"><?php echo htmlspecialchars($member['full_name']); ?></h5>
+                                        <?php if ($is_head): ?>
+                                            <span class="head-indicator">HEAD OF HOUSEHOLD</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <p class="text-muted mb-0"><?php echo ucfirst($member['sex']); ?>, <?php echo $member['age']; ?> years old</p>
                                 </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">
-                                        <i class="fas fa-heart"></i>Civil Status
-                                    </span>
-                                    <span class="detail-value"><?php echo ucfirst($member['civil_status']) ?: 'Single'; ?></span>
+                                <div class="col-auto">
+                                    <select class="form-select relationship-select" data-member-id="<?php echo $member['id']; ?>" <?php echo $is_head ? 'disabled' : ''; ?>>
+                                        <?php if ($is_head): ?>
+                                            <option selected>Head of Household</option>
+                                        <?php else: ?>
+                                            <option value="">Select Relationship</option>
+                                            <?php foreach ($relationship_options as $option): ?>
+                                                <?php if ($option !== 'Head of Household'): ?>
+                                                    <option value="<?php echo $option; ?>" <?php echo ($member['relationship_to_head'] === $option) ? 'selected' : ''; ?>>
+                                                        <?php echo $option; ?>
+                                                    </option>
+                                                <?php endif; ?>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </select>
                                 </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">
-                                        <i class="fas fa-briefcase"></i>Occupation
-                                    </span>
-                                    <span class="detail-value"><?php echo $member['occupation'] ?: 'N/A'; ?></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="detail-item">
-                                    <span class="detail-label">
-                                        <i class="fas fa-graduation-cap"></i>Education
-                                    </span>
-                                    <span class="detail-value"><?php echo $member['educational_attainment'] ?: 'N/A'; ?></span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">
-                                        <i class="fas fa-phone"></i>Contact
-                                    </span>
-                                    <span class="detail-value"><?php echo $member['contact_number'] ?: 'N/A'; ?></span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">
-                                        <i class="fas fa-envelope"></i>Email
-                                    </span>
-                                    <span class="detail-value"><?php echo $member['email'] ?: 'N/A'; ?></span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">
-                                        <i class="fas fa-id-card"></i>PhilHealth
-                                    </span>
-                                    <span class="detail-value <?php echo !empty($member['philhealth_number']) ? 'text-success' : 'text-warning'; ?>">
-                                        <?php echo !empty($member['philhealth_number']) ? 'Member' : ($member['age'] < 18 ? 'Dependent' : 'Not Registered'); ?>
-                                    </span>
+                                <div class="col-auto">
+                                    <?php if ($is_head): ?>
+                                        <button class="btn btn-success btn-sm" disabled>
+                                            <i class="fas fa-check me-1"></i>Head
+                                        </button>
+                                    <?php else: ?>
+                                        <button class="btn save-btn btn-sm" onclick="saveRelationship(<?php echo $member['id']; ?>, this)">
+                                            <i class="fas fa-save me-1"></i>Save
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary btn-lg me-3" onclick="saveAllRelationships()">
+                            <i class="fas fa-save me-2"></i>Save All Changes
+                        </button>
+                        <button class="btn btn-outline-secondary btn-lg" onclick="resetRelationships()">
+                            <i class="fas fa-undo me-2"></i>Reset Changes
+                        </button>
                     </div>
                 </div>
-
-                <?php endforeach; ?>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="assets/js/census-resident.js"></script>
 
     <script>
+        function saveRelationship(memberId, button) {
+            const select = document.querySelector(`select[data-member-id="${memberId}"]`);
+            const relationship = select.value;
+            
+            if (!relationship) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selection Required',
+                    text: 'Please select a relationship first.'
+                });
+                return;
+            }
+            
+            // Show loading state
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+            button.disabled = true;
+            
+            // Send AJAX request
+            const formData = new FormData();
+            formData.append('action', 'update_relationship');
+            formData.append('member_id', memberId);
+            formData.append('relationship', relationship);
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    button.innerHTML = '<i class="fas fa-check me-1"></i>Saved';
+                    button.className = 'btn btn-success btn-sm';
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: 'Relationship updated successfully.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.className = 'btn save-btn btn-sm';
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Failed to save');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error saving relationship: ' + error.message
+                });
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+        
+        function saveAllRelationships() {
+            const selects = document.querySelectorAll('.relationship-select:not([disabled])');
+            const updates = [];
+            
+            selects.forEach(select => {
+                if (select.value) {
+                    updates.push({
+                        member_id: select.getAttribute('data-member-id'),
+                        relationship: select.value
+                    });
+                }
+            });
+            
+            if (updates.length === 0) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Changes',
+                    text: 'No changes to save.'
+                });
+                return;
+            }
+            
+            // Show loading overlay
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Send batch update
+            const formData = new FormData();
+            formData.append('action', 'batch_update_relationships');
+            formData.append('updates', JSON.stringify(updates));
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'All relationships saved successfully!',
+                        showConfirmButton: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.error || 'Failed to save');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error saving relationships: ' + error.message
+                });
+            });
+        }
+        
+        function resetRelationships() {
+            Swal.fire({
+                title: 'Reset Changes?',
+                text: 'Are you sure you want to reset all changes?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, reset!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    location.reload();
+                }
+            });
+        }
+        
         function exportHouseholdData() {
             const overlay = document.getElementById('loadingOverlay');
             overlay.style.display = 'flex';
@@ -631,6 +814,98 @@ foreach ($family_members as $member) {
             }, 2000);
         }
         
+        // Auto-suggest relationships based on age and gender
+        document.addEventListener('DOMContentLoaded', function() {
+            const selects = document.querySelectorAll('.relationship-select:not([disabled])');
+            
+            selects.forEach(select => {
+                select.addEventListener('change', function() {
+                    const card = this.closest('.relationship-card');
+                    const saveBtn = card.querySelector('.save-btn');
+                    
+                    if (this.value) {
+                        saveBtn.style.display = 'inline-block';
+                        // Highlight the card when relationship is selected
+                        card.style.borderColor = '#0d6efd';
+                        card.style.boxShadow = '0 4px 12px rgba(13, 110, 253, 0.15)';
+                    } else {
+                        card.style.borderColor = '#e9ecef';
+                        card.style.boxShadow = '0 8px 25px rgba(0,0,0,0.08)';
+                    }
+                });
+            });
+
+            // Auto-suggest relationships based on member info
+            autoSuggestRelationships();
+        });
+
+        function autoSuggestRelationships() {
+            const memberCards = document.querySelectorAll('.relationship-card:not(.is-head)');
+            const headCard = document.querySelector('.relationship-card.is-head');
+            
+            if (!headCard) return;
+            
+            const headInfo = getCardInfo(headCard);
+            
+            memberCards.forEach(card => {
+                const memberInfo = getCardInfo(card);
+                const select = card.querySelector('.relationship-select');
+                
+                if (select.value === '') {
+                    const suggestedRelationship = getSuggestedRelationship(headInfo, memberInfo);
+                    if (suggestedRelationship) {
+                        select.value = suggestedRelationship;
+                        select.style.backgroundColor = '#fff3cd';
+                        select.style.borderColor = '#ffc107';
+                        
+                        // Add tooltip or indicator for suggested relationship
+                        select.title = 'Suggested based on age and gender';
+                    }
+                }
+            });
+        }
+
+        function getCardInfo(card) {
+            const text = card.querySelector('.text-muted').textContent;
+            const name = card.querySelector('h5').textContent;
+            
+            const genderMatch = text.match(/(Male|Female)/i);
+            const ageMatch = text.match(/(\d+) years old/);
+            
+            return {
+                name: name,
+                gender: genderMatch ? genderMatch[1].toLowerCase() : 'unknown',
+                age: ageMatch ? parseInt(ageMatch[1]) : 0
+            };
+        }
+
+        function getSuggestedRelationship(headInfo, memberInfo) {
+            const ageDiff = headInfo.age - memberInfo.age;
+            
+            // Spouse (similar age, different gender, both adults)
+            if (Math.abs(ageDiff) <= 10 && headInfo.gender !== memberInfo.gender && 
+                memberInfo.age >= 18 && headInfo.age >= 18) {
+                return 'Spouse';
+            }
+            
+            // Children (significant age difference, head is older)
+            if (ageDiff >= 15 && memberInfo.age < 40) {
+                return memberInfo.gender === 'male' ? 'Son' : 'Daughter';
+            }
+            
+            // Parents (head is younger)
+            if (ageDiff <= -15 && memberInfo.age >= 40) {
+                return memberInfo.gender === 'male' ? 'Father' : 'Mother';
+            }
+            
+            // Siblings (similar age)
+            if (Math.abs(ageDiff) <= 15 && memberInfo.age >= 10) {
+                return memberInfo.gender === 'male' ? 'Brother' : 'Sister';
+            }
+            
+            return null;
+        }
+        
         // Mobile sidebar toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.querySelector('.sidebar');
@@ -652,6 +927,59 @@ foreach ($family_members as $member) {
                 });
             });
         });
+
+        // Validation functions
+        function validateRelationships() {
+            const headCards = document.querySelectorAll('.relationship-card.is-head');
+            const memberCards = document.querySelectorAll('.relationship-card:not(.is-head)');
+            
+            if (headCards.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Head of Household',
+                    text: 'Please designate someone as the head of household.'
+                });
+                return false;
+            }
+            
+            if (headCards.length > 1) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Multiple Heads',
+                    text: 'Only one person can be designated as head of household.'
+                });
+                return false;
+            }
+            
+            let unsetRelationships = 0;
+            memberCards.forEach(card => {
+                const select = card.querySelector('.relationship-select');
+                if (!select.value) {
+                    unsetRelationships++;
+                }
+            });
+            
+            if (unsetRelationships > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Incomplete Relationships',
+                    text: `${unsetRelationships} member(s) still need their relationship set.`,
+                    showConfirmButton: true
+                });
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Enhanced save all with validation
+        function saveAllRelationshipsWithValidation() {
+            if (!validateRelationships()) {
+                return;
+            }
+            
+            saveAllRelationships();
+        }
     </script>
 </body>
 </html>
