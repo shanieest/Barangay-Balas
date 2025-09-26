@@ -521,3 +521,27 @@ Stack trace:
 [23-Sep-2025 09:06:12 Asia/Manila] Processing request id=45 action=approve user_id=1 note=
 [23-Sep-2025 09:06:19 Asia/Manila] Processing request id=41 action=approve user_id=1 note=
 [23-Sep-2025 11:44:08 Asia/Manila] Processing request id=42 action=approve user_id=1 note=
+[25-Sep-2025 19:01:42 Asia/Manila] Processing request id=43 action=approve user_id=1 note=
+[25-Sep-2025 19:23:14 Asia/Manila] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Joshua
+    [lastName] => Punzalan
+    [middleName] => Maun
+    [suffix] => 
+    [sex] => male
+    [contactNumber] => 09619589093
+    [email] => joshuamu69@gmail.com
+    [houseNumber] => 412
+    [purok] => 5
+    [address] => House 412, Purok 5, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2003-07-23
+    [age] => 22
+    [password] => badingako
+)
+
+[25-Sep-2025 19:23:14 Asia/Manila] Using provided age: 22
+[25-Sep-2025 19:23:14 Asia/Manila] Final values - birthdate: 2003-07-23, age: 22
+[25-Sep-2025 19:23:14 Asia/Manila] Resident inserted with ID: 48
+[25-Sep-2025 19:34:13 Asia/Manila] Processing request id=45 action=approve user_id=1 note=
+[25-Sep-2025 19:42:42 Asia/Manila] Processing request id=46 action=approve user_id=1 note=

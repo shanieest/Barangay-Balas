@@ -1,9 +1,7 @@
 <?php
-// public/census.php - Residents' Household Census Page with Relationship Management
 require_once '../../auth/auth.php';
 require_once '../../config/db.php';
 
-// Handle relationship updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
     
