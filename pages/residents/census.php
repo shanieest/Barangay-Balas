@@ -23,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     
     if ($_POST['action'] === 'batch_update_relationships') {
         $updates = json_decode($_POST['updates'], true);
-        $success = true;
         
         mysqli_begin_transaction($conn);
         
@@ -68,25 +67,24 @@ mysqli_stmt_bind_param($stmt, "i", $resident_id);
 mysqli_stmt_execute($stmt);
 $current_resident = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 
-// Get all household members
+// Get all household members - ONLY BY HOUSE NUMBER
 $family_query = "
     SELECT 
         r.*,
         CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) as full_name
     FROM residents r
     WHERE house_number = ? 
-    AND purok = ? 
     AND resident_status = 'Active'
     ORDER BY 
         CASE 
-            WHEN relationship_to_head = 'Head of Household' OR relationship_to_head IS NULL THEN 0
+            WHEN relationship_to_head = 'Head of Household' THEN 0
             WHEN relationship_to_head = 'Spouse' THEN 1
             ELSE 2
         END,
         age DESC
 ";
 $stmt = mysqli_prepare($conn, $family_query);
-mysqli_stmt_bind_param($stmt, "ss", $current_resident['house_number'], $current_resident['purok']);
+mysqli_stmt_bind_param($stmt, "s", $current_resident['house_number']);
 mysqli_stmt_execute($stmt);
 $family_members = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
 
@@ -117,7 +115,7 @@ if (!$head_found && !empty($family_members)) {
     
     // Refresh data
     $stmt = mysqli_prepare($conn, $family_query);
-    mysqli_stmt_bind_param($stmt, "ss", $current_resident['house_number'], $current_resident['purok']);
+    mysqli_stmt_bind_param($stmt, "s", $current_resident['house_number']);
     mysqli_stmt_execute($stmt);
     $family_members = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
 }
@@ -187,7 +185,6 @@ $relationship_options = [
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
         .sidebar {
@@ -291,7 +288,6 @@ $relationship_options = [
             transform: translateY(-2px);
         }
 
-        /* Relationship Management Styles */
         .relationship-card {
             border: 2px solid #e9ecef;
             border-radius: 15px;
@@ -299,7 +295,6 @@ $relationship_options = [
             margin-bottom: 20px;
             background: white;
             box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            overflow: hidden;
         }
         
         .relationship-card:hover {
@@ -496,7 +491,6 @@ $relationship_options = [
                                 <i class="fas fa-home me-3"></i>My Household
                             </h1>
                             <p class="mb-0 opacity-75 fs-5">House #<?php echo htmlspecialchars($current_resident['house_number']); ?>, Purok <?php echo htmlspecialchars($current_resident['purok']); ?>, Barangay Balas</p>
-                            <small class="opacity-75">Household ID: HH-<?php echo substr($current_resident['purok'], -1); ?>-<?php echo str_pad($current_resident['house_number'], 4, '0', STR_PAD_LEFT); ?></small>
                         </div>
                         <div class="col-md-4 text-end mt-3 mt-md-0">
                             <div class="d-flex flex-column align-items-end">
@@ -514,7 +508,7 @@ $relationship_options = [
                             <h4 class="mb-2">
                                 <i class="fas fa-file-excel me-2"></i>Download Your Household Report
                             </h4>
-                            <p class="mb-0">Get a complete Excel report of your family's census information for official use</p>
+                            <p class="mb-0">Get a complete Excel report of your family's census information</p>
                         </div>
                         <div class="col-md-4 text-end">
                             <button class="btn export-btn" onclick="exportHouseholdData()">
@@ -559,7 +553,7 @@ $relationship_options = [
                         <strong>Important:</strong> Make sure to designate one person as the "Head of Household" and set appropriate relationships for all family members.
                     </div>
 
-                    <!-- Household Members with Relationship Management -->
+                    <!-- Household Members -->
                     <div id="householdMembers">
                         <?php foreach ($family_members as $member): 
                             $is_head = ($member['relationship_to_head'] === 'Head of Household');
@@ -623,7 +617,7 @@ $relationship_options = [
                         <button class="btn btn-primary btn-lg me-3" onclick="saveAllRelationships()">
                             <i class="fas fa-save me-2"></i>Save All Changes
                         </button>
-                        <button class="btn btn-outline-secondary btn-lg" onclick="resetRelationships()">
+                        <button class="btn btn-outline-secondary btn-lg" onclick="location.reload()">
                             <i class="fas fa-undo me-2"></i>Reset Changes
                         </button>
                     </div>
@@ -634,6 +628,7 @@ $relationship_options = [
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="census.js"></script>
 
     <script>
         function saveRelationship(memberId, button) {
@@ -649,12 +644,10 @@ $relationship_options = [
                 return;
             }
             
-            // Show loading state
             const originalText = button.innerHTML;
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
             button.disabled = true;
             
-            // Send AJAX request
             const formData = new FormData();
             formData.append('action', 'update_relationship');
             formData.append('member_id', memberId);
@@ -723,10 +716,8 @@ $relationship_options = [
                 return;
             }
             
-            // Show loading overlay
             document.getElementById('loadingOverlay').style.display = 'flex';
             
-            // Send batch update
             const formData = new FormData();
             formData.append('action', 'batch_update_relationships');
             formData.append('updates', JSON.stringify(updates));
@@ -761,222 +752,6 @@ $relationship_options = [
                     text: 'Error saving relationships: ' + error.message
                 });
             });
-        }
-        
-        function resetRelationships() {
-            Swal.fire({
-                title: 'Reset Changes?',
-                text: 'Are you sure you want to reset all changes?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, reset!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    location.reload();
-                }
-            });
-        }
-        
-        function exportHouseholdData() {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.style.display = 'flex';
-
-            // Create form and submit
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'census-backend.php';
-            form.style.display = 'none';
-            
-            const actionInput = document.createElement('input');
-            actionInput.name = 'action';
-            actionInput.value = 'export_household';
-            
-            form.appendChild(actionInput);
-            document.body.appendChild(form);
-            
-            form.submit();
-            
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                document.body.removeChild(form);
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Export Successful!',
-                    text: 'Your household report has been downloaded successfully.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }, 2000);
-        }
-        
-        // Auto-suggest relationships based on age and gender
-        document.addEventListener('DOMContentLoaded', function() {
-            const selects = document.querySelectorAll('.relationship-select:not([disabled])');
-            
-            selects.forEach(select => {
-                select.addEventListener('change', function() {
-                    const card = this.closest('.relationship-card');
-                    const saveBtn = card.querySelector('.save-btn');
-                    
-                    if (this.value) {
-                        saveBtn.style.display = 'inline-block';
-                        // Highlight the card when relationship is selected
-                        card.style.borderColor = '#0d6efd';
-                        card.style.boxShadow = '0 4px 12px rgba(13, 110, 253, 0.15)';
-                    } else {
-                        card.style.borderColor = '#e9ecef';
-                        card.style.boxShadow = '0 8px 25px rgba(0,0,0,0.08)';
-                    }
-                });
-            });
-
-            // Auto-suggest relationships based on member info
-            autoSuggestRelationships();
-        });
-
-        function autoSuggestRelationships() {
-            const memberCards = document.querySelectorAll('.relationship-card:not(.is-head)');
-            const headCard = document.querySelector('.relationship-card.is-head');
-            
-            if (!headCard) return;
-            
-            const headInfo = getCardInfo(headCard);
-            
-            memberCards.forEach(card => {
-                const memberInfo = getCardInfo(card);
-                const select = card.querySelector('.relationship-select');
-                
-                if (select.value === '') {
-                    const suggestedRelationship = getSuggestedRelationship(headInfo, memberInfo);
-                    if (suggestedRelationship) {
-                        select.value = suggestedRelationship;
-                        select.style.backgroundColor = '#fff3cd';
-                        select.style.borderColor = '#ffc107';
-                        
-                        // Add tooltip or indicator for suggested relationship
-                        select.title = 'Suggested based on age and gender';
-                    }
-                }
-            });
-        }
-
-        function getCardInfo(card) {
-            const text = card.querySelector('.text-muted').textContent;
-            const name = card.querySelector('h5').textContent;
-            
-            const genderMatch = text.match(/(Male|Female)/i);
-            const ageMatch = text.match(/(\d+) years old/);
-            
-            return {
-                name: name,
-                gender: genderMatch ? genderMatch[1].toLowerCase() : 'unknown',
-                age: ageMatch ? parseInt(ageMatch[1]) : 0
-            };
-        }
-
-        function getSuggestedRelationship(headInfo, memberInfo) {
-            const ageDiff = headInfo.age - memberInfo.age;
-            
-            // Spouse (similar age, different gender, both adults)
-            if (Math.abs(ageDiff) <= 10 && headInfo.gender !== memberInfo.gender && 
-                memberInfo.age >= 18 && headInfo.age >= 18) {
-                return 'Spouse';
-            }
-            
-            // Children (significant age difference, head is older)
-            if (ageDiff >= 15 && memberInfo.age < 40) {
-                return memberInfo.gender === 'male' ? 'Son' : 'Daughter';
-            }
-            
-            // Parents (head is younger)
-            if (ageDiff <= -15 && memberInfo.age >= 40) {
-                return memberInfo.gender === 'male' ? 'Father' : 'Mother';
-            }
-            
-            // Siblings (similar age)
-            if (Math.abs(ageDiff) <= 15 && memberInfo.age >= 10) {
-                return memberInfo.gender === 'male' ? 'Brother' : 'Sister';
-            }
-            
-            return null;
-        }
-        
-        // Mobile sidebar toggle functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-            
-            function toggleSidebar() {
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.toggle('collapsed');
-                    mainContent.classList.toggle('expanded');
-                }
-            }
-            
-            const sidebarItems = document.querySelectorAll('.sidebar-menu li');
-            sidebarItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    if (window.innerWidth <= 768) {
-                        toggleSidebar();
-                    }
-                });
-            });
-        });
-
-        // Validation functions
-        function validateRelationships() {
-            const headCards = document.querySelectorAll('.relationship-card.is-head');
-            const memberCards = document.querySelectorAll('.relationship-card:not(.is-head)');
-            
-            if (headCards.length === 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'No Head of Household',
-                    text: 'Please designate someone as the head of household.'
-                });
-                return false;
-            }
-            
-            if (headCards.length > 1) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Multiple Heads',
-                    text: 'Only one person can be designated as head of household.'
-                });
-                return false;
-            }
-            
-            let unsetRelationships = 0;
-            memberCards.forEach(card => {
-                const select = card.querySelector('.relationship-select');
-                if (!select.value) {
-                    unsetRelationships++;
-                }
-            });
-            
-            if (unsetRelationships > 0) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Incomplete Relationships',
-                    text: `${unsetRelationships} member(s) still need their relationship set.`,
-                    showConfirmButton: true
-                });
-                return false;
-            }
-            
-            return true;
-        }
-
-        // Enhanced save all with validation
-        function saveAllRelationshipsWithValidation() {
-            if (!validateRelationships()) {
-                return;
-            }
-            
-            saveAllRelationships();
         }
     </script>
 </body>

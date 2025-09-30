@@ -10,8 +10,6 @@ use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-
-
 header('Content-Type: application/json');
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
@@ -74,25 +72,16 @@ function exportHouseholdData() {
     
     // Headers
     $headers = [
-        'A5' => 'House Number',
-        'B5' => 'Purok', 
-        'C5' => 'Full Name',
-        'D5' => 'Relationship to Head',
-        'E5' => 'Age',
-        'F5' => 'Sex',
-        'G5' => 'Birthdate',
-        'H5' => 'Civil Status',
-        'I5' => 'Educational Attainment',
-        'J5' => 'Religion',
-        'K5' => 'Occupation',
-        'L5' => 'Contact Number',
-        'M5' => 'Email',
-        'N5' => 'PhilHealth Status',
-        'O5' => 'Indigent Status',
-        'P5' => '4Ps Member',
-        'Q5' => 'Medical History',
-        'R5' => 'Household Size',
-        'S5' => 'Address'
+        'A5' => 'Full Name',
+        'B5' => 'Relationship to Head',
+        'C5' => 'Age',
+        'D5' => 'Sex',
+        'E5' => 'Civil Status',
+        'F5' => 'Educational Attainment',
+        'G5' => 'Occupation',
+        'H5' => 'Contact Number',
+        'I5' => 'Email',
+        'J5' => 'PhilHealth Status'
     ];
     
     foreach ($headers as $cell => $header) {
@@ -108,31 +97,25 @@ function exportHouseholdData() {
     $sheet->getStyle('A5:J5')->getBorders()->getAllBorders()
         ->setBorderStyle(Border::BORDER_THIN);
     
-    // Get household members
+    // Get household members - ONLY BY HOUSE NUMBER
     $query = "
         SELECT 
             r.*,
             CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) as full_name
         FROM residents r
         WHERE house_number = ? 
-        AND purok = ? 
         AND resident_status = 'Active'
         ORDER BY 
             CASE 
-                WHEN LOWER(civil_status) = 'married' AND age = (
-                    SELECT MIN(age) FROM residents r2 
-                    WHERE r2.house_number = r.house_number 
-                    AND r2.purok = r.purok 
-                    AND LOWER(r2.civil_status) = 'married'
-                    AND r2.resident_status = 'Active'
-                ) THEN 0
-                ELSE age
+                WHEN relationship_to_head = 'Head of Household' THEN 0
+                WHEN relationship_to_head = 'Spouse' THEN 1
+                ELSE 2
             END,
-            age
+            age DESC
     ";
     
     $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "ss", $resident_info['house_number'], $resident_info['purok']);
+    mysqli_stmt_bind_param($stmt, "s", $resident_info['house_number']);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     
@@ -142,15 +125,8 @@ function exportHouseholdData() {
     while ($data = mysqli_fetch_assoc($result)) {
         $member_count++;
         
-        // Determine relationship
-        $relationship = 'MEMBER';
-        if ($member_count === 1) {
-            $relationship = 'HEAD OF FAMILY';
-        } elseif ($member_count === 2 && strtolower($data['civil_status']) === 'married') {
-            $relationship = 'SPOUSE';
-        } elseif ($member_count > 2) {
-            $relationship = (strtolower($data['sex']) === 'male') ? 'SON' : 'DAUGHTER';
-        }
+        // Get relationship from database
+        $relationship = $data['relationship_to_head'] ?: 'MEMBER';
         
         // PhilHealth status
         $philhealth_status = 'Not Registered';
@@ -173,7 +149,7 @@ function exportHouseholdData() {
         $sheet->setCellValue("J$row", $philhealth_status);
         
         // Highlight head of household
-        if ($relationship === 'HEAD OF FAMILY') {
+        if ($relationship === 'Head of Household') {
             $sheet->getStyle("A$row:J$row")->getFont()->setBold(true);
             $sheet->getStyle("A$row:J$row")->getFill()
                 ->setFillType(Fill::FILL_SOLID)
@@ -202,9 +178,9 @@ function exportHouseholdData() {
     $males = 0;
     $females = 0;
     
-    mysqli_data_seek($result, 0); // Reset result pointer
+    mysqli_data_seek($result, 0);
     $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "ss", $resident_info['house_number'], $resident_info['purok']);
+    mysqli_stmt_bind_param($stmt, "s", $resident_info['house_number']);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     
@@ -259,9 +235,8 @@ function exportHouseholdData() {
     $sheet->getStyle("A$footer_row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     
     // Output file
-    $filename = 'My_Household_Census_' . $resident_info['house_number'] . '_' . $resident_info['purok'] . '_' . date('Y-m-d') . '.xlsx';
+    $filename = 'My_Household_Census_' . $resident_info['house_number'] . '_' . date('Y-m-d') . '.xlsx';
     
-    // Clear any output buffer
     if (ob_get_level()) {
         ob_end_clean();
     }
@@ -269,7 +244,6 @@ function exportHouseholdData() {
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
-    header('Cache-Control: max-age=1');
     header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
     header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
     header('Cache-Control: cache, must-revalidate');
@@ -283,7 +257,7 @@ function exportHouseholdData() {
 function getHouseholdData() {
     global $conn;
     
-    $resident_id = $_SESSION['resident_id'];
+    $resident_id = $_SESSION['user_id'];
     
     // Get current resident's house info
     $resident_query = "SELECT house_number, purok FROM residents WHERE id = ?";
@@ -297,49 +271,32 @@ function getHouseholdData() {
         return;
     }
     
-    // Get all household members
+    // Get all household members - ONLY BY HOUSE NUMBER
     $query = "
         SELECT 
             r.*,
             CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) as full_name
         FROM residents r
         WHERE house_number = ? 
-        AND purok = ? 
         AND resident_status = 'Active'
         ORDER BY 
             CASE 
-                WHEN LOWER(civil_status) = 'married' AND age = (
-                    SELECT MIN(age) FROM residents r2 
-                    WHERE r2.house_number = r.house_number 
-                    AND r2.purok = r.purok 
-                    AND LOWER(r2.civil_status) = 'married'
-                    AND r2.resident_status = 'Active'
-                ) THEN 0
-                ELSE age
+                WHEN relationship_to_head = 'Head of Household' THEN 0
+                WHEN relationship_to_head = 'Spouse' THEN 1
+                ELSE 2
             END,
-            age
+            age DESC
     ";
     
     $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "ss", $resident_info['house_number'], $resident_info['purok']);
+    mysqli_stmt_bind_param($stmt, "s", $resident_info['house_number']);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     
     $members = [];
-    $member_count = 0;
     
     while ($member = mysqli_fetch_assoc($result)) {
-        $member_count++;
-        
-        // Determine relationship
-        $relationship = 'MEMBER';
-        if ($member_count === 1) {
-            $relationship = 'HEAD';
-        } elseif ($member_count === 2 && strtolower($member['civil_status']) === 'married') {
-            $relationship = 'SPOUSE';
-        } elseif ($member_count > 2) {
-            $relationship = (strtolower($member['sex']) === 'male') ? 'SON' : 'DAUGHTER';
-        }
+        $relationship = $member['relationship_to_head'] ?: 'MEMBER';
         
         $members[] = [
             'id' => $member['id'],
@@ -353,7 +310,7 @@ function getHouseholdData() {
             'email' => $member['email'] ?: 'N/A',
             'philhealth_status' => !empty($member['philhealth_number']) ? 'Member' : ($member['age'] < 18 ? 'Dependent' : 'Not Registered'),
             'relationship' => $relationship,
-            'is_head' => $relationship === 'HEAD'
+            'is_head' => $relationship === 'Head of Household'
         ];
     }
     
@@ -361,7 +318,7 @@ function getHouseholdData() {
         'house_number' => $resident_info['house_number'],
         'purok' => $resident_info['purok'],
         'members' => $members,
-        'total_members' => $member_count
+        'total_members' => count($members)
     ]);
 }
 ?>
