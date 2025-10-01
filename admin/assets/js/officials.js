@@ -1,21 +1,24 @@
-
+// admin/assets/js/officials.js
 document.addEventListener('DOMContentLoaded', function() {
     loadOfficials();
     
-    document.getElementById('addOfficialForm').addEventListener('submit', addOfficial);
-    document.getElementById('editOfficialForm').addEventListener('submit', updateOfficial);
-    document.getElementById('confirmDeleteBtn').addEventListener('click', deleteOfficial);
-    
-    document.getElementById('officialConfirmPassword').addEventListener('input', function() {
-        const password = document.getElementById('officialPassword').value;
-        const confirmPassword = this.value;
+    // Only add event listeners if user can modify
+    if (window.USER_CAN_MODIFY) {
+        document.getElementById('addOfficialForm').addEventListener('submit', addOfficial);
+        document.getElementById('editOfficialForm').addEventListener('submit', updateOfficial);
+        document.getElementById('confirmDeleteBtn').addEventListener('click', deleteOfficial);
         
-        if (password !== confirmPassword && confirmPassword.length > 0) {
-            this.setCustomValidity('Passwords do not match');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
+        document.getElementById('officialConfirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('officialPassword').value;
+            const confirmPassword = this.value;
+            
+            if (password !== confirmPassword && confirmPassword.length > 0) {
+                this.setCustomValidity('Passwords do not match');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    }
     
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -42,7 +45,8 @@ function loadOfficials() {
             tableBody.innerHTML = '';
             
             if (data.data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No officials found</td></tr>';
+                const colspan = window.USER_CAN_MODIFY ? '6' : '5';
+                tableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center">No officials found</td></tr>`;
                 return;
             }
             
@@ -50,37 +54,60 @@ function loadOfficials() {
                 const row = document.createElement('tr');
                 const fullName = `${official.first_name} ${official.middle_name ? official.middle_name + ' ' : ''}${official.last_name}`;
                 
-                row.innerHTML = `
+                const roleBadgeClass = official.role === 'Admin' ? 'bg-primary' : 'bg-info';
+                const statusBadgeClass = official.status === 'Active' ? 'bg-success' : 'bg-secondary';
+                
+                let rowHTML = `
                     <td>${index + 1}</td>
-                    <td>${escapeHtml(fullName)}</td>
-                    <td>${escapeHtml(official.position)}</td>
+                    <td>
+                        ${escapeHtml(fullName)}<br>
+                        <small class="text-muted">@${escapeHtml(official.username)}</small>
+                    </td>
+                    <td>
+                        ${escapeHtml(official.position)}<br>
+                        <span class="badge ${roleBadgeClass}">${escapeHtml(official.role)}</span>
+                    </td>
                     <td>
                         ${escapeHtml(official.email)}<br>
                         <small class="text-muted">${official.contact_number || 'No contact'}</small>
                     </td>
-                    <td><span class="badge ${official.status === 'Active' ? 'bg-success' : 'bg-secondary'}">${official.status}</span></td>
-                    <td class="action-buttons">
-                        <button class="btn btn-sm btn-warning edit-btn" data-id="${official.id}" data-bs-toggle="tooltip" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger delete-btn" data-id="${official.id}" 
-                            data-name="${escapeHtml(fullName)}" data-position="${escapeHtml(official.position)}"
-                            ${official.position === 'Barangay Captain' ? 'disabled data-bs-toggle="tooltip" title="Cannot delete Barangay Captain"' : 'data-bs-toggle="tooltip" title="Delete"'}>
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
+                    <td><span class="badge ${statusBadgeClass}">${official.status}</span></td>
                 `;
+                
+                // Only add action buttons if user can modify
+                if (window.USER_CAN_MODIFY) {
+                    rowHTML += `
+                        <td class="action-buttons">
+                            <button class="btn btn-sm btn-warning edit-btn" data-id="${official.id}" data-bs-toggle="tooltip" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="${official.id}" 
+                                data-name="${escapeHtml(fullName)}" 
+                                data-position="${escapeHtml(official.position)}"
+                                data-role="${escapeHtml(official.role)}"
+                                ${official.position === 'Barangay Captain' ? 'disabled data-bs-toggle="tooltip" title="Cannot delete Barangay Captain"' : 'data-bs-toggle="tooltip" title="Delete"'}>
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                }
+                
+                row.innerHTML = rowHTML;
                 tableBody.appendChild(row);
             });
             
-            addButtonEventListeners();
+            // Only add button listeners if user can modify
+            if (window.USER_CAN_MODIFY) {
+                addButtonEventListeners();
+            }
         })
         .catch(error => {
             console.error('Error loading officials:', error);
             showAlert('Failed to load officials: ' + error.message, 'error');
             
             const tableBody = document.querySelector('#officialsTable tbody');
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading data</td></tr>';
+            const colspan = window.USER_CAN_MODIFY ? '6' : '5';
+            tableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-danger">Error loading data</td></tr>`;
         })
         .finally(() => {
             showLoadingSpinner(false);
@@ -100,10 +127,12 @@ function addButtonEventListeners() {
             const id = this.getAttribute('data-id');
             const name = this.getAttribute('data-name');
             const position = this.getAttribute('data-position');
+            const role = this.getAttribute('data-role');
             
             document.getElementById('deleteOfficialId').value = id;
             document.getElementById('deleteOfficialName').textContent = name;
             document.getElementById('deleteOfficialPosition').textContent = position;
+            document.getElementById('deleteOfficialRole').textContent = role;
             
             new bootstrap.Modal(document.getElementById('deleteOfficialModal')).show();
         });
@@ -139,6 +168,7 @@ function loadOfficialData(id) {
             document.getElementById('editOfficialMiddleName').value = official.middle_name || '';
             document.getElementById('editOfficialLastName').value = official.last_name || '';
             document.getElementById('editOfficialPosition').value = official.position || '';
+            document.getElementById('editOfficialRole').value = official.role || 'Official';
             document.getElementById('editOfficialEmail').value = official.email || '';
             document.getElementById('editOfficialContact').value = official.contact_number || '';
             document.getElementById('editOfficialStatus').value = official.status || 'Active';
@@ -175,13 +205,14 @@ function addOfficial(e) {
         middle_name: document.getElementById('officialMiddleName').value.trim(),
         last_name: document.getElementById('officialLastName').value.trim(),
         position: document.getElementById('officialPosition').value,
+        role: document.getElementById('officialRole').value,
         email: document.getElementById('officialEmail').value.trim(),
         contact_number: document.getElementById('officialContact').value.trim(),
         status: document.getElementById('officialStatus').value,
         password: password
     };
     
-    if (!formData.first_name || !formData.last_name || !formData.position || !formData.email) {
+    if (!formData.first_name || !formData.last_name || !formData.position || !formData.email || !formData.role) {
         showAlert('Please fill in all required fields', 'error');
         return;
     }
@@ -249,6 +280,7 @@ function updateOfficial(e) {
         middle_name: document.getElementById('editOfficialMiddleName').value.trim(),
         last_name: document.getElementById('editOfficialLastName').value.trim(),
         position: document.getElementById('editOfficialPosition').value,
+        role: document.getElementById('editOfficialRole').value,
         email: document.getElementById('editOfficialEmail').value.trim(),
         contact_number: document.getElementById('editOfficialContact').value.trim(),
         status: document.getElementById('editOfficialStatus').value
@@ -258,7 +290,7 @@ function updateOfficial(e) {
         formData.password = password;
     }
     
-    if (!formData.first_name || !formData.last_name || !formData.position || !formData.email) {
+    if (!formData.first_name || !formData.last_name || !formData.position || !formData.email || !formData.role) {
         showAlert('Please fill in all required fields', 'error');
         return;
     }
@@ -369,7 +401,8 @@ function showAlert(message, type) {
 function showLoadingSpinner(show) {
     const tableBody = document.querySelector('#officialsTable tbody');
     if (show) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+        const colspan = window.USER_CAN_MODIFY ? '6' : '5';
+        tableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
     }
 }
 

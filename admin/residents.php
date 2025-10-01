@@ -101,12 +101,16 @@ requireAuth();
                                             Verified Residents
                                         </div>
                                         <div>
+                                            <?php if (canModify()) { ?>
                                             <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#addResidentModal">
                                                 <i class="fas fa-plus me-1"></i> Add Resident
                                             </button>
+                                            <?php } ?>
+                                            <?php if (canModify()) { ?>
                                             <button class="btn btn-success btn-sm" onclick="exportResidents()">
                                                 <i class="fas fa-file-excel me-1"></i> Export
                                             </button>
+                                            <?php } ?>
                                         </div>
                                     </div>
                                 </div>
@@ -131,7 +135,9 @@ requireAuth();
                                                     <th>Contact</th>
                                                     <th>Birthdate</th>
                                                     <th>Account Status</th>
+                                                    <?php if (canModify()) { ?>
                                                     <th>Actions</th>
+                                                    <?php } ?>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -195,7 +201,9 @@ requireAuth();
                                                     <th>Date Requested</th>
                                                     <th>Status</th>
                                                     <th>Processed By</th>
+                                                    <?php if (canModify()) { ?>
                                                     <th>Actions</th>
+                                                    <?php } ?>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -238,6 +246,9 @@ requireAuth();
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="assets/js/script.js"></script>
+    <script>
+        window.USER_CAN_MODIFY = <?php echo canModify() ? 'true' : 'false'; ?>;
+    </script>
     <script src="assets/js/residents.js"></script>
 </body>
 </html> 

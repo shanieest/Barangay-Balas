@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();
 require_once __DIR__ . '/includes/db.php';
+
 ?>
 
 <!DOCTYPE html>
