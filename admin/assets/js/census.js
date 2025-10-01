@@ -1,32 +1,26 @@
-// assets/js/census-enhanced.js - Enhanced Census Management JavaScript
 
 let currentPage = 1;
 let currentLimit = 25;
-let currentPurok = '';
 let currentSearch = '';
 
-// Initialize when document loads
 document.addEventListener('DOMContentLoaded', function() {
     loadHouseholds();
     loadStatistics();
 });
 
-// Load households data with complete information
 function loadHouseholds(page = 1) {
     currentPage = page;
-    const purok = document.getElementById('purokFilter').value;
     const search = document.getElementById('searchInput').value;
     const limit = document.getElementById('entriesPerPage').value;
     
-    currentPurok = purok;
     currentSearch = search;
     currentLimit = parseInt(limit);
     
     const container = document.getElementById('householdContainer');
     container.innerHTML = `
         <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-3">Loading households...</p>
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-3 text-muted">Loading households...</p>
         </div>
     `;
     
@@ -34,216 +28,252 @@ function loadHouseholds(page = 1) {
         action: 'get_households',
         page: page,
         limit: limit,
-        purok: purok,
         search: search
     });
     
     fetch(`census-backend.php?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            displayHouseholdsEnhanced(data.households);
+            if (data.error) throw new Error(data.error);
+            displayHouseholds(data.households);
             displayPagination(data);
         })
         .catch(error => {
-            console.error('Error:', error);
             container.innerHTML = `
-                <div class="alert alert-danger text-center">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Error loading households: ${error.message}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Error: ${error.message}
                 </div>
             `;
         });
 }
 
-// Display households with complete census information
-function displayHouseholdsEnhanced(households) {
+function displayHouseholds(households) {
     const container = document.getElementById('householdContainer');
     
     if (households.length === 0) {
         container.innerHTML = `
-            <div class="alert alert-info text-center">
-                <i class="fas fa-info-circle me-2"></i>
-                No households found matching your criteria.
+            <div class="alert alert-info text-center py-4">
+                <i class="fas fa-info-circle fa-2x mb-2"></i>
+                <h5>No households found</h5>
             </div>
         `;
         return;
     }
     
-    let householdsHTML = '';
+    let html = '';
     
     households.forEach(household => {
-        householdsHTML += `
-            <div class="household-card-enhanced">
-                <div class="household-header-enhanced">
+        html += `
+            <div class="card shadow-sm mb-4 household-card">
+                <!-- Household Header -->
+                <div class="card-header bg-primary text-white py-3">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h4 class="mb-1">House #${household.house_number}, ${household.purok}</h4>
-                            <p class="mb-0 opacity-75">Household ID: ${household.household_id}</p>
+                            <h4 class="mb-1">
+                                <i class="fas fa-home me-2"></i>House #${household.house_number}
+                            </h4>
+                            <p class="mb-0"><small>${household.address || 'No address specified'}</small></p>
                         </div>
-                        <div class="col-md-4 text-end">
-                            <div class="household-stats">
-                                <span class="badge bg-light text-dark fs-6 me-2">${household.member_count} Member${household.member_count > 1 ? 's' : ''}</span>
-                                <div class="mt-2">
-                                    ${getHouseholdBadges(household.members)}
-                                </div>
-                            </div>
+                        <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                            <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                                <i class="fas fa-users me-1"></i>${household.member_count} Member${household.member_count > 1 ? 's' : ''}
+                            </span>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Household Members -->
                 <div class="card-body p-0">
-                    ${household.members.map(member => `
-                        <div class="member-row-enhanced ${member.relationship === 'HEAD' ? 'head-member-row' : ''}">
-                            <div class="row g-0">
-                                <div class="col-md-4">
-                                    <div class="member-basic-info">
-                                        <div class="d-flex align-items-center">
-                                            <div class="member-avatar-sm">
+                    ${household.members.map((member, idx) => {
+                        const isHead = member.relationship === 'HEAD';
+                        return `
+                            <div class="member-row ${isHead ? 'member-head' : ''} ${idx % 2 === 0 ? 'bg-light' : 'bg-white'}">
+                                <div class="row g-0">
+                                    <!-- Left Column: Basic Info -->
+                                    <div class="col-lg-4 border-end p-4">
+                                        <div class="d-flex align-items-start">
+                                            <div class="member-avatar me-3">
                                                 ${getInitials(member.name)}
                                             </div>
-                                            <div class="ms-3">
-                                                <h6 class="mb-1 fw-bold">${member.name}</h6>
-                                                <span class="badge ${getBadgeClass(member.relationship)}">${member.relationship}</span>
+                                            <div class="flex-grow-1">
+                                                <h5 class="mb-2 fw-bold">
+                                                    ${member.name}
+                                                    ${isHead ? '<i class="fas fa-crown text-warning ms-2"></i>' : ''}
+                                                </h5>
+                                                <span class="badge badge-relationship-${member.relationship.toLowerCase()} mb-2">
+                                                    ${member.relationship}
+                                                </span>
+                                                <div class="mt-3">
+                                                    <p class="mb-2"><strong>Age:</strong> ${member.age} years old</p>
+                                                    <p class="mb-2"><strong>Sex:</strong> ${member.sex}</p>
+                                                    <p class="mb-0"><strong>Birthday:</strong> ${formatDate(member.birthdate)}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-md-8">
-                                    <div class="member-details-grid">
-                                        <div class="detail-group">
-                                            <small class="detail-label">Personal Info</small>
-                                            <div class="detail-content">
-                                                <span class="detail-item">Age: ${member.age}</span>
-                                                <span class="detail-item">Sex: ${member.sex}</span>
-                                                <span class="detail-item">Civil Status: ${member.civil_status}</span>
-                                                <span class="detail-item">Birthday: ${formatBirthdate(member.birthdate)}</span>
+                                    
+                                    <!-- Middle Column: Personal Info -->
+                                    <div class="col-lg-4 border-end p-4">
+                                        <h6 class="text-muted text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Personal Information</h6>
+                                        <p class="mb-2"><strong>Civil Status:</strong> ${member.civil_status}</p>
+                                        <p class="mb-2"><strong>Education:</strong> ${member.education}</p>
+                                        <p class="mb-2"><strong>Religion:</strong> ${member.religion}</p>
+                                        <p class="mb-2"><strong>Occupation:</strong> ${member.occupation}</p>
+                                        <p class="mb-2"><strong>Contact:</strong> ${member.contact}</p>
+                                        <p class="mb-0"><strong>Email:</strong> ${member.email}</p>
+                                    </div>
+                                    
+                                    <!-- Right Column: Status & Programs -->
+                                    <div class="col-lg-4 p-4">
+                                        <h6 class="text-muted text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Status & Programs</h6>
+                                        
+                                        <div class="mb-3">
+                                            <strong class="d-block mb-2">Health Coverage:</strong>
+                                            ${member.philhealth === 'Member' 
+                                                ? '<span class="badge bg-info text-white px-3 py-2"><i class="fas fa-notes-medical me-1"></i>PhilHealth Member</span>' 
+                                                : '<span class="badge bg-secondary px-3 py-2">No PhilHealth</span>'}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <strong class="d-block mb-2">Social Programs:</strong>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                ${member.is_indigent 
+                                                    ? '<span class="badge bg-warning text-dark px-3 py-2"><i class="fas fa-hand-holding-heart me-1"></i>Indigent</span>' 
+                                                    : ''}
+                                                ${member.is_4ps 
+                                                    ? '<span class="badge bg-success px-3 py-2"><i class="fas fa-hands-helping me-1"></i>4Ps Member</span>' 
+                                                    : ''}
+                                                ${parseInt(member.age) >= 60 
+                                                    ? '<span class="badge bg-purple text-white px-3 py-2"><i class="fas fa-walking me-1"></i>Senior Citizen</span>' 
+                                                    : ''}
+                                                ${parseInt(member.age) < 18 
+                                                    ? '<span class="badge bg-pink text-white px-3 py-2"><i class="fas fa-child me-1"></i>Minor</span>' 
+                                                    : ''}
+                                                ${!member.is_indigent && !member.is_4ps && parseInt(member.age) < 60 && parseInt(member.age) >= 18
+                                                    ? '<span class="badge bg-light text-dark px-3 py-2">None</span>'
+                                                    : ''}
                                             </div>
                                         </div>
-                                        <div class="detail-group">
-                                            <small class="detail-label">Background</small>
-                                            <div class="detail-content">
-                                                <span class="detail-item">Education: ${member.education}</span>
-                                                <span class="detail-item">Religion: ${member.religion}</span>
-                                                <span class="detail-item">Occupation: ${member.occupation}</span>
-                                            </div>
-                                        </div>
-                                        <div class="detail-group">
-                                            <small class="detail-label">Contact & Health</small>
-                                            <div class="detail-content">
-                                                <span class="detail-item">Contact: ${member.contact}</span>
-                                                <span class="detail-item">Email: ${member.email}</span>
-                                                <span class="detail-item">PhilHealth: ${member.philhealth}</span>
-                                            </div>
-                                        </div>
-                                        <div class="detail-group">
-                                            <small class="detail-label">Social Programs</small>
-                                            <div class="detail-content">
-                                                <span class="badge ${member.is_indigent ? 'bg-warning' : 'bg-light text-dark'} me-1">
-                                                    ${member.is_indigent ? 'Indigent' : 'Non-Indigent'}
-                                                </span>
-                                                <span class="badge ${member.is_4ps ? 'bg-success' : 'bg-light text-dark'}">
-                                                    ${member.is_4ps ? '4Ps Member' : 'Non-4Ps'}
-                                                </span>
-                                            </div>
-                                        </div>
+                                        
                                         ${member.medical_history !== 'None' ? `
-                                        <div class="detail-group">
-                                            <small class="detail-label">Medical History</small>
-                                            <div class="detail-content">
-                                                <span class="detail-item text-muted">${member.medical_history}</span>
-                                            </div>
+                                        <div>
+                                            <strong class="d-block mb-2">Medical History:</strong>
+                                            <p class="text-muted small mb-0">${member.medical_history}</p>
                                         </div>
                                         ` : ''}
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
-                <div class="household-footer">
+                
+                <!-- Card Footer -->
+                <div class="card-footer bg-light py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">
-                            <i class="fas fa-users me-1"></i>
-                            ${getHouseholdComposition(household.members)}
-                        </small>
-                        <div class="action-buttons">
-                            <button class="btn btn-sm btn-outline-primary" onclick="editHousehold('${household.household_id}')">
-                                <i class="fas fa-edit me-1"></i>Edit
-                            </button>
-                            <button class="btn btn-sm btn-outline-info" onclick="viewHouseholdDetails('${household.household_id}')">
-                                <i class="fas fa-eye me-1"></i>Details
-                            </button>
-                        </div>
+                        <span class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Household Composition: ${getHouseholdComposition(household.members)}
+                        </span>
                     </div>
                 </div>
             </div>
         `;
     });
     
-    container.innerHTML = householdsHTML;
+    container.innerHTML = html;
 }
 
-// Helper functions for enhanced display
-function getInitials(fullName) {
-    return fullName.split(' ')
-        .map(name => name.charAt(0))
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
+function getInitials(name) {
+    return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-function getBadgeClass(relationship) {
-    switch(relationship) {
-        case 'HEAD': return 'head-badge bg-primary';
-        case 'SPOUSE': return 'spouse-badge bg-success';
-        case 'SON': case 'DAUGHTER': return 'child-badge bg-info';
-        case 'FATHER': case 'MOTHER': return 'parent-badge bg-warning';
-        case 'BROTHER': case 'SISTER': return 'sibling-badge bg-secondary';
-        default: return 'member-badge bg-light text-dark';
-    }
-}
-
-function formatBirthdate(birthdate) {
-    if (!birthdate || birthdate === '0000-00-00') return 'Not provided';
-    const date = new Date(birthdate);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-    });
-}
-
-function getHouseholdBadges(members) {
-    const indigent = members.some(m => m.is_indigent);
-    const fourps = members.some(m => m.is_4ps);
-    const seniors = members.some(m => parseInt(m.age) >= 60);
-    const children = members.some(m => parseInt(m.age) < 18);
-    
-    let badges = '';
-    if (indigent) badges += '<span class="badge bg-warning text-dark me-1">Indigent</span>';
-    if (fourps) badges += '<span class="badge bg-success me-1">4Ps</span>';
-    if (seniors) badges += '<span class="badge bg-info me-1">Senior</span>';
-    if (children) badges += '<span class="badge bg-light text-dark me-1">w/ Children</span>';
-    
-    return badges;
+function formatDate(dateString) {
+    if (!dateString || dateString === '0000-00-00') return 'Not provided';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 function getHouseholdComposition(members) {
-    const adults = members.filter(m => parseInt(m.age) >= 18).length;
+    const adults = members.filter(m => parseInt(m.age) >= 18 && parseInt(m.age) < 60).length;
     const children = members.filter(m => parseInt(m.age) < 18).length;
     const seniors = members.filter(m => parseInt(m.age) >= 60).length;
     
-    let composition = [];
-    if (adults > 0) composition.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
-    if (children > 0) composition.push(`${children} Child${children > 1 ? 'ren' : ''}`);
-    if (seniors > 0) composition.push(`${seniors} Senior${seniors > 1 ? 's' : ''}`);
+    let parts = [];
+    if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
+    if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
+    if (seniors > 0) parts.push(`${seniors} Senior${seniors > 1 ? 's' : ''}`);
     
-    return composition.join(', ');
+    return parts.join(', ') || 'No members';
 }
 
-// Load and update enhanced statistics
+function viewHouseholdDetails(householdId) {
+    Swal.fire({
+        title: 'Loading...',
+        html: '<div class="spinner-border text-primary"></div>',
+        showConfirmButton: false,
+        allowOutsideClick: false
+    });
+    
+    fetch(`census-backend.php?action=get_household_details&id=${householdId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) throw new Error(data.error);
+            
+            Swal.fire({
+                title: `Household #${data.house_number} - Complete Details`,
+                html: `
+                    <div class="text-start">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Total Members:</strong> ${data.total_members}
+                            </div>
+                            <div class="col-6">
+                                <strong>Household Type:</strong> ${data.household_type}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Indigent:</strong> ${data.has_indigent ? 'Yes' : 'No'}
+                            </div>
+                            <div class="col-4">
+                                <strong>4Ps:</strong> ${data.has_4ps ? 'Yes' : 'No'}
+                            </div>
+                            <div class="col-4">
+                                <strong>Seniors:</strong> ${data.senior_count}
+                            </div>
+                        </div>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Relationship</th>
+                                    <th>Age</th>
+                                    <th>Occupation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.members.map(m => `
+                                    <tr>
+                                        <td>${m.name}</td>
+                                        <td><span class="badge badge-relationship-${m.relationship.toLowerCase()}">${m.relationship}</span></td>
+                                        <td>${m.age}</td>
+                                        <td>${m.occupation}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `,
+                width: '800px',
+                confirmButtonText: 'Close'
+            });
+        })
+        .catch(error => {
+            Swal.fire('Error', error.message, 'error');
+        });
+}
+
 function loadStatistics() {
     fetch('census-backend.php?action=get_statistics')
         .then(response => response.json())
@@ -258,192 +288,56 @@ function loadStatistics() {
             updateStatistic('indigentCount', parseInt(data.indigent_families));
             updateStatistic('fourpsCount', parseInt(data.fourps_members));
             updateStatistic('philhealthCount', parseInt(data.philhealth_members));
-        })
-        .catch(error => {
-            console.error('Error loading statistics:', error);
         });
 }
 
-// Edit household function
-function editHousehold(householdId) {
-    // Implementation for editing household
-    Swal.fire({
-        title: 'Edit Household',
-        text: `Edit household ${householdId}`,
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'Edit Members',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Redirect to edit page or open modal
-            window.location.href = `edit-household.php?id=${householdId}`;
-        }
-    });
+function updateStatistic(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    element.textContent = value.toLocaleString();
 }
 
-// View household details function
-function viewHouseholdDetails(householdId) {
-    // Implementation for viewing household details
-    Swal.fire({
-        title: 'Household Details',
-        html: `<p>Loading detailed information for ${householdId}...</p>`,
-        icon: 'info',
-        confirmButtonText: 'Close',
-        width: '800px',
-        didOpen: () => {
-            // Fetch detailed household data
-            fetch(`census-backend.php?action=get_household_details&id=${householdId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    // Update modal content with detailed data
-                    Swal.update({
-                        html: generateHouseholdDetailsHTML(data)
-                    });
-                })
-                .catch(error => {
-                    Swal.update({
-                        html: `<p class="text-danger">Error loading details: ${error.message}</p>`
-                    });
-                });
-        }
-    });
-}
-
-// Generate detailed HTML for household
-function generateHouseholdDetailsHTML(data) {
+function displayPagination(data) {
+    const container = document.getElementById('paginationContainer');
+    const { total, page, limit, total_pages } = data;
+    
+    const startEntry = ((page - 1) * limit) + 1;
+    const endEntry = Math.min(page * limit, total);
+    
     let html = `
-        <div class="household-details">
-            <h5>Household Information</h5>
-            <div class="row mb-3">
-                <div class="col-6">
-                    <strong>Address:</strong> House #${data.house_number}, ${data.purok}<br>
-                    <strong>Total Members:</strong> ${data.total_members}<br>
-                    <strong>Household Type:</strong> ${data.household_type || 'Nuclear Family'}
-                </div>
-                <div class="col-6">
-                    <strong>Indigent Status:</strong> ${data.has_indigent ? 'Yes' : 'No'}<br>
-                    <strong>4Ps Member:</strong> ${data.has_4ps ? 'Yes' : 'No'}<br>
-                    <strong>Senior Citizens:</strong> ${data.senior_count}
-                </div>
-            </div>
-            <h6>Family Members</h6>
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Relationship</th>
-                            <th>Age</th>
-                            <th>Occupation</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <div><span class="text-muted">Showing ${startEntry} to ${endEntry} of ${total} households</span></div>
+        <nav><ul class="pagination mb-0">
     `;
     
-    data.members.forEach(member => {
-        html += `
-            <tr>
-                <td>${member.name}</td>
-                <td><span class="badge ${getBadgeClass(member.relationship)}">${member.relationship}</span></td>
-                <td>${member.age}</td>
-                <td>${member.occupation}</td>
-                <td>
-                    ${member.is_indigent ? '<span class="badge bg-warning">Indigent</span>' : ''}
-                    ${member.is_4ps ? '<span class="badge bg-success">4Ps</span>' : ''}
-                    ${member.philhealth !== 'Not Registered' ? '<span class="badge bg-info">PhilHealth</span>' : ''}
-                </td>
-            </tr>
-        `;
-    });
+    if (page > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadHouseholds(${page - 1}); return false;">Previous</a></li>`;
+    }
     
-    html += `
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
+    for (let i = Math.max(1, page - 2); i <= Math.min(total_pages, page + 2); i++) {
+        html += `<li class="page-item ${i === page ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="loadHouseholds(${i}); return false;">${i}</a>
+        </li>`;
+    }
     
-    return html;
+    if (page < total_pages) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadHouseholds(${page + 1}); return false;">Next</a></li>`;
+    }
+    
+    html += '</ul></nav>';
+    container.innerHTML = html;
 }
 
-// Update relationship function
-function updateRelationship(residentId, currentRelationship) {
-    const relationships = [
-        'HEAD', 'SPOUSE', 'SON', 'DAUGHTER', 'FATHER', 'MOTHER', 
-        'BROTHER', 'SISTER', 'GRANDSON', 'GRANDDAUGHTER', 
-        'GRANDFATHER', 'GRANDMOTHER', 'SON-IN-LAW', 'DAUGHTER-IN-LAW',
-        'BROTHER-IN-LAW', 'SISTER-IN-LAW', 'NEPHEW', 'NIECE',
-        'UNCLE', 'AUNT', 'COUSIN', 'BOARDER', 'DOMESTIC HELPER',
-        'OTHER RELATIVE', 'NON-RELATIVE'
-    ];
-    
-    let selectOptions = relationships.map(rel => 
-        `<option value="${rel}" ${rel === currentRelationship ? 'selected' : ''}>${rel}</option>`
-    ).join('');
-    
-    Swal.fire({
-        title: 'Update Relationship',
-        html: `
-            <div class="mb-3">
-                <label class="form-label">Relationship to Head of Family:</label>
-                <select class="form-select" id="relationshipSelect">
-                    ${selectOptions}
-                </select>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Update',
-        preConfirm: () => {
-            const newRelationship = document.getElementById('relationshipSelect').value;
-            if (!newRelationship) {
-                Swal.showValidationMessage('Please select a relationship');
-                return false;
-            }
-            return newRelationship;
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Send update request
-            const formData = new FormData();
-            formData.append('action', 'update_relationship');
-            formData.append('resident_id', residentId);
-            formData.append('relationship', result.value);
-            
-            fetch('census-backend.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Success!', 'Relationship updated successfully', 'success');
-                    loadHouseholds(currentPage); // Refresh the display
-                } else {
-                    throw new Error(data.error || 'Update failed');
-                }
-            })
-            .catch(error => {
-                Swal.fire('Error!', error.message, 'error');
-            });
-        }
-    });
+function filterHouseholds() {
+    loadHouseholds(1);
 }
 
-// Enhanced export function
-function exportToExcelEnhanced() {
+function changeEntriesPerPage() {
+    loadHouseholds(1);
+}
+
+function exportToExcel(type) {
     const loadingOverlay = document.getElementById('loadingOverlay');
     loadingOverlay.style.display = 'flex';
-    
-    // Update loading text for enhanced export
-    const loadingText = loadingOverlay.querySelector('h5');
-    if (loadingText) {
-        loadingText.textContent = 'Generating Complete Census Report...';
-    }
     
     const form = document.createElement('form');
     form.method = 'POST';
@@ -456,152 +350,24 @@ function exportToExcelEnhanced() {
     
     const typeInput = document.createElement('input');
     typeInput.name = 'type';
-    typeInput.value = 'enhanced';
+    typeInput.value = type;
     
     form.appendChild(actionInput);
     form.appendChild(typeInput);
     document.body.appendChild(form);
-    
     form.submit();
     
     setTimeout(() => {
         loadingOverlay.style.display = 'none';
         document.body.removeChild(form);
-        
         Swal.fire({
             icon: 'success',
-            title: 'Export Complete!',
-            text: 'Your comprehensive census report has been downloaded successfully.',
-            timer: 3000,
+            title: 'Export Successful!',
+            text: 'Your Excel file has been downloaded.',
+            timer: 2000,
             showConfirmButton: false
         });
-    }, 3000);
+    }, 2000);
 }
 
-// Enhanced filter function with more options
-function filterHouseholdsEnhanced() {
-    const filters = {
-        purok: document.getElementById('purokFilter').value,
-        search: document.getElementById('searchInput').value,
-        indigent: document.getElementById('indigentFilter')?.value || '',
-        fourps: document.getElementById('fourpsFilter')?.value || '',
-        seniors: document.getElementById('seniorsFilter')?.value || ''
-    };
-    
-    currentPage = 1;
-    loadHouseholds(1);
-}
-
-// Pagination (reuse existing function)
-function displayPagination(data) {
-    const container = document.getElementById('paginationContainer');
-    const { total, page, limit, total_pages } = data;
-    
-    const startEntry = ((page - 1) * limit) + 1;
-    const endEntry = Math.min(page * limit, total);
-    
-    let paginationHTML = `
-        <div>
-            <p class="text-muted mb-0">Showing ${startEntry} to ${endEntry} of ${total} households</p>
-        </div>
-        <nav>
-            <ul class="pagination mb-0">
-    `;
-    
-    // Previous button
-    if (page > 1) {
-        paginationHTML += `
-            <li class="page-item">
-                <a class="page-link" href="#" onclick="loadHouseholds(${page - 1})">Previous</a>
-            </li>
-        `;
-    } else {
-        paginationHTML += `
-            <li class="page-item disabled">
-                <span class="page-link">Previous</span>
-            </li>
-        `;
-    }
-    
-    // Page numbers
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(total_pages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage + 1 < maxVisiblePages) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        if (i === page) {
-            paginationHTML += `
-                <li class="page-item active">
-                    <span class="page-link">${i}</span>
-                </li>
-            `;
-        } else {
-            paginationHTML += `
-                <li class="page-item">
-                    <a class="page-link" href="#" onclick="loadHouseholds(${i})">${i}</a>
-                </li>
-            `;
-        }
-    }
-    
-    // Next button
-    if (page < total_pages) {
-        paginationHTML += `
-            <li class="page-item">
-                <a class="page-link" href="#" onclick="loadHouseholds(${page + 1})">Next</a>
-            </li>
-        `;
-    } else {
-        paginationHTML += `
-            <li class="page-item disabled">
-                <span class="page-link">Next</span>
-            </li>
-        `;
-    }
-    
-    paginationHTML += `
-            </ul>
-        </nav>
-    `;
-    
-    container.innerHTML = paginationHTML;
-}
-
-// Filter and search functions
-function filterHouseholds() {
-    currentPage = 1;
-    loadHouseholds(1);
-}
-
-function changeEntriesPerPage() {
-    currentPage = 1;
-    loadHouseholds(1);
-}
-
-// Update statistic with animation (reuse existing function)
-function updateStatistic(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    
-    let current = 0;
-    const increment = value / 50;
-    
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= value) {
-            element.textContent = value.toLocaleString();
-            clearInterval(timer);
-        } else {
-            element.textContent = Math.floor(current).toLocaleString();
-        }
-    }, 20);
-}
-
-// Auto-refresh functionality
-setInterval(() => {
-    loadStatistics();
-}, 30000); // Refresh every 30 seconds
+setInterval(loadStatistics, 60000);

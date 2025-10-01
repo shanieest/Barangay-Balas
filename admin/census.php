@@ -42,6 +42,197 @@ $stats = mysqli_fetch_assoc($stats_result);
             --light-gray: #f8f9fa;
             --dark-gray: #343a40;
         }
+        /* Spacious & Readable Household Card Styles */
+
+.household-card {
+    border-radius: 12px;
+    overflow: hidden;
+    border: none !important;
+}
+
+.household-card .card-header {
+    background: linear-gradient(135deg, #0033cc 0%, #3a7cb9 100%);
+    border: none;
+}
+
+.household-card .card-header h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Member Row Styles */
+.member-row {
+    border-bottom: 2px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.member-row:hover {
+    background-color: #f0f8ff !important;
+}
+
+.member-row:last-child {
+    border-bottom: none;
+}
+
+.member-head {
+    background: linear-gradient(to right, #fff9e6 0%, #ffffff 50%) !important;
+    border-left: 5px solid #ffbe0b;
+}
+
+/* Member Avatar */
+.member-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0033cc, #3a7cb9);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(0, 51, 204, 0.2);
+    flex-shrink: 0;
+}
+
+.member-head .member-avatar {
+    background: linear-gradient(135deg, #ffbe0b, #ff9800);
+    box-shadow: 0 3px 10px rgba(255, 190, 11, 0.3);
+}
+
+/* Relationship Badges */
+.badge-relationship-head {
+    background: #0033cc;
+    color: white;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-relationship-spouse {
+    background: #4caf50;
+    color: white;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-relationship-son,
+.badge-relationship-daughter {
+    background: #2196f3;
+    color: white;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-relationship-father,
+.badge-relationship-mother {
+    background: #ff9800;
+    color: white;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-relationship-brother,
+.badge-relationship-sister {
+    background: #9c27b0;
+    color: white;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-relationship-grandfather,
+.badge-relationship-grandmother {
+    background: #607d8b;
+    color: white;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-relationship-undetermined {
+    background: #9e9e9e;
+    color: white;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Info Sections */
+.member-row h5 {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.member-row h6 {
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+.member-row p {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #495057;
+}
+
+.member-row p strong {
+    color: #2c3e50;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 120px;
+}
+
+/* Status Badges */
+.bg-purple {
+    background-color: #9c27b0 !important;
+}
+
+.bg-pink {
+    background-color: #e91e63 !important;
+}
+
+/* Card Footer */
+.card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .member-row .border-end {
+        border-right: none !important;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .member-row .col-lg-4 {
+        padding: 20px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .member-avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 1.1rem;
+    }
+    
+    .member-row h5 {
+        font-size: 1.1rem;
+    }
+    
+    .member-row p strong {
+        min-width: 100px;
+        font-size: 0.9rem;
+    }
+}
 
         .stats-card {
             border-radius: 15px;
