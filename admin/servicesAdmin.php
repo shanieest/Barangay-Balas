@@ -282,7 +282,9 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         <th>Reason</th>
                       <?php endif; ?>
                     <?php endif; ?>
-                    <th>Actions</th>
+                     <?php if (canModify()) { ?>
+                      <th>Actions</th>
+                      <?php } ?>
                   </tr>
                 </thead>
                 <tbody>
@@ -296,6 +298,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         <?php if ($doc_tab === 'pending'): ?>
                           <td><?= htmlspecialchars($row['purpose']) ?></td>
                           <td>
+                            <?php if (canModify()) : ?>
                             <button class="btn btn-sm btn-success me-1" data-bs-toggle="modal" data-bs-target="#approveRequestModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-check"></i> Approve
                             </button>
@@ -303,12 +306,14 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                               <i class="fas fa-times"></i> Disapprove
                             </button>
                           </td>
+                          <?php endif; ?>
                         <?php else: ?>
                           <td><?= htmlspecialchars($row['date_processed']) ?></td>
                           <?php if ($doc_tab === 'disapproved'): ?>
                             <td><?= htmlspecialchars($row['notes']) ?></td>
                           <?php endif; ?>
                           <td>
+                            <?php if (canModify()) : ?>
                             <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewRequestModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-eye"></i> View
                             </button>
@@ -317,8 +322,9 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                                   <i class="fas fa-download"></i> Download
                               </a>
                             <?php endif; ?>
+                            <?php endif; ?>
                           </td>
-                        <?php endif; ?>
+                            <?php endif; ?>
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
@@ -403,7 +409,9 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                     <?php else: ?>
                       <th>Status</th>
                     <?php endif; ?>
+                    <?php if (canModify()) { ?>
                     <th>Actions</th>
+                    <?php } ?>
                   </tr>
                 </thead>
                 <tbody>
@@ -418,16 +426,19 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         <?php if ($service_tab === 'pending'): ?>
                           <td><?= htmlspecialchars($row['purpose']) ?></td>
                           <td>
+                            <?php if (canModify()) : ?>
                             <button class="btn btn-sm btn-success me-1" data-bs-toggle="modal" data-bs-target="#approveServiceModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-check"></i> Approve
                             </button>
                             <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectServiceModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-times"></i> Reject
                             </button>
+                            <?php endif; ?>
                           </td>
                         <?php elseif ($service_tab === 'cancelled'): ?>
                           <td><?= htmlspecialchars($row['rejection_reason'] ?: $row['notes'] ?: 'N/A') ?></td>
                           <td>
+
                             <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewServiceModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-eye"></i> View
                             </button>
@@ -445,6 +456,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                             <span class="badge <?= $badge_class ?>"><?= $row['status'] ?></span>
                           </td>
                           <td>
+                            <?php if (canModify()) : ?>
                             <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewServiceModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-eye"></i> View
                             </button>
@@ -452,6 +464,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                               <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateServiceModal" data-id="<?= $row['id'] ?>">
                                 <i class="fas fa-edit"></i> Update
                               </button>
+                            <?php endif; ?>
                             <?php endif; ?>
                           </td>
                         <?php endif; ?>
@@ -492,7 +505,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="assets/js/script.js"></script>
-<script src="assets/js/reservation.js"></script>
+<script src="assets/js/reservation.js"></script> 
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -518,6 +531,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+        window.USER_CAN_MODIFY = <?php echo canModify() ? 'true' : 'false'; ?>;
+
 </script>
 
 </body>

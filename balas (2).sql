@@ -162,19 +162,6 @@ INSERT INTO `announcement_images` (`id`, `announcement_id`, `image_path`, `creat
 -- Table structure for table `barangay_officials`
 --
 
-CREATE TABLE `barangay_officials` (
-  `id` int(11) NOT NULL,
-  `first_name` varchar(50) NOT NULL,
-  `last_name` varchar(50) NOT NULL,
-  `middle_name` varchar(50) DEFAULT NULL,
-  `position` varchar(100) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `contact_number` varchar(20) DEFAULT NULL,
-  `status` enum('Active','Inactive') DEFAULT 'Active',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- --------------------------------------------------------
 
 --
