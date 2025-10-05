@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 23, 2025 at 01:23 PM
+-- Generation Time: Oct 05, 2025 at 07:52 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -41,35 +41,7 @@ CREATE TABLE `activity_logs` (
 --
 
 INSERT INTO `activity_logs` (`id`, `user_id`, `activity`, `timestamp`, `ip_address`, `user_agent`) VALUES
-(118, 1, '1', '2025-09-19 11:48:36', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0'),
-(119, 43, 'Requested document (ID: 3)', '2025-09-19 11:52:15', '::1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1 Edg/140.0.0.0'),
-(120, 43, 'Requested document (ID: 2)', '2025-09-19 12:32:58', '::1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1 Edg/140.0.0.0'),
-(121, 43, 'Requested document (ID: 3)', '2025-09-19 12:33:52', '::1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1 Edg/140.0.0.0'),
-(122, 1, '1', '2025-09-21 08:53:13', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(123, 1, 'Approved service reservation (ID: 14)', '2025-09-21 13:19:30', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(124, 1, 'Rejected service reservation (ID: 12)', '2025-09-21 13:19:50', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(125, 43, 'Cancelled service reservation #13 (Services: Vehicle, Purpose: Test)', '2025-09-21 13:20:11', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(126, 43, 'Cancelled Clearance document request #116', '2025-09-21 13:20:23', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(127, 43, 'Cancelled Residency document request #117', '2025-09-21 13:21:45', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(128, 1, 'Updated service reservation status to \'In Progress\' (ID: 14)', '2025-09-21 13:22:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(129, 43, 'Updated profile photo', '2025-09-21 13:26:47', NULL, NULL),
-(130, 43, 'Updated profile photo', '2025-09-21 13:44:48', NULL, NULL),
-(131, 43, 'Updated profile photo', '2025-09-21 13:48:58', NULL, NULL),
-(132, 43, 'Updated profile photo', '2025-09-21 13:52:48', NULL, NULL),
-(133, 1, '1', '2025-09-21 19:04:05', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(134, 1, '1', '2025-09-22 10:01:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(135, 1, '1', '2025-09-22 10:33:02', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(136, 1, '1', '2025-09-22 23:40:31', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(137, 1, '1', '2025-09-23 08:30:48', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(138, 1, '1', '2025-09-23 08:40:41', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(139, 43, 'Updated profile information', '2025-09-23 08:46:07', NULL, NULL),
-(140, 1, '1', '2025-09-23 09:02:59', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(141, 1, '1', '2025-09-23 09:06:02', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(142, 1, '1', '2025-09-23 11:43:54', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(143, 44, 'Updated profile information', '2025-09-23 11:44:52', NULL, NULL),
-(144, 1, '1', '2025-09-23 12:22:47', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(145, 1, '1', '2025-09-23 13:08:15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'),
-(146, 43, 'Updated profile information.', '2025-09-23 13:35:05', NULL, NULL);
+(191, 1, 'Logged in as Admin', '2025-10-06 01:30:33', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36');
 
 -- --------------------------------------------------------
 
@@ -92,7 +64,7 @@ CREATE TABLE `admin_users` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `last_login` datetime DEFAULT NULL,
-  `role` enum('Admin','Official') DEFAULT 'Official'
+  `role` enum('Admin','Official') DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -100,7 +72,10 @@ CREATE TABLE `admin_users` (
 --
 
 INSERT INTO `admin_users` (`id`, `username`, `password`, `first_name`, `last_name`, `middle_name`, `email`, `contact_number`, `position`, `photo_path`, `status`, `created_at`, `updated_at`, `last_login`, `role`) VALUES
-(1, 'administrator', '$2y$10$rUKGC0CbAREdpcyydH2EwesD5R5WNgexhfUBiuJwIg0.bMeayFs1a', 'Admin na Maganda', 'Jarshane', NULL, 'jarshanetolentino@gmail.com', '09999999999', 'Secretary', NULL, 'Active', '2025-08-04 04:20:14', '2025-09-23 05:08:15', '2025-09-23 13:08:15', 'Official');
+(1, 'administrator', '$2y$10$rUKGC0CbAREdpcyydH2EwesD5R5WNgexhfUBiuJwIg0.bMeayFs1a', 'Admin', 'Account', '', 'barangaybalas@gmail.com', '09999999999', 'Barangay Secretary', 'uploads/profile_photos/profile_1_1759683016.png', 'Active', '2025-08-04 04:20:14', '2025-10-05 17:30:33', '2025-10-06 01:30:33', 'Admin'),
+(4, 'mlorenzo', '$2y$10$vmFUayGWQI.07Tg21TBN8e.FzH2dXFk8qisrUVp32M5/8GkwNK6AS', 'Marvin', 'Lorenzo', 'Chan', 'marvin@gmail.com', '09123456788', 'Barangay Captain', NULL, 'Active', '2025-10-01 04:43:12', '2025-10-05 05:51:21', '2025-10-01 17:59:39', 'Official'),
+(8, 'jtolentino', '$2y$10$FtqglK38/415f0.HY/rMtuduBzwEm3VFitcpzpJ41ETxuTfICToNO', 'Jarshane', 'Tolentinoo', '', 'jar@hotmail.com', '09123456783', 'Barangay Kagawad', NULL, 'Active', '2025-10-01 12:22:27', '2025-10-05 05:51:00', '2025-10-02 18:28:13', 'Official'),
+(9, 'jquinto', '$2y$10$Z8Ory2g4rC01pWYnVDgX.O.2D1qnFHwDsrc5LL/UCHXuYc1y1ljS2', 'John Kyle', 'Quinto', '', 'johnkyle@gmail.com', '09999999991', 'Barangay Kagawad', NULL, 'Active', '2025-10-05 16:36:53', '2025-10-05 16:38:08', '2025-10-06 00:38:08', 'Official');
 
 -- --------------------------------------------------------
 
@@ -128,7 +103,8 @@ INSERT INTO `announcements` (`id`, `title`, `content`, `date_posted`, `posted_by
 (14, 'Test 3', 'Debugging Session', '2025-09-22 00:00:00', 1, '2025-09-22 02:17:03', NULL),
 (15, 'Test 4', 'Debug', '2025-09-22 10:22:16', 1, '2025-09-22 02:22:16', NULL),
 (16, 'Test 5', 'Content', '2025-09-22 10:30:37', 1, '2025-09-22 02:30:37', NULL),
-(17, 'Test 6', 'Content', '2025-09-22 10:33:02', 1, '2025-09-22 02:33:02', NULL);
+(17, 'Test 6', 'Content', '2025-09-22 10:33:02', 1, '2025-09-22 02:33:02', NULL),
+(18, 'Test 7', 'content', '2025-10-06 00:35:32', 1, '2025-10-05 16:35:32', NULL);
 
 -- --------------------------------------------------------
 
@@ -154,13 +130,8 @@ INSERT INTO `announcement_images` (`id`, `announcement_id`, `image_path`, `creat
 (9, 9, 'uploads/announcements/1758452931_68cfdcc3d3eda.png', '2025-09-21 11:08:51'),
 (10, 9, 'uploads/announcements/1758452952_68cfdcd89c86f.jpeg', '2025-09-21 11:09:12'),
 (16, 14, 'uploads/announcements/1758507423_68d0b19fa693a.jpg', '2025-09-22 02:17:03'),
-(17, 15, 'uploads/announcements/1758507736_68d0b2d8726ff.png', '2025-09-22 02:22:16');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `barangay_officials`
---
+(17, 15, 'uploads/announcements/1758507736_68d0b2d8726ff.png', '2025-09-22 02:22:16'),
+(18, 18, 'uploads/announcements/1759682132_68e29e545f14e.png', '2025-10-05 16:35:32');
 
 -- --------------------------------------------------------
 
@@ -177,13 +148,6 @@ CREATE TABLE `document_qr_codes` (
   `last_verified_at` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `document_qr_codes`
---
-
-INSERT INTO `document_qr_codes` (`id`, `request_id`, `qr_code`, `qr_code_image_path`, `verification_attempts`, `last_verified_at`, `created_at`) VALUES
-(102, 115, '4aac9b2fdd7452e9', 'C:\\xampp\\htdocs\\Barangay-Balas\\admin/../public/uploads/qr_codes/qr_115_1758253993.png', 0, NULL, '2025-09-19 03:53:13');
 
 -- --------------------------------------------------------
 
@@ -208,21 +172,12 @@ CREATE TABLE `document_requests` (
   `purpose` varchar(255) NOT NULL,
   `status` enum('Pending','Approved','Disapproved','Cancelled') DEFAULT 'Pending',
   `shipping_method` text NOT NULL,
-  `date_requested` timestamp NOT NULL DEFAULT current_timestamp(),
+  `date_requested` date NOT NULL DEFAULT current_timestamp(),
   `date_processed` timestamp NULL DEFAULT NULL,
   `processed_by` int(11) DEFAULT NULL,
   `notes` text DEFAULT NULL,
   `document_file_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `document_requests`
---
-
-INSERT INTO `document_requests` (`id`, `resident_id`, `document_type_id`, `first_name`, `middle_name`, `last_name`, `houseno`, `purok`, `civil_status`, `sex`, `birthdate`, `age`, `email`, `purpose`, `status`, `shipping_method`, `date_requested`, `date_processed`, `processed_by`, `notes`, `document_file_path`) VALUES
-(115, 43, 3, 'Marvin', 'Chan', 'Lorenzo', '1', '1', 'Single', 'female', '2000', 24, '927365', 'Debugging session', 'Approved', 'Claim Anytime', '2025-09-19 03:52:15', '2025-09-19 03:53:13', NULL, '', 'uploads/generated_docs/request_115_1758253993.pdf'),
-(116, 43, 2, 'Marvin', 'Chan', 'Lorenzo', '1', '1', 'Single', 'male', '2000', 24, '927365', 'test', '', 'Claim Anytime', '2025-09-19 04:32:57', NULL, NULL, NULL, NULL),
-(117, 43, 3, 'Jarshane', 'Sigua', 'Tolentino', '1', '1', 'Single', 'female', '2000', 24, '0', 'Test', 'Cancelled', 'Claim Anytime', '2025-09-19 04:33:52', NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -244,24 +199,6 @@ INSERT INTO `document_types` (`id`, `document_type`) VALUES
 (2, 'Clearance'),
 (3, 'Residency'),
 (4, 'Business Permit');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `household_structure`
---
-
-CREATE TABLE `household_structure` (
-  `id` int(11) NOT NULL,
-  `household_id` varchar(50) NOT NULL,
-  `head_resident_id` int(11) NOT NULL,
-  `house_number` varchar(20) NOT NULL,
-  `purok` varchar(20) NOT NULL,
-  `household_type` enum('Single Person','Nuclear Family','Extended Family','Composite') DEFAULT 'Nuclear Family',
-  `total_members` int(11) DEFAULT 1,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -305,10 +242,8 @@ CREATE TABLE `residents` (
 --
 
 INSERT INTO `residents` (`id`, `first_name`, `last_name`, `middle_name`, `suffix`, `sex`, `birthdate`, `age`, `civil_status`, `educational_attainment`, `religion`, `occupation`, `philhealth_number`, `is_indigent`, `is_4ps_member`, `medical_history`, `contact_number`, `email`, `house_number`, `purok`, `relationship_to_head`, `address`, `verification_status`, `resident_status`, `photo_path`, `valid_id_path`, `created_at`, `updated_at`) VALUES
-(43, 'Jarshane', 'Tolentino', 'Sigua', '', 'female', '2003-11-21', 21, 'Single', 'College', 'INC', 'Studemt', '', 1, 1, 'N/A', '91234567890', 'jarshanetolentino@gmail.com', '1', '1', NULL, 'House 1, Purok Purok 1, Balas, Mexico, Pampanga, Philippines', 'Pending', 'Active', 'uploads/profiles/profile_43_1758433968.jpg', 'uploads/valid_ids/id_68ccd2d474896.jpeg', '2025-09-19 03:49:40', '2025-09-23 05:35:05'),
-(44, 'Jarlawrence', 'Tolentino', 'Sigua', '', 'male', '2006-03-11', 19, 'Single', '', '', '', NULL, 0, 0, NULL, '09123456781', 'jarlawrence@gmail.com', '1', '1', NULL, 'House 1, Purok 1, Balas, Mexico, Pampanga, Philippines', 'Pending', 'Active', NULL, 'uploads/valid_ids/id_68d1f1b863587.JPG', '2025-09-23 01:02:48', '2025-09-23 03:44:52'),
-(45, 'Jarvin', 'Tolentino ', 'Sigua', '', 'male', '2000-11-28', 24, '', NULL, NULL, NULL, NULL, 0, 0, NULL, '09123456781', 'jarvin@gmail.com', '1', 'Purok 1', NULL, 'House 1, Purok Purok 1, Balas, Mexico, Pampanga, Philippines', 'Pending', 'Active', NULL, 'uploads/valid_ids/id_68d1f26d49ae2.JPG', '2025-09-23 01:05:49', '2025-09-23 01:05:49'),
-(46, 'Jarhim', 'Tolentino ', 'Sigua', '', 'male', '2003-01-03', 22, '', NULL, NULL, NULL, NULL, 0, 0, NULL, '09123456781', 'jarhim@gmail.com', '1', 'Purok 1', NULL, 'House 1, Purok 1, Balas, Mexico, Pampanga, Philippines', 'Pending', 'Active', NULL, 'uploads/valid_ids/id_68d2176870f79.pdf', '2025-09-23 03:43:36', '2025-09-23 03:43:36');
+(48, 'Jarshane', 'Tolentino', 'Sigua', '', 'female', '2003-11-21', 21, '', NULL, NULL, NULL, NULL, 0, 0, NULL, '0987654321', 'jars@gmail.com', '409', 'Purok 3', NULL, 'House 409, Purok 3, Balas, Mexico, Pampanga, Philippines', 'Pending', 'Active', NULL, 'uploads/valid_ids/id_68e2a89679be1.png', '2025-10-05 17:19:18', '2025-10-05 17:19:18'),
+(49, 'John ', 'Quinto', 'Magpayo', '', 'male', '2003-07-29', 22, '', NULL, NULL, NULL, NULL, 0, 0, NULL, '12345678978', 'kyle@gmail.com', '409', 'Purok 3', NULL, 'House 409, Purok 3, Balas, Mexico, Pampanga, Philippines', 'Pending', 'Active', NULL, 'uploads/valid_ids/id_68e2ab2c0abb3.png', '2025-10-05 17:30:20', '2025-10-05 17:30:20');
 
 -- --------------------------------------------------------
 
@@ -333,10 +268,8 @@ CREATE TABLE `resident_accounts` (
 --
 
 INSERT INTO `resident_accounts` (`id`, `resident_id`, `email`, `password`, `account_status`, `processed_by`, `date_processed`, `notes`, `date_requested`) VALUES
-(39, 43, 'jarshanetolentino@gmail.com', '$2y$10$6zD4th95dwQLSUsNQvsH2.z4H148hN2nCz7k/.M9y9lO49YXwT2de', 'Approved', 1, '2025-09-19 11:50:12', '', '2025-09-19 11:49:40'),
-(40, 44, 'jarlawrence@gmail.com', '$2y$10$191OwOzg6c9LeiqQ/Ae96OaQUSsGFckfylyn.s8FLn5Ef4rRo3/ty', 'Approved', 1, '2025-09-23 09:03:16', 'Hakdog', '2025-09-23 09:02:48'),
-(41, 45, 'jarvin@gmail.com', '$2y$10$M.8Es0jYYndneZNhzAo9fu0vAaVI/rCnTNfx.dkdkwnxzO/tUkVAa', 'Approved', 1, '2025-09-23 09:06:19', '', '2025-09-23 09:05:49'),
-(42, 46, 'jarhim@gmail.com', '$2y$10$fyZPq0ueMvn.aAIv8hME4O8jGtZTGD4kdYSylY/MA7E2xbbjEhftK', 'Approved', 1, '2025-09-23 11:44:08', '', '2025-09-23 11:43:36');
+(44, 48, 'jars@gmail.com', '$2y$10$PCFW7ANo9KvEkiUNNgTFXeLIb8rkigAsp6YzDgkzZ9/Qszk7POTri', 'Approved', 1, '2025-10-06 01:27:45', '', '2025-10-06 01:19:18'),
+(45, 49, 'kyle@gmail.com', '$2y$10$XTqmbRW7CuV37E0w3VtmqOHNh6fkjHG5/jyO5CG32BQyvinFwNQFG', 'Approved', 1, '2025-10-06 01:50:42', '', '2025-10-06 01:30:20');
 
 -- --------------------------------------------------------
 
@@ -365,17 +298,6 @@ CREATE TABLE `service_reservations` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `service_reservations`
---
-
-INSERT INTO `service_reservations` (`id`, `resident_id`, `resident_name`, `contact_number`, `email`, `reservation_date_start`, `reservation_date_end`, `duration_days`, `purpose`, `status`, `scheduled_datetime`, `notes`, `rejection_reason`, `date_requested`, `date_processed`, `processed_by`, `created_at`, `updated_at`) VALUES
-(10, 43, 'Jarshane Tolentino', '91234567890', 'jarshanetolentino@gmail.com', '2025-11-11', '2025-11-12', 2, 'Test', 'Pending', NULL, 'Setup Time: 08:00\nDuration Type: full_day\nEvent Location: House #1, Purok 1\n', NULL, '2025-09-21 01:22:51', NULL, NULL, '2025-09-21 01:22:51', '2025-09-21 01:49:14'),
-(11, NULL, 'Jarshane Tolentino', '09999999999', 'jarshanetolentino@gmail.com', '2025-09-22', '2025-09-22', 1, 'TEST', 'Pending', NULL, 'Setup Time: 08:00\nDuration Type: half_day\nEvent Location: House #1, Purok 1\n', NULL, '2025-09-21 01:26:56', NULL, NULL, '2025-09-21 01:26:56', '2025-09-21 01:26:56'),
-(12, NULL, 'Jarshane Tolentino', '09999999999', 'jarshanetolentino@gmail.com', '2025-11-11', '2025-11-11', 1, 'Test', 'Rejected', NULL, 'Start Time: 08:00\nEnd Time: 14:00\n', 'Test', '2025-09-21 01:35:32', '2025-09-21 05:19:50', 1, '2025-09-21 01:35:32', '2025-09-21 05:19:50'),
-(13, 43, 'Jarshane Tolentino', '91234567890', 'jarshanetolentino@gmail.com', '2025-11-11', '2025-11-11', 1, 'Test', 'Cancelled', NULL, 'Start Time: 08:00\nEnd Time: 20:00\n', NULL, '2025-09-21 05:18:00', NULL, NULL, '2025-09-21 05:18:00', '2025-09-21 05:20:11'),
-(14, 43, 'Jarshane Tolentino', '91234567890', 'jarshanetolentino@gmail.com', '2025-11-11', '2025-11-11', 1, 'Test', 'In Progress', NULL, '', NULL, '2025-09-21 05:19:15', '2025-09-21 05:22:34', 1, '2025-09-21 05:19:15', '2025-09-21 05:22:34');
-
 -- --------------------------------------------------------
 
 --
@@ -389,20 +311,6 @@ CREATE TABLE `service_reservation_items` (
   `quantity` int(11) DEFAULT 1,
   `notes` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `service_reservation_items`
---
-
-INSERT INTO `service_reservation_items` (`id`, `reservation_id`, `service_type_id`, `quantity`, `notes`) VALUES
-(12, 10, 4, 2, NULL),
-(13, 11, 1, 2, NULL),
-(14, 11, 4, 4, NULL),
-(15, 11, 3, 2, NULL),
-(16, 12, 2, 1, NULL),
-(17, 13, 2, 1, NULL),
-(18, 14, 1, 3, NULL),
-(19, 14, 4, 4, NULL);
 
 -- --------------------------------------------------------
 
@@ -476,13 +384,6 @@ ALTER TABLE `announcement_images`
   ADD KEY `announcement_id` (`announcement_id`);
 
 --
--- Indexes for table `barangay_officials`
---
-ALTER TABLE `barangay_officials`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
-
---
 -- Indexes for table `document_qr_codes`
 --
 ALTER TABLE `document_qr_codes`
@@ -504,14 +405,6 @@ ALTER TABLE `document_requests`
 --
 ALTER TABLE `document_types`
   ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `household_structure`
---
-ALTER TABLE `household_structure`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `household_id` (`household_id`),
-  ADD KEY `head_resident_id` (`head_resident_id`);
 
 --
 -- Indexes for table `residents`
@@ -566,43 +459,37 @@ ALTER TABLE `viewer_tokens`
 -- AUTO_INCREMENT for table `activity_logs`
 --
 ALTER TABLE `activity_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=147;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=192;
 
 --
 -- AUTO_INCREMENT for table `admin_users`
 --
 ALTER TABLE `admin_users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `announcements`
 --
 ALTER TABLE `announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `announcement_images`
 --
 ALTER TABLE `announcement_images`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
-
---
--- AUTO_INCREMENT for table `barangay_officials`
---
-ALTER TABLE `barangay_officials`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `document_qr_codes`
 --
 ALTER TABLE `document_qr_codes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
 
 --
 -- AUTO_INCREMENT for table `document_requests`
 --
 ALTER TABLE `document_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT for table `document_types`
@@ -611,34 +498,28 @@ ALTER TABLE `document_types`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT for table `household_structure`
---
-ALTER TABLE `household_structure`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
 -- AUTO_INCREMENT for table `residents`
 --
 ALTER TABLE `residents`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `resident_accounts`
 --
 ALTER TABLE `resident_accounts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `service_reservations`
 --
 ALTER TABLE `service_reservations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `service_reservation_items`
 --
 ALTER TABLE `service_reservation_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `service_types`
@@ -683,12 +564,6 @@ ALTER TABLE `document_requests`
   ADD CONSTRAINT `fk_request_resident` FOREIGN KEY (`resident_id`) REFERENCES `residents` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_request_type` FOREIGN KEY (`document_type_id`) REFERENCES `document_types` (`id`),
   ADD CONSTRAINT `fk_resident` FOREIGN KEY (`resident_id`) REFERENCES `residents` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `household_structure`
---
-ALTER TABLE `household_structure`
-  ADD CONSTRAINT `household_structure_ibfk_1` FOREIGN KEY (`head_resident_id`) REFERENCES `residents` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `resident_accounts`
