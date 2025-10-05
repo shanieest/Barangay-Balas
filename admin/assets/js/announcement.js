@@ -353,3 +353,17 @@ function showAlert(message, type = 'info') {
         }, 5000);
     }
 }
+
+function showImageModal(src) {
+    document.getElementById('modalImage').src = src;
+    var modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});

@@ -1,8 +1,7 @@
 <?php
-// admin/includes/auth.php
 
 if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.cookie_path', '/'); // ensure session cookie works everywhere
+    ini_set('session.cookie_path', '/');
     session_start();
 }
 

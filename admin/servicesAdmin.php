@@ -112,7 +112,6 @@ while ($row = $service_result->fetch_assoc()) {
     if ($row['service_names']) {
         $services = explode(', ', $row['service_names']);
         foreach ($services as $service) {
-            // Check if service has quantity info
             if (strpos($service, '(x') !== false) {
                 $service_parts = explode(' (x', $service);
                 $service_name = $service_parts[0];
@@ -131,7 +130,7 @@ while ($row = $service_result->fetch_assoc()) {
                 default => 'bg-secondary'
             };
             
-            $service_badges .= '<span class="badge ' . $badge_class . ' me-1">' . 
+            $service_badges .= '<span class="badge ' . $badge_class . ' me-1 mb-1">' . 
                               htmlspecialchars($service_name) . 
                               ($quantity_text ? ' <small>' . $quantity_text . '</small>' : '') . 
                               '</span>';
@@ -150,7 +149,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
     
     if ($total_pages <= 1) return $links;
     
-    $links .= '<nav aria-label="Page navigation"><ul class="pagination pagination-sm justify-content-center">';
+    $links .= '<nav aria-label="Page navigation"><ul class="pagination pagination-sm justify-content-center mb-0">';
     
     $prev_disabled = $current_page <= 1 ? 'disabled' : '';
     $prev_page = max(1, $current_page - 1);
@@ -196,28 +195,12 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Services | Barangay Balas Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
-  <style>
-    .service-badge { 
-      font-size: 0.8rem; 
-      margin-left: 5px; 
-    }
-    .service-badge small {
-      font-size: 0.7rem;
-      font-weight: bold;
-    }
-    .table td { 
-      vertical-align: middle; 
-    }
-    .pagination-info {
-      font-size: 0.9em;
-      color: #6c757d;
-      margin-bottom: 1rem;
-    }
-  </style>
+  <link rel="stylesheet" href="assets/css/servicesAdmin.css">
 </head>
 <body class="sb-nav-fixed">
 <?php include 'includes/navbar.php'; ?>
@@ -234,9 +217,11 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
 
         <!-- Document Requests Section -->
         <div class="card mb-4">
-          <div class="card-header"><i class="fas fa-table me-1"></i> Manage Document Requests</div>
+          <div class="card-header">
+            <i class="fas fa-table me-1"></i> Manage Document Requests
+          </div>
           <div class="card-body">
-            <ul class="nav nav-tabs mb-4" id="requestsTab" role="tablist">
+            <ul class="nav nav-tabs mb-3" id="requestsTab" role="tablist">
               <li class="nav-item">
                 <a class="nav-link <?= $doc_tab === 'pending' ? 'active' : '' ?>" 
                    href="?doc_tab=pending&doc_page=1&service_tab=<?= $service_tab ?>&service_page=<?= $service_page ?>">
@@ -270,21 +255,21 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
               <table class="table table-striped table-bordered">
                 <thead>
                   <tr>
-                    <th>Request ID</th>
+                    <th>ID</th>
                     <th>Resident</th>
-                    <th>Document Type</th>
-                    <th>Date Requested</th>
+                    <th>Document</th>
+                    <th>Date</th>
                     <?php if ($doc_tab === 'pending'): ?>
                       <th>Purpose</th>
                     <?php else: ?>
-                      <th>Date <?= ucfirst($doc_tab) ?></th>
+                      <th><?= ucfirst($doc_tab) ?></th>
                       <?php if ($doc_tab === 'disapproved'): ?>
                         <th>Reason</th>
                       <?php endif; ?>
                     <?php endif; ?>
-                     <?php if (canModify()) { ?>
+                    <?php if (canModify()) { ?>
                       <th>Actions</th>
-                      <?php } ?>
+                    <?php } ?>
                   </tr>
                 </thead>
                 <tbody>
@@ -297,12 +282,12 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         <td><?= htmlspecialchars($row['date_requested']) ?></td>
                         <?php if ($doc_tab === 'pending'): ?>
                           <td><?= htmlspecialchars($row['purpose']) ?></td>
-                          <td>
-                            <?php if (canModify()) : ?>
-                            <button class="btn btn-sm btn-success me-1" data-bs-toggle="modal" data-bs-target="#approveRequestModal" data-id="<?= $row['id'] ?>">
+                          <?php if (canModify()) : ?>
+                          <td class="action-buttons">
+                            <button class="btn btn-sm btn-success me-1 mb-1" data-bs-toggle="modal" data-bs-target="#approveRequestModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-check"></i> Approve
                             </button>
-                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#disapproveRequestModal" data-id="<?= $row['id'] ?>">
+                            <button class="btn btn-sm btn-danger mb-1" data-bs-toggle="modal" data-bs-target="#disapproveRequestModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-times"></i> Disapprove
                             </button>
                           </td>
@@ -312,19 +297,19 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                           <?php if ($doc_tab === 'disapproved'): ?>
                             <td><?= htmlspecialchars($row['notes']) ?></td>
                           <?php endif; ?>
-                          <td>
-                            <?php if (canModify()) : ?>
-                            <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewRequestModal" data-id="<?= $row['id'] ?>">
+                          <?php if (canModify()) : ?>
+                          <td class="action-buttons">
+                            <button class="btn btn-sm btn-info me-1 mb-1" data-bs-toggle="modal" data-bs-target="#viewRequestModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-eye"></i> View
                             </button>
                             <?php if ($doc_tab === 'approved' && !empty($row['document_file_path'])): ?>
-                              <a href="download-document.php?id=<?= (int)$row['id'] ?>" class="btn btn-sm btn-primary">
+                              <a href="download-document.php?id=<?= (int)$row['id'] ?>" class="btn btn-sm btn-primary mb-1">
                                   <i class="fas fa-download"></i> Download
                               </a>
                             <?php endif; ?>
-                            <?php endif; ?>
                           </td>
-                            <?php endif; ?>
+                          <?php endif; ?>
+                        <?php endif; ?>
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
@@ -335,19 +320,23 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
             </div>
 
             <!-- Document Pagination -->
-            <?php 
-            echo generatePaginationLinks(
-              $doc_page, 
-              $total_doc_pages, 
-              'servicesAdmin.php', 
-              [
-                'doc_tab' => $doc_tab,
-                'service_tab' => $service_tab,
-                'service_page' => $service_page,
-                'doc_page' => ''
-              ]
-            );
-            ?>
+            <div class="row mt-3">
+              <div class="col-12">
+                <?php 
+                echo generatePaginationLinks(
+                  $doc_page, 
+                  $total_doc_pages, 
+                  'servicesAdmin.php', 
+                  [
+                    'doc_tab' => $doc_tab,
+                    'service_tab' => $service_tab,
+                    'service_page' => $service_page,
+                    'doc_page' => ''
+                  ]
+                );
+                ?>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -357,17 +346,17 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
             <i class="fas fa-concierge-bell me-1"></i> Service Reservations
           </div>
           <div class="card-body">
-            <ul class="nav nav-tabs mb-4" id="servicesTab" role="tablist">
+            <ul class="nav nav-tabs mb-3" id="servicesTab" role="tablist">
               <li class="nav-item">
                 <a class="nav-link <?= $service_tab === 'pending' ? 'active' : '' ?>" 
                    href="?service_tab=pending&service_page=1&doc_tab=<?= $doc_tab ?>&doc_page=<?= $doc_page ?>">
-                  Pending Reservations <span class="badge bg-warning ms-1"><?= $service_counts['Pending'] ?></span>
+                  Pending <span class="badge bg-warning ms-1"><?= $service_counts['Pending'] ?></span>
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link <?= $service_tab === 'approved' ? 'active' : '' ?>" 
                    href="?service_tab=approved&service_page=1&doc_tab=<?= $doc_tab ?>&doc_page=<?= $doc_page ?>">
-                  Approved Reservations <span class="badge bg-success ms-1"><?= $service_counts['Approved'] ?></span>
+                  Approved <span class="badge bg-success ms-1"><?= $service_counts['Approved'] ?></span>
                 </a>
               </li>
               <li class="nav-item">
@@ -397,10 +386,10 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
               <table class="table table-striped table-bordered">
                 <thead>
                   <tr>
-                    <th>Reservation ID</th>
+                    <th>ID</th>
                     <th>Resident</th>
-                    <th>Service Type & Quantity</th>
-                    <th>Reservation Date</th>
+                    <th>Services</th>
+                    <th>Date</th>
                     <th>Duration</th>
                     <?php if ($service_tab === 'pending'): ?>
                       <th>Purpose</th>
@@ -425,21 +414,20 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         <td><?= htmlspecialchars($row['duration']) ?></td>
                         <?php if ($service_tab === 'pending'): ?>
                           <td><?= htmlspecialchars($row['purpose']) ?></td>
-                          <td>
-                            <?php if (canModify()) : ?>
-                            <button class="btn btn-sm btn-success me-1" data-bs-toggle="modal" data-bs-target="#approveServiceModal" data-id="<?= $row['id'] ?>">
+                          <?php if (canModify()) : ?>
+                          <td class="action-buttons">
+                            <button class="btn btn-sm btn-success me-1 mb-1" data-bs-toggle="modal" data-bs-target="#approveServiceModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-check"></i> Approve
                             </button>
-                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectServiceModal" data-id="<?= $row['id'] ?>">
+                            <button class="btn btn-sm btn-danger mb-1" data-bs-toggle="modal" data-bs-target="#rejectServiceModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-times"></i> Reject
                             </button>
-                            <?php endif; ?>
                           </td>
+                          <?php endif; ?>
                         <?php elseif ($service_tab === 'cancelled'): ?>
                           <td><?= htmlspecialchars($row['rejection_reason'] ?: $row['notes'] ?: 'N/A') ?></td>
-                          <td>
-
-                            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewServiceModal" data-id="<?= $row['id'] ?>">
+                          <td class="action-buttons">
+                            <button class="btn btn-sm btn-info mb-1" data-bs-toggle="modal" data-bs-target="#viewServiceModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-eye"></i> View
                             </button>
                           </td>
@@ -455,18 +443,18 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                             ?>
                             <span class="badge <?= $badge_class ?>"><?= $row['status'] ?></span>
                           </td>
-                          <td>
-                            <?php if (canModify()) : ?>
-                            <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewServiceModal" data-id="<?= $row['id'] ?>">
+                          <?php if (canModify()) : ?>
+                          <td class="action-buttons">
+                            <button class="btn btn-sm btn-info me-1 mb-1" data-bs-toggle="modal" data-bs-target="#viewServiceModal" data-id="<?= $row['id'] ?>">
                               <i class="fas fa-eye"></i> View
                             </button>
                             <?php if ($service_tab === 'approved'): ?>
-                              <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#updateServiceModal" data-id="<?= $row['id'] ?>">
+                              <button class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal" data-bs-target="#updateServiceModal" data-id="<?= $row['id'] ?>">
                                 <i class="fas fa-edit"></i> Update
                               </button>
                             <?php endif; ?>
-                            <?php endif; ?>
                           </td>
+                          <?php endif; ?>
                         <?php endif; ?>
                       </tr>
                     <?php endforeach; ?>
@@ -478,19 +466,23 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
             </div>
 
             <!-- Service Pagination -->
-            <?php 
-            echo generatePaginationLinks(
-              $service_page, 
-              $total_service_pages, 
-              'servicesAdmin.php', 
-              [
-                'service_tab' => $service_tab,
-                'doc_tab' => $doc_tab,
-                'doc_page' => $doc_page,
-                'service_page' => ''
-              ]
-            );
-            ?>
+            <div class="row mt-3">
+              <div class="col-12">
+                <?php 
+                echo generatePaginationLinks(
+                  $service_page, 
+                  $total_service_pages, 
+                  'servicesAdmin.php', 
+                  [
+                    'service_tab' => $service_tab,
+                    'doc_tab' => $doc_tab,
+                    'doc_page' => $doc_page,
+                    'service_page' => ''
+                  ]
+                );
+                ?>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -532,8 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-        window.USER_CAN_MODIFY = <?php echo canModify() ? 'true' : 'false'; ?>;
-
+window.USER_CAN_MODIFY = <?php echo canModify() ? 'true' : 'false'; ?>;
 </script>
 
 </body>

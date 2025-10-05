@@ -312,3 +312,5 @@ function showMessage(element, message, type) {
 
 // Global function to make changeQuantity available to onclick handlers
 window.changeQuantity = changeQuantity;
+
+

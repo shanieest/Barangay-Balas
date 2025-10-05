@@ -1,5 +1,4 @@
 <?php
-// Enhanced census-backend.php - House number only, no purok
 require_once 'includes/db.php';
 require_once 'includes/auth.php';
 require_once '../vendor/autoload.php'; 

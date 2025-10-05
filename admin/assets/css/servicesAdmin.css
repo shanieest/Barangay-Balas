@@ -1,0 +1,141 @@
+
+    .service-badge { 
+      font-size: 0.8rem; 
+      display: inline-block;
+    }
+    .service-badge small {
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    .table td { 
+      vertical-align: middle; 
+    }
+    .pagination-info {
+      font-size: 0.9em;
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+    
+    /* Responsive table styling */
+    @media (max-width: 991.98px) {
+      .table-responsive {
+        font-size: 0.875rem;
+      }
+      
+      .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+      }
+      
+      .service-badge {
+        font-size: 0.7rem;
+      }
+      
+      .card-header {
+        font-size: 0.95rem;
+      }
+    }
+    
+    @media (max-width: 767.98px) {
+      .table-responsive {
+        font-size: 0.8rem;
+      }
+      
+      .table thead th {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.25rem;
+      }
+      
+      .table tbody td {
+        padding: 0.5rem 0.25rem;
+      }
+      
+      .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+      }
+      
+      .badge {
+        font-size: 0.65rem;
+      }
+      
+      .nav-tabs .nav-link {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+      }
+      
+      .pagination-info {
+        font-size: 0.8rem;
+        text-align: center;
+      }
+    }
+    
+    @media (max-width: 575.98px) {
+      .table {
+        font-size: 0.75rem;
+      }
+      
+      .table thead th,
+      .table tbody td {
+        padding: 0.4rem 0.2rem;
+        white-space: nowrap;
+      }
+      
+      .btn-group-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      
+      .btn-group-vertical .btn {
+        width: 100%;
+        margin: 0;
+      }
+      
+      h1.mt-4 {
+        font-size: 1.5rem;
+      }
+      
+      .breadcrumb {
+        font-size: 0.8rem;
+      }
+      
+      .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .nav-tabs .nav-link {
+        white-space: nowrap;
+        font-size: 0.75rem;
+        padding: 0.4rem 0.6rem;
+      }
+    }
+    
+    /* Action buttons responsive layout */
+    @media (max-width: 575.98px) {
+      .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      
+      .action-buttons .btn {
+        width: 100%;
+        font-size: 0.7rem;
+      }
+    }
+    
+    /* Pagination responsive */
+    .pagination {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    @media (max-width: 575.98px) {
+      .pagination .page-link {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+      }
+    }

@@ -1,5 +1,4 @@
 <?php
-// verify_qr.php
 require 'db.php';
 header('Content-Type: application/json');
 
@@ -7,7 +6,6 @@ $token = trim($_POST['token'] ?? '');
 
 if (!$token) { http_response_code(400); echo json_encode(['error'=>'No token']); exit; }
 
-// find QR record and request
 $stmt = $mysqli->prepare("SELECT q.id as qr_id, q.request_id, q.verification_attempts, q.last_verified_at, r.* 
     FROM document_qr_codes q
     JOIN document_requests r ON r.id = q.request_id
@@ -22,11 +20,10 @@ if ($res->num_rows === 0) {
 $row = $res->fetch_assoc();
 $stmt->close();
 
-// increment attempt count
 $mysqli->query("UPDATE document_qr_codes SET verification_attempts = verification_attempts + 1, last_verified_at = NOW() WHERE id = " . intval($row['qr_id']));
 
-// Now decide what to return based on request status
-$status = $row['status']; // Pending, Approved, Disapproved, Processing, Released
+
+$status = $row['status']; 
 if ($status === 'Pending' || $status === 'Processing') {
     echo json_encode(['status'=>$status, 'message'=>'Your request is '.$status.'. Please wait.']);
     exit;
@@ -38,11 +35,9 @@ if ($status === 'Disapproved') {
 }
 
 if ($status === 'Approved') {
-    // create a secure one-time token to view the file (prevent direct file URL revealing)
     $viewToken = bin2hex(random_bytes(24));
     $expires = time() + 300; // 5 minutes
 
-    // store in a small table or file — we'll use PHP session for simplicity (better: create a viewer_tokens table).
     session_start();
     $_SESSION['viewer_tokens'][$viewToken] = [
         'request_id' => $row['request_id'],
@@ -50,7 +45,6 @@ if ($status === 'Approved') {
     ];
 
     $viewerUrl = 'viewer.php?token=' . $viewToken;
-    // Also include download URL if you want auto-download when admin flagged auto_download
     echo json_encode(['status'=>'Approved', 'viewer_url'=>$viewerUrl, 'auto_download'=>0, 'notes'=>$row['notes'] ?? '']);
     exit;
 }

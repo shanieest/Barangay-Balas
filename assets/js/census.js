@@ -194,3 +194,127 @@ const CensusUtils = {
 };
 
 window.CensusUtils = CensusUtils;
+
+
+        function saveRelationship(memberId, button) {
+            const select = document.querySelector(`select[data-member-id="${memberId}"]`);
+            const relationship = select.value;
+            
+            if (!relationship) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selection Required',
+                    text: 'Please select a relationship first.'
+                });
+                return;
+            }
+            
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+            button.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('action', 'update_relationship');
+            formData.append('member_id', memberId);
+            formData.append('relationship', relationship);
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    button.innerHTML = '<i class="fas fa-check me-1"></i>Saved';
+                    button.className = 'btn btn-success btn-sm';
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: 'Relationship updated successfully.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.className = 'btn save-btn btn-sm';
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Failed to save');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error saving relationship: ' + error.message
+                });
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+        
+        function saveAllRelationships() {
+            const selects = document.querySelectorAll('.relationship-select:not([disabled])');
+            const updates = [];
+            
+            selects.forEach(select => {
+                if (select.value) {
+                    updates.push({
+                        member_id: select.getAttribute('data-member-id'),
+                        relationship: select.value
+                    });
+                }
+            });
+            
+            if (updates.length === 0) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Changes',
+                    text: 'No changes to save.'
+                });
+                return;
+            }
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            const formData = new FormData();
+            formData.append('action', 'batch_update_relationships');
+            formData.append('updates', JSON.stringify(updates));
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'All relationships saved successfully!',
+                        showConfirmButton: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.error || 'Failed to save');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error saving relationships: ' + error.message
+                });
+            });
+        }

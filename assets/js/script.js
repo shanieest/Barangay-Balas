@@ -1,3 +1,6 @@
+
+
+
 //announcemets in index
 function showImageModal(imageSrc) {
   document.getElementById('modalImage').src = imageSrc;

@@ -21,20 +21,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
-    $resident_id = intval($_SESSION['user_id']); // From session
-    $document_type_id = intval($_POST['document_type_id']);
-    $first_name       = trim($_POST['first_name']);
-    $middle_name      = trim($_POST['middle_name']);
-    $last_name        = trim($_POST['last_name']);
-    $houseno          = trim($_POST['houseno']);
-    $purok            = trim($_POST['purok']);
-    $civil_status     = trim($_POST['civil_status']);
-    $sex              = trim($_POST['sex']);
-    $birthdate        = trim($_POST['birthdate']);
-    $age              = intval($_POST['age']);
-    $email            = trim($_POST['email']);
-    $purpose          = trim($_POST['purpose']);
-    $shipping_method  = trim($_POST['shipping_method']);
+    $resident_id     = intval($_SESSION['user_id']); // From session
+    $document_type_id= intval($_POST['document_type_id']);
+    $first_name      = trim($_POST['first_name']);
+    $middle_name     = trim($_POST['middle_name']);
+    $last_name       = trim($_POST['last_name']);
+    $houseno         = trim($_POST['houseno']);
+    $purok           = trim($_POST['purok']);
+    $civil_status    = trim($_POST['civil_status']);
+    $sex             = trim($_POST['sex']);
+    $birthdate       = trim($_POST['birthdate']);
+    $age             = intval($_POST['age']);
+    $email           = trim($_POST['email']);
+    $purpose         = trim($_POST['purpose']);
+    $shipping_method = trim($_POST['shipping_method']);
 
     $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
               strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($stmt = $conn->prepare($sql)) {
         $stmt->bind_param(
-            'iisssssssisiss',
+            'iissssssssisss',
             $resident_id,
             $document_type_id,
             $first_name,
@@ -65,32 +65,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         );
 
         if ($stmt->execute()) {
-                $request_id = $stmt->insert_id;
+            $request_id = $stmt->insert_id;
 
-                // Log activity
-                $user_id   = $resident_id;
-                $activity  = "Requested document (ID: $document_type_id)";
-                $ip        = $_SERVER['REMOTE_ADDR'] ?? null;
-                $agent     = $_SERVER['HTTP_USER_AGENT'] ?? null;
+            // Log activity
+            $user_id  = $resident_id;
+            $activity = "Requested document (ID: $document_type_id)";
+            $ip       = $_SERVER['REMOTE_ADDR'] ?? null;
+            $agent    = $_SERVER['HTTP_USER_AGENT'] ?? null;
 
-                $log = $conn->prepare("INSERT INTO activity_logs (user_id, activity, ip_address, user_agent) VALUES (?, ?, ?, ?)");
-                $log->bind_param('isss', $user_id, $activity, $ip, $agent);
-                $log->execute();
-                $log->close();
+            $log = $conn->prepare("INSERT INTO activity_logs (user_id, activity, ip_address, user_agent) VALUES (?, ?, ?, ?)");
+            $log->bind_param('isss', $user_id, $activity, $ip, $agent);
+            $log->execute();
+            $log->close();
 
-                if ($isAjax) {
-                    echo json_encode([
-                        "status"  => "success",
-                        "message" => "Request submitted successfully",
-                        "request_id" => $request_id, // Fixed: should be $request_id, not $document_type_id
-                    ]);
-                } else {
-                    echo "<h3>✅ Request submitted successfully!</h3>";
-                    echo "<p>Request ID: {$request_id}</p>";
-                    echo "<p>Name: {$first_name} {$middle_name} {$last_name}</p>";
-                    echo "<p>Document Type ID: {$document_type_id}</p>";
-                    echo "<p>Purpose: {$purpose}</p>";
-                }
+            if ($isAjax) {
+                echo json_encode([
+                    "status"  => "success",
+                    "message" => "Request submitted successfully",
+                    "request_id" => $request_id
+                ]);
+            } else {
+                echo "<h3> Request submitted successfully!</h3>";
+                echo "<p>Request ID: {$request_id}</p>";
+                echo "<p>Name: {$first_name} {$middle_name} {$last_name}</p>";
+                echo "<p>Document Type ID: {$document_type_id}</p>";
+                echo "<p>Purpose: {$purpose}</p>";
             }
         } else {
             if ($isAjax) {
@@ -102,11 +101,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->close();
     } else {
         if ($isAjax) {
-            echo json_encode(["status" => "error", "message" => "System error."]);
+            echo json_encode(["status" => "error", "message" => "System error (prepare failed)."]);
         } else {
-            echo "<h3> System error.</h3>";
+            echo "<h3>System error (prepare failed).</h3>";
         }
     }
 
     $conn->close();
+}
 ?>

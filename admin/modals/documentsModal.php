@@ -91,13 +91,6 @@
           <label for="approveNotes" class="form-label">Notes (optional)</label>
           <textarea name="notes" id="approveNotes" class="form-control" rows="3" placeholder="Add any additional notes..."></textarea>
         </div>
-
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="auto_download" id="autoDownload" value="1">
-          <label class="form-check-label" for="autoDownload">
-            Auto-download document after approval
-          </label>
-        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

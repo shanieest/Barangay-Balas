@@ -1,7 +1,7 @@
 <!-- sidebar.php -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
     <div class="sidebar-header d-flex justify-content-between align-items-center">
-        <h3 class="m-0">Barangay Balas</h3>
+        <h3 class="m-0 sidebar-text">Barangay Balas</h3>
     </div>
     <ul class="sidebar-menu">
         <li class="<?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">
@@ -42,3 +42,37 @@
         </li>
     </ul>
 </div>
+
+<style>
+/* Sidebar collapsed state */
+body.sidebar-collapsed .sidebar {
+    width: 80px;
+}
+
+body.sidebar-collapsed .sidebar-text {
+    display: none;
+}
+
+body.sidebar-collapsed .main-content {
+    margin-left: 80px;
+}
+
+body.sidebar-collapsed .sidebar-header h3 {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar-menu li {
+    text-align: center;
+    padding: 10px 5px;
+}
+
+body.sidebar-collapsed .sidebar-menu li i {
+    margin-right: 0;
+    font-size: 1.2rem;
+}
+
+body.sidebar-collapsed .sidebar-menu li.active {
+    border-left: none;
+    border-top: 4px solid var(--accent-yellow);
+}
+</style>

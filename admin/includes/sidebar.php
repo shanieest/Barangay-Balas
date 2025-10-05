@@ -4,7 +4,6 @@ require_once 'includes/db.php';
 // Default admin name
 $adminName = "Admin";
 
-// Get admin name if logged in
 if (isset($_SESSION['admin_id'])) {
     $adminId = $_SESSION['admin_id'];
     $stmt = $conn->prepare("SELECT first_name, last_name FROM admin_users WHERE id = ?");
@@ -16,44 +15,49 @@ if (isset($_SESSION['admin_id'])) {
     }
     $stmt->close();
 }
+
+$currentPage = basename($_SERVER['PHP_SELF']);
 ?>
+
 <!-- Sidebar Navigation -->
 <div id="layoutSidenav_nav">
     <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
         <div class="sb-sidenav-menu">
             <div class="nav">
-                <div class="sb-sidenav-menu-heading"></div>
-                <a class="nav-link" href="dashboard.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                    Dashboard
+                <a class="nav-link <?= $currentPage == 'dashboard.php' ? 'active' : '' ?>" href="dashboard.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
+                    <span class="nav-text">Dashboard</span>
                 </a>
 
-                <div class="sb-sidenav-menu-heading"></div>
-                <a class="nav-link" href="announcements.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-bullhorn"></i></div>
-                    Announcements
-                </a>
-                <a class="nav-link" href="residents.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                    Residents
-                </a>
-                <a class="nav-link" href="census.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
-                    Census Data
-                </a>
-                <a class="nav-link" href="servicesAdmin.php">
+                <a class="nav-link <?= $currentPage == 'servicesAdmin.php' ? 'active' : '' ?>" href="servicesAdmin.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-briefcase"></i></div>
-                    Services
+                    <span class="nav-text">Services</span>
                 </a>
-                <a class="nav-link" href="barangay-officials.php">
+
+                <a class="nav-link <?= $currentPage == 'announcements.php' ? 'active' : '' ?>" href="announcements.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-bullhorn"></i></div>
+                    <span class="nav-text">Announcements</span>
+                </a>
+
+                <a class="nav-link <?= $currentPage == 'residents.php' ? 'active' : '' ?>" href="residents.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
+                    <span class="nav-text">Residents</span>
+                </a>
+
+                <a class="nav-link <?= $currentPage == 'census.php' ? 'active' : '' ?>" href="census.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
+                    <span class="nav-text">Census Data</span>
+                </a>
+
+                <a class="nav-link <?= $currentPage == 'barangay-officials.php' ? 'active' : '' ?>" href="barangay-officials.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-user-tie"></i></div>
-                    Barangay Officials
+                    <span class="nav-text">Barangay Officials</span>
                 </a>
             </div>
         </div>
         <div class="sb-sidenav-footer">
             <div class="small">Logged in as:</div>
-            <?= htmlspecialchars($adminName) ?>
+            <div class="admin-name"><?= htmlspecialchars($adminName) ?></div>
         </div>
     </nav>
 </div>

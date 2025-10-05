@@ -1,4 +1,5 @@
 <?php
+//this file is for debugging session issues 
 session_start();
 
 echo "<h2>Session Debug Information</h2>";
@@ -41,9 +42,3 @@ if (isset($_SESSION['user_id'])) {
 
 echo "</pre>";
 ?>
-
-<style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    pre { background: #f5f5f5; padding: 15px; border-radius: 5px; }
-    h2 { color: #333; }
-</style>

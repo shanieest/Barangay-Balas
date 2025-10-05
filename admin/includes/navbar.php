@@ -1,26 +1,12 @@
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-primary">
-    <!-- Navbar Brand -->
-    <a class="navbar-brand ps-3" href="dashboard.php">
-        <img src="" height="30" class="d-inline-block align-top me-2" alt="">
-        Barangay Balas Admin
-    </a>
-    
-    <!-- Sidebar Toggle -->
-    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" type="button">
-        <i class="fas fa-bars"></i>
-    </button>
-    
-    <!-- Navbar Search -->
-    <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0" action="search.php" method="GET">
-        <div class="input-group">
-            <input class="form-control" type="text" name="query" placeholder="Search for..." aria-label="Search" required />
-            <button class="btn btn-warning" type="submit"><i class="fas fa-search"></i></button>
-        </div>
-    </form>
+    <div class="d-flex align-items-center" id="brandWrapper">
 
-    
-    <!-- Navbar -->
-    <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
+        <button class="btn btn-link btn-sm text-white ms-2" id="sidebarToggle" type="button" aria-label="Toggle Sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <ul class="navbar-nav ms-auto me-3 me-lg-4">
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-user fa-fw"></i>

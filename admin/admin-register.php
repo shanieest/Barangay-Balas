@@ -1,3 +1,8 @@
+<!-- for incase of registration of admin for balas
+note: This file is not linked in the main navigation for security reasons. Access it directly via URL when needed. 
+localhost/barangay-balas/admin/admin-register.php
+-->
+
 <?php
 require_once 'includes/db.php';
 

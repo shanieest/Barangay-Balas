@@ -1,5 +1,4 @@
 <?php
-// stream_pdf.php
 require 'db.php';
 session_start();
 
@@ -11,7 +10,6 @@ $data = $_SESSION['viewer_tokens'][$token];
 if ($data['expires'] < time()) { unset($_SESSION['viewer_tokens'][$token]); http_response_code(403); echo "Expired"; exit; }
 $request_id = intval($data['request_id']);
 
-// fetch file path
 $stmt = $mysqli->prepare("SELECT document_file_path FROM document_requests WHERE id = ?");
 $stmt->bind_param('i', $request_id);
 $stmt->execute();
@@ -27,6 +25,6 @@ header('Content-Length: ' . $size);
 header('Content-Disposition: inline; filename="/admin/download-document.pdf"');
 readfile($path);
 
-// optionally remove token for single-use:
 unset($_SESSION['viewer_tokens'][$token]);
 exit;
+?>

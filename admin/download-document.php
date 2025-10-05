@@ -1,5 +1,5 @@
 <?php
-require 'includes/db.php'; // Make sure this path is correct
+require 'includes/db.php';
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);

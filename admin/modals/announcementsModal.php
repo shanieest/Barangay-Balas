@@ -116,3 +116,17 @@
         </div>
     </div>
 </div>
+
+<!-- Image Modal for viewing full images -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-header border-0">
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-0">
+        <img id="modalImage" src="" class="img-fluid rounded shadow" alt="Announcement Image" style="max-height: 80vh;">
+      </div>
+    </div>
+  </div>
+</div>

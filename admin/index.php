@@ -7,59 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        :root {
-            --primary-red: #990000;
-            --primary-blue:  #0033cc;
-            --primary-yellow: #FFD166;
-            --light-blue: #A8DADC;
-            --light-gray: #F1FAEE;
-        }
-        
-        body {
-            background-color: var(--light-gray);
-        }
-        
-        .login-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .login-header {
-            background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .login-form {
-            padding: 30px;
-        }
-        
-        .btn-login {
-            background-color: var(--primary-red);
-            border: none;
-            padding: 10px 30px;
-            font-weight: 600;
-        }
-        
-        .btn-login:hover {
-            background-color: #C1121F;
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 0.25rem rgba(29, 53, 87, 0.25);
-        }
-        
-        .logo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 15px;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
