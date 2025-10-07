@@ -83,10 +83,7 @@
       overflow: hidden;
       border-radius: 0.5rem;
     }
-    
-    /* ==================== RESPONSIVE STYLES ==================== */
-    
-    /* Extra Small Devices (phones, less than 576px) */
+        
     @media (max-width: 575.98px) {
       /* Ensure proper spacing from top for fixed headers */
       body {

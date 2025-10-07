@@ -90,9 +90,6 @@
     <!-- Center Menu Items -->
     <div class="collapse navbar-collapse justify-content-center" id="mainNavbar">
       <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="/barangay-balas/index.php">Home</a>
-        </li>
         <!-- Services Dropdown -->
     <!--    <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
@@ -123,10 +120,6 @@
         </li> -->
         <li class="nav-item">
           <a class="nav-link" href="/barangay-balas/public/officials.php">Barangay Officials</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#jobs">Jobs</a>
-        </li>
         <li class="nav-item">
           <a class="nav-link" href="/barangay-balas/public/announcements.php">News & Events</a>
         </li>
