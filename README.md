@@ -48,7 +48,7 @@ Resident Portal
  Document Generation
 - Auto-generate DOCX to PDF documents using PHPWord and LibreOffice
 
-Census Management (Resident approved account)
+•Census Management (Resident approved account)
 -Serves as the official record of all residents within Barangay Balas.  
 -It supports both admin and resident access for transparency and accountability.
 
@@ -66,7 +66,6 @@ Composer | PHP dependency manager
 
 Follow these steps to set up the Barangay Balas System locally:
 
- Prerequisites
 Make sure you have installed:
 - XAMPP
 
