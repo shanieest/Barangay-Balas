@@ -666,4 +666,5 @@ function handleExportResidents() {
     fclose($output);
     exit();
 }
+
 ?>
