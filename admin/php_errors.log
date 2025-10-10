@@ -568,3 +568,171 @@ Stack trace:
 [06-Oct-2025 01:41:45 Asia/Manila] Processing request id=49 action=approve user_id=1 note=
 [06-Oct-2025 01:50:35 Asia/Manila] Processing request id=49 action=approve user_id=1 note=
 [06-Oct-2025 01:50:42 Asia/Manila] Processing request id=45 action=approve user_id=1 note=
+[10-Oct-2025 10:24:38 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:24:38 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(13): require_once()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:24:38 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:24:38 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(13): require_once()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:27:37 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:27:37 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(13): require_once()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:27:37 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:27:37 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(13): require_once()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:30:52 Asia/Manila] Processing request id=48 action=approve user_id=1 note=Test 1
+[10-Oct-2025 10:30:52 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:30:52 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:31:04 Asia/Manila] Processing request id=48 action=approve user_id=1 note=Test 1
+[10-Oct-2025 10:31:04 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:31:04 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:31:25 Asia/Manila] Processing request id=48 action=approve user_id=1 note=Test 1
+[10-Oct-2025 10:31:25 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:31:25 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:31:39 Asia/Manila] Processing request id=48 action=approve user_id=1 note=Test 1
+[10-Oct-2025 10:31:39 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:31:39 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:33:48 Asia/Manila] Processing request id=48 action=approve user_id=1 note=
+[10-Oct-2025 10:33:48 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:33:48 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:35:49 Asia/Manila] Processing request id=48 action=approve user_id=1 note=Test 1
+[10-Oct-2025 10:35:49 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:35:49 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:54:26 Asia/Manila] Processing request id=49 action=approve user_id=1 note=Test 1
+[10-Oct-2025 10:54:26 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:54:26 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:54:39 Asia/Manila] Processing request id=49 action=approve user_id=1 note=Test 1
+[10-Oct-2025 10:54:39 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 10:54:39 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 12:56:38 Asia/Manila] Processing request id=47 action=approve user_id=1 note=
+[10-Oct-2025 12:56:38 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 12:56:38 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 12:57:16 Asia/Manila] Processing request id=46 action=approve user_id=1 note=
+[10-Oct-2025 12:57:16 Asia/Manila] PHP Warning:  require(../phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 12:57:16 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required '../phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\config\emailer.php:5
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(587): require_once()
+#1 C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php(50): handleProcessRequest()
+#2 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\config\emailer.php on line 5
+[10-Oct-2025 17:21:46 Asia/Manila] Processing request id=50 action=approve user_id=1 note=test 1
+[10-Oct-2025 17:21:52 Asia/Manila] Email sent successfully to quintojohnkyle@gmail.com
+[10-Oct-2025 17:24:02 Asia/Manila] Processing request id=50 action=approve user_id=1 note=test 1
+[10-Oct-2025 17:24:07 Asia/Manila] Email sent successfully to quintojohnkyle@gmail.com
+[10-Oct-2025 17:43:11 Asia/Manila] Processing request id=51 action=approve user_id=1 note=Test 2
+[10-Oct-2025 17:43:15 Asia/Manila] Email sent successfully to quintojohnkyle@gmail.com
+[10-Oct-2025 17:44:24 Asia/Manila] Processing request id=51 action=approve user_id=1 note=Test 3
+[10-Oct-2025 17:44:29 Asia/Manila] Email sent successfully to quintojohnkyle@gmail.com
+[10-Oct-2025 17:49:49 Asia/Manila] Processing request id=52 action=approve user_id=1 note=Test 3
+[10-Oct-2025 17:49:53 Asia/Manila] Email sent successfully to quintojohnkyle@gmail.com
+[10-Oct-2025 17:49:53 Asia/Manila] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\xampp\htdocs\Barangay-Balas\vendor\phpmailer\phpmailer\src\SMTP.php:315) in C:\xampp\htdocs\Barangay-Balas\admin\residents-backend.php on line 607
+[10-Oct-2025 17:55:44 Asia/Manila] Processing request id=53 action=approve user_id=1 note=Test 4
+[10-Oct-2025 17:55:49 Asia/Manila] Email sent successfully to quintojohnkyle@gmail.com
+[10-Oct-2025 22:52:46 Asia/Manila] Processing request id=54 action=approve user_id=1 note=test 5
+[10-Oct-2025 22:52:50 Asia/Manila] Email sent successfully to jarshanetolentino@gmail.com
+[10-Oct-2025 22:59:07 Asia/Manila] Processing request id=59 action=reject user_id=1 note=Test disapproved
+[10-Oct-2025 22:59:18 Asia/Manila] Processing request id=55 action=reject user_id=1 note=Test disapproved
+[10-Oct-2025 22:59:22 Asia/Manila] Email sent successfully to quintojohnkyle@gmail.com
+[10-Oct-2025 23:32:14 Asia/Manila] Processing request id=56 action=approve user_id=1 note=
+[10-Oct-2025 23:32:19 Asia/Manila] Email sent successfully to jarshanetolentino@gmail.com
+[11-Oct-2025 00:59:32 Asia/Manila] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Jarshaene
+    [lastName] => Tolentino 
+    [middleName] => Sigua
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 09123456781
+    [email] => jarshanetolentino1@gmail.com
+    [houseNumber] => 11
+    [purok] => 1
+    [address] => House 11, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2001-11-11
+    [age] => 23
+    [password] => 111111111
+)
+
+[11-Oct-2025 00:59:32 Asia/Manila] Using provided age: 23
+[11-Oct-2025 00:59:32 Asia/Manila] Final values - birthdate: 2001-11-11, age: 23, createAccount: true
+[11-Oct-2025 00:59:32 Asia/Manila] Resident inserted with ID: 61
+[11-Oct-2025 00:59:32 Asia/Manila] Account created for resident ID: 61
+[11-Oct-2025 01:03:09 Asia/Manila] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Jarshaene
+    [lastName] => Tolentino
+    [middleName] => Sigua
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 0987654321
+    [email] => jarshane@gmail.com
+    [houseNumber] => 111
+    [purok] => 1
+    [address] => House 111, Purok 1, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2001-11-11
+    [age] => 23
+    [password] => 11111111
+)
+
+[11-Oct-2025 01:03:09 Asia/Manila] Using provided age: 23
+[11-Oct-2025 01:03:09 Asia/Manila] Final values - birthdate: 2001-11-11, age: 23, createAccount: true
+[11-Oct-2025 01:03:09 Asia/Manila] Resident inserted with ID: 62
+[11-Oct-2025 01:03:09 Asia/Manila] Account created for resident ID: 62

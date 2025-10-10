@@ -3,6 +3,9 @@ require 'includes/db.php';
 require 'includes/auth.php';
 require '../vendor/autoload.php';
 require_once __DIR__ . '/../lib/phpqrcode/qrlib.php';
+require_once __DIR__ . '/../config/emailer.php';
+require_once __DIR__ . '/../email_templates/document_status.php';
+
 
 use PhpOffice\PhpWord\TemplateProcessor;
 
@@ -181,9 +184,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $response['message'] = 'Request approved and document generated successfully.';
             $response['file_path'] = $relativePdfPath;
             $response['auto_download'] = $auto_download;
+
+            // Fetch user's email and name
+$user_query = $conn->prepare("SELECT email, CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
+$user_query->bind_param('i', $request['resident_id']);
+$user_query->execute();
+$user_result = $user_query->get_result();
+$user = $user_result->fetch_assoc();
+$user_query->close();
+
+if ($user && !empty($user['email'])) {
+    $template = requestStatusEmail(
+        $user['full_name'],
+        $request['document_type'],
+        $status,
+        $notes,
+        $relativePdfPath ? (isset($_SERVER['REQUEST_SCHEME']) && isset($_SERVER['HTTP_HOST'])
+            ? $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/' . $relativePdfPath
+            : $relativePdfPath)
+        : null
+    );
+
+    sendEmail($user['email'], $template['subject'], $template['message']);
+}
+
         } else {
             $response['success'] = true;
-            $response['message'] = 'Request disapproved successfully.';
+$response['message'] = 'Request disapproved successfully.';
+
+// Send email for disapproval too
+$user_query = $conn->prepare("SELECT email, CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
+$user_query->bind_param('i', $request['resident_id']);
+$user_query->execute();
+$user_result = $user_query->get_result();
+$user = $user_result->fetch_assoc();
+$user_query->close();
+
+if ($user && !empty($user['email'])) {
+    $template = requestStatusEmail($user['full_name'], $request['document_type'], $status, $notes);
+    sendEmail($user['email'], $template['subject'], $template['message']);
+}
+
         }
 
         $conn->commit();

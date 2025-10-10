@@ -22,12 +22,6 @@
                 <span class="sidebar-text">Announcements</span>
             </a>
         </li>
-        <li class="<?= basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : '' ?>">
-            <a href="profile.php">
-                <i class="fas fa-user"></i>
-                <span class="sidebar-text">My Profile</span>
-            </a>
-        </li>
         <li class="<?= basename($_SERVER['PHP_SELF']) == 'services-history.php' ? 'active' : '' ?>">
             <a href="services-history.php">
                 <i class="fas fa-history"></i>

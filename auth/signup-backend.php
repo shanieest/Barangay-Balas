@@ -23,8 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'email' => 'Email',
         'password' => 'Password',
         'confirmPassword' => 'Confirm password',
-        'idType' => 'ID type',
-        'idNumber' => 'ID number'
+        'idType' => 'ID type'
     ];
 
     foreach ($required as $field => $name) {
@@ -60,34 +59,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $purok = $_POST['purok'] ?? '';
     $address = "House $houseNumber, $purok, Balas, Mexico, Pampanga, Philippines";
 
-    // Process file upload
-    $validIdPath = '';
-    if (isset($_FILES['validId']) && $_FILES['validId']['error'] === UPLOAD_ERR_OK) {
-        $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-        $maxSize = 5 * 1024 * 1024;
+    // Process file uploads for both ID photos
+    $validIdPath1 = '';
+    $validIdPath2 = '';
+    $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    $maxSize = 5 * 1024 * 1024;
 
-        if (!in_array($_FILES['validId']['type'], $allowedTypes)) {
-            $response['errors']['validId'] = "Only JPG, PNG, and PDF files are allowed";
-        } elseif ($_FILES['validId']['size'] > $maxSize) {
-            $response['errors']['validId'] = "File size exceeds 5MB limit";
+    // Upload Directory
+    $uploadDir = 'uploads/valid_ids/';
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
+    // Process First ID Photo
+    if (isset($_FILES['validId1']) && $_FILES['validId1']['error'] === UPLOAD_ERR_OK) {
+        if (!in_array($_FILES['validId1']['type'], $allowedTypes)) {
+            $response['errors']['validId1'] = "Only JPG, PNG, and PDF files are allowed for ID Photo 1";
+        } elseif ($_FILES['validId1']['size'] > $maxSize) {
+            $response['errors']['validId1'] = "File size exceeds 5MB limit for ID Photo 1";
         } else {
-            $uploadDir = 'uploads/valid_ids/';
-            if (!file_exists($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
+            $fileExt1 = pathinfo($_FILES['validId1']['name'], PATHINFO_EXTENSION);
+            $fileName1 = uniqid('id1_') . '.' . $fileExt1;
+            $filePath1 = $uploadDir . $fileName1;
 
-            $fileExt = pathinfo($_FILES['validId']['name'], PATHINFO_EXTENSION);
-            $fileName = uniqid('id_') . '.' . $fileExt;
-            $filePath = $uploadDir . $fileName;
-
-            if (move_uploaded_file($_FILES['validId']['tmp_name'], $filePath)) {
-                $validIdPath = $filePath;
+            if (move_uploaded_file($_FILES['validId1']['tmp_name'], $filePath1)) {
+                $validIdPath1 = $filePath1;
             } else {
-                $response['errors']['validId'] = "Failed to upload file";
+                $response['errors']['validId1'] = "Failed to upload ID Photo 1";
             }
         }
     } else {
-        $response['errors']['validId'] = "Valid ID is required";
+        $response['errors']['validId1'] = "ID Photo 1 is required";
+    }
+
+    // Process Second ID Photo
+    if (isset($_FILES['validId2']) && $_FILES['validId2']['error'] === UPLOAD_ERR_OK) {
+        if (!in_array($_FILES['validId2']['type'], $allowedTypes)) {
+            $response['errors']['validId2'] = "Only JPG, PNG, and PDF files are allowed for ID Photo 2";
+        } elseif ($_FILES['validId2']['size'] > $maxSize) {
+            $response['errors']['validId2'] = "File size exceeds 5MB limit for ID Photo 2";
+        } else {
+            $fileExt2 = pathinfo($_FILES['validId2']['name'], PATHINFO_EXTENSION);
+            $fileName2 = uniqid('id2_') . '.' . $fileExt2;
+            $filePath2 = $uploadDir . $fileName2;
+
+            if (move_uploaded_file($_FILES['validId2']['tmp_name'], $filePath2)) {
+                $validIdPath2 = $filePath2;
+            } else {
+                $response['errors']['validId2'] = "Failed to upload ID Photo 2";
+            }
+        }
+    } else {
+        $response['errors']['validId2'] = "ID Photo 2 is required";
     }
 
     if (!empty($response['errors'])) {
@@ -120,16 +143,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Email address already registered");
         }
 
-        // Insert into residents
+        // Insert into residents with both ID paths
         $residentQuery = "INSERT INTO residents (
             first_name, last_name, middle_name, suffix, sex, birthdate, age,
             contact_number, email, house_number, purok, address,
-            verification_status, resident_status, valid_id_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', 'Active', ?)";
+            verification_status, resident_status, valid_id_path, valid_id_path_2
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', 'Active', ?, ?)";
 
         $residentStmt = $conn->prepare($residentQuery);
         $residentStmt->bind_param(
-            "ssssssissssss",
+            "ssssssississss",
             $firstName,
             $lastName,
             $middleName,
@@ -142,7 +165,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $houseNumber,
             $purok,
             $address,
-            $validIdPath
+            $validIdPath1,
+            $validIdPath2
         );
 
         if (!$residentStmt->execute()) {

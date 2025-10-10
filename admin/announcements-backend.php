@@ -2,13 +2,15 @@
 require_once __DIR__ . '/includes/auth.php';
 requireAuth();
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/../config/emailer.php';
+require_once __DIR__ . '/../email_templates/announcement.php';
+
 
 date_default_timezone_set('Asia/Manila');
 
 function timeAgo($datetime) {
     $dt = new DateTime($datetime, new DateTimeZone('Asia/Manila'));
     $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
-
     $diff = $now->getTimestamp() - $dt->getTimestamp();
 
     if ($diff < 60) return $diff . ' seconds ago';
@@ -29,43 +31,55 @@ if (isset($_POST['addAnnouncement'])) {
     if (empty($title) || empty($content) || empty($date)) {
         $_SESSION['error'] = "All fields except image are required.";
     } else {
-        if (!isset($_SESSION['error'])) {
-            $stmt = $conn->prepare("INSERT INTO announcements (title, content, date_posted, posted_by, created_at) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssis", $title, $content, $now, $userId, $now);
+        $stmt = $conn->prepare("INSERT INTO announcements (title, content, date_posted, posted_by, created_at) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssis", $title, $content, $now, $userId, $now);
 
-            if ($stmt->execute()) {
-                $announcementId = $stmt->insert_id;
-                $stmt->close();
+        if ($stmt->execute()) {
+            $announcementId = $stmt->insert_id;
+            $stmt->close();
 
-                if (!empty($_FILES['images']['name'][0])) {
-                    $targetDir = "uploads/announcements/";
-                    if (!is_dir($targetDir)) {
-                        mkdir($targetDir, 0755, true);
-                    }
-                    $allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                    foreach ($_FILES['images']['name'] as $key => $name) {
-                        if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
-                            $fileInfo = pathinfo($name);
-                            $extension = strtolower($fileInfo['extension']);
-                            if (in_array($extension, $allowedTypes) && $_FILES['images']['size'][$key] <= 5000000) {
-                                $filename = time() . "_" . uniqid() . "." . $extension;
-                                $targetFile = $targetDir . $filename;
-                                if (move_uploaded_file($_FILES['images']['tmp_name'][$key], $targetFile)) {
-                                    $imgStmt = $conn->prepare("INSERT INTO announcement_images (announcement_id, image_path) VALUES (?, ?)");
-                                    $imgStmt->bind_param("is", $announcementId, $targetFile);
-                                    $imgStmt->execute();
-                                    $imgStmt->close();
-                                }
+            // === Image Uploads ===
+            if (!empty($_FILES['images']['name'][0])) {
+                $targetDir = "uploads/announcements/";
+                if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+                $allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+                foreach ($_FILES['images']['name'] as $key => $name) {
+                    if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
+                        $fileInfo = pathinfo($name);
+                        $extension = strtolower($fileInfo['extension']);
+                        if (in_array($extension, $allowedTypes) && $_FILES['images']['size'][$key] <= 5000000) {
+                            $filename = time() . "_" . uniqid() . "." . $extension;
+                            $targetFile = $targetDir . $filename;
+                            if (move_uploaded_file($_FILES['images']['tmp_name'][$key], $targetFile)) {
+                                $imgStmt = $conn->prepare("INSERT INTO announcement_images (announcement_id, image_path) VALUES (?, ?)");
+                                $imgStmt->bind_param("is", $announcementId, $targetFile);
+                                $imgStmt->execute();
+                                $imgStmt->close();
                             }
                         }
                     }
                 }
-
-                $_SESSION['success'] = "Announcement added successfully.";
-            } else {
-                $_SESSION['error'] = "Error adding announcement: " . $conn->error;
-                $stmt->close();
             }
+
+            $res = $conn->query("
+                SELECT CONCAT(r.first_name, ' ', r.last_name) AS full_name, r.email 
+                FROM resident_accounts ra
+                INNER JOIN residents r ON ra.resident_id = r.id
+                WHERE ra.account_status = 'Approved' AND r.email IS NOT NULL
+            ");
+            if ($res && $res->num_rows > 0) {
+                while ($row = $res->fetch_assoc()) {
+                    $emailData = announcementEmail($row['full_name'], $title, $content, $date);
+                    sendEmail($row['email'], $emailData['subject'], $emailData['message']); 
+                    // uses your emailer.php sendEmail() function
+                }
+            }
+
+            $_SESSION['success'] = "Announcement added successfully and notifications sent to approved residents.";
+        } else {
+            $_SESSION['error'] = "Error adding announcement: " . $conn->error;
+            $stmt->close();
         }
     }
 

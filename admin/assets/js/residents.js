@@ -555,18 +555,16 @@ function displayResidentModal(resident) {
     if (resident.photo_path && resident.photo_path !== 'null' && resident.photo_path !== '') {
         photoPath = `../auth/uploads/photos/${resident.photo_path}`;
     }
-
-    // Handle valid ID path
-    let idPath = 'img/default-id.jpg';
-    if (resident.valid_id_path && resident.valid_id_path !== 'null' && resident.valid_id_path !== '') {
-        let cleanPath = resident.valid_id_path;
-        cleanPath = cleanPath.replace(/^uploads\/valid_ids\//, '');
-        cleanPath = cleanPath.replace(/^auth\/uploads\/valid_ids\//, '');
-        idPath = `../auth/uploads/valid_ids/${cleanPath}`;
-    }
-
     updateModalImage(viewModal, '.resident-photo', photoPath);
-    updateModalImage(viewModal, '.resident-valid-id', idPath);
+
+    // Handle BOTH valid ID paths
+    displayIdPhotos(
+        viewModal, 
+        resident.valid_id_path, 
+        resident.valid_id_path_2,
+        '.resident-valid-id',
+        '.resident-valid-id-2'
+    );
 
     // Resident status badge
     const residentStatus = resident.resident_status || 'Active';
@@ -664,6 +662,38 @@ function updateModalImage(modal, selector, src) {
     };
 }
 
+function displayIdPhotos(modal, idPath1, idPath2, idSelector1 = '.resident-valid-id', idSelector2 = '.resident-valid-id-2') {
+    // Process and display first ID photo
+    let cleanIdPath1 = 'img/default-id.jpg';
+    if (idPath1 && idPath1 !== 'null' && idPath1 !== '') {
+        let cleanPath = idPath1;
+        cleanPath = cleanPath.replace(/^uploads\/valid_ids\//, '');
+        cleanPath = cleanPath.replace(/^auth\/uploads\/valid_ids\//, '');
+        cleanIdPath1 = `../auth/uploads/valid_ids/${cleanPath}`;
+    }
+    updateModalImage(modal, idSelector1, cleanIdPath1);
+
+    // Process and display second ID photo
+    let cleanIdPath2 = 'img/default-id.jpg';
+    if (idPath2 && idPath2 !== 'null' && idPath2 !== '') {
+        let cleanPath = idPath2;
+        cleanPath = cleanPath.replace(/^uploads\/valid_ids\//, '');
+        cleanPath = cleanPath.replace(/^auth\/uploads\/valid_ids\//, '');
+        cleanIdPath2 = `../auth/uploads/valid_ids/${cleanPath}`;
+    }
+    updateModalImage(modal, idSelector2, cleanIdPath2);
+
+    // Show/hide second ID container based on availability
+    const idContainer2 = modal.querySelector('.id-photo-2-container');
+    if (idContainer2) {
+        if (idPath2 && idPath2 !== 'null' && idPath2 !== '') {
+            idContainer2.style.display = 'block';
+        } else {
+            idContainer2.style.display = 'none';
+        }
+    }
+}
+
 // View request function
 function viewRequest(id) {
     if (!id) {
@@ -754,7 +784,7 @@ function displayRequestModal(request) {
     }
 
     const requestId = request.account_id || request.id;
-    const formattedRequestId = requestId ? `${requestId.toString().padStart( '0')}` : 'N/A';
+    const formattedRequestId = requestId ? `${requestId.toString().padStart(6, '0')}` : 'N/A';
 
     updateModalText(viewModal, '.request-name', fullName);
     updateModalText(viewModal, '.request-id', `Request ID: ${formattedRequestId}`);
@@ -785,17 +815,16 @@ function displayRequestModal(request) {
     if (request.photo_path && request.photo_path !== 'null' && request.photo_path !== '') {
         photoPath = `../auth/uploads/photos/${request.photo_path}`;
     }
-
-    let idPath = 'img/default-id.jpg';
-    if (request.valid_id_path && request.valid_id_path !== 'null' && request.valid_id_path !== '') {
-        let cleanPath = request.valid_id_path;
-        cleanPath = cleanPath.replace(/^uploads\/valid_ids\//, '');
-        cleanPath = cleanPath.replace(/^auth\/uploads\/valid_ids\//, '');
-        idPath = `../auth/uploads/valid_ids/${cleanPath}`;
-    }
-    
     updateModalImage(viewModal, '.request-photo', photoPath);
-    updateModalImage(viewModal, '.request-valid-id', idPath);
+
+    // Handle BOTH valid ID paths for requests
+    displayIdPhotos(
+        viewModal, 
+        request.valid_id_path, 
+        request.valid_id_path_2,
+        '.request-valid-id',
+        '.request-valid-id-2'
+    );
 
     const dateRequested = request.date_requested;
     updateModalText(viewModal, '.request-date-requested', 
@@ -1205,12 +1234,215 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Add resident form submission
-        const saveResidentBtn = getElement('#saveResidentBtn');
-        if (saveResidentBtn) {
-            saveResidentBtn.addEventListener('click', async function () {
-                // ... (keep existing save resident logic)
-            });
+       const saveResidentBtn = getElement('#saveResidentBtn');
+if (saveResidentBtn) {
+    console.log('Save Resident Button found and attaching listener...');
+    
+    saveResidentBtn.addEventListener('click', async function (e) {
+        e.preventDefault(); // Prevent any default behavior
+        console.log('Save Resident Button clicked!');
+        
+        const form = getElement('#addResidentForm');
+        if (!form) {
+            console.error('Form not found!');
+            showToast('Form not found', 'danger');
+            return;
         }
+
+        // Validate form
+        if (!form.checkValidity()) {
+            console.log('Form validation failed');
+            form.classList.add('was-validated');
+            showToast('Please fill in all required fields', 'danger');
+            return;
+        }
+
+        console.log('Form is valid, proceeding...');
+
+        /* ---------- Birthdate Validation ---------- */
+        const birthdateInput = getElement('#birthdate');
+        const ageInput = getElement('#age');
+        
+        if (birthdateInput && birthdateInput.value) {
+            const dateValue = birthdateInput.value.trim();
+            console.log('Processing birthdate:', dateValue);
+
+            // Year only → default to Jan 1
+            if (/^\d{4}$/.test(dateValue)) {
+                birthdateInput.value = `${dateValue}-01-01`;
+                console.log('Converted year to full date:', birthdateInput.value);
+            }
+            // Full date → strict check
+            else if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+                const [y, m, d] = dateValue.split('-').map(Number);
+                const dt = new Date(dateValue);
+                if (dt.getFullYear() !== y || dt.getMonth() + 1 !== m || dt.getDate() !== d) {
+                    showToast('Invalid birthdate. Use a real YYYY-MM-DD date.', 'danger');
+                    return;
+                }
+            }
+            // Browser-parsable fallback
+            else {
+                const parsedDate = new Date(dateValue);
+                if (!isNaN(parsedDate.getTime())) {
+                    birthdateInput.value = parsedDate.toISOString().split('T')[0];
+                    console.log('Parsed date to:', birthdateInput.value);
+                } else {
+                    showToast('Invalid birthdate format. Use YYYY-MM-DD or year only.', 'danger');
+                    return;
+                }
+            }
+
+            /* ---------- Calculate Age ---------- */
+            if (ageInput) {
+                const birthdate = new Date(birthdateInput.value);
+                const today = new Date();
+                let age = today.getFullYear() - birthdate.getFullYear();
+                const monthDiff = today.getMonth() - birthdate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+                    age--;
+                }
+                
+                age = Math.max(0, age);
+                ageInput.value = age;
+                console.log('Calculated age:', age);
+            }
+        }
+
+        /* ---------- Auto-generate address ---------- */
+        const houseNumberInput = getElement('#houseNumber');
+        const purokInput = getElement('#purok');
+        const addressInput = getElement('#address');
+        
+        if (houseNumberInput && purokInput && addressInput) {
+            const houseNumber = houseNumberInput.value.trim();
+            const purok = purokInput.value.trim();
+            
+            if (houseNumber && purok) {
+                addressInput.value = `House ${houseNumber}, Purok ${purok}, Balas, Mexico, Pampanga, Philippines`;
+                console.log('Generated address:', addressInput.value);
+            }
+        }
+
+        /* ---------- Check account creation ---------- */
+        const createAccountCheck = getElement('#createAccountCheck');
+        const passwordInput = getElement('#password');
+        const emailInput = getElement('#email');
+        
+        if (createAccountCheck && createAccountCheck.checked) {
+            console.log('Account creation requested');
+            
+            if (!passwordInput || !passwordInput.value.trim()) {
+                passwordInput?.classList.add('is-invalid');
+                showToast('Password is required when creating an account', 'danger');
+                return;
+            }
+            
+            if (!emailInput || !emailInput.value.trim()) {
+                emailInput?.classList.add('is-invalid');
+                showToast('Email is required when creating an account', 'danger');
+                return;
+            }
+        }
+
+        /* ---------- Prepare FormData ---------- */
+        const formData = new FormData(form);
+        
+        // Ensure age and birthdate are in FormData
+        if (ageInput && ageInput.value) {
+            formData.set('age', ageInput.value);
+        }
+        if (birthdateInput && birthdateInput.value) {
+            formData.set('birthdate', birthdateInput.value);
+        }
+        
+        // Debug: Log all form data
+        console.log('=== FormData Contents ===');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+        console.log('========================');
+
+        /* ---------- Show loading state ---------- */
+        const originalText = this.innerHTML;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
+        this.disabled = true;
+
+        try {
+            console.log('Sending request to server...');
+            
+            const response = await fetch('residents-backend.php?action=add', {
+                method: 'POST',
+                body: formData
+            });
+
+            console.log('Response status:', response.status);
+
+            // Check content type
+            const contentType = response.headers.get('content-type') || '';
+            console.log('Response content-type:', contentType);
+
+            if (!contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response received:', text.substring(0, 500));
+                throw new Error('Server returned invalid response (expected JSON)');
+            }
+
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to add resident');
+            }
+
+            // Success!
+            console.log('Resident added successfully!');
+            showToast(data.message || 'Resident added successfully!', 'success');
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(getElement('#addResidentModal'));
+            if (modal) {
+                console.log('Closing modal...');
+                modal.hide();
+            }
+
+            // Reset form
+            form.reset();
+            form.classList.remove('was-validated');
+
+            // Reset account fields
+            const accountFields = getElement('#accountFields');
+            if (accountFields) accountFields.style.display = 'none';
+            if (createAccountCheck) createAccountCheck.checked = false;
+            const createAccountInput = getElement('#createAccount');
+            if (createAccountInput) createAccountInput.value = 'false';
+
+            // Refresh resident list
+            console.log('Refreshing resident list...');
+            refreshResidentList(currentResidentPage, currentResidentSearch);
+        }
+        catch (error) {
+            console.error('=== ERROR ===');
+            console.error('Error type:', error.name);
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+            console.error('=============');
+            
+            showToast(error.message || 'An unexpected error occurred', 'danger');
+        }
+        finally {
+            // Restore button
+            this.innerHTML = originalText;
+            this.disabled = false;
+            console.log('Button restored');
+        }
+    });
+    
+    console.log('Save Resident Button listener attached successfully');
+} else {
+    console.error('Save Resident Button (#saveResidentBtn) not found in DOM!');
+}
             
         // Update resident form submission
         const updateResidentBtn = getElement('#updateResidentBtn');
@@ -1405,4 +1637,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('Residents management initialized successfully');
+
+    // Create image viewer modal HTML
+    const imageViewerHTML = `
+        <div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title text-white" id="imageViewerTitle">Image Viewer</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center p-0">
+                        <img src="" id="imageViewerImg" class="img-fluid" alt="Full size image" style="max-height: 80vh;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Append modal to body if it doesn't exist
+    if (!document.getElementById('imageViewerModal')) {
+        document.body.insertAdjacentHTML('beforeend', imageViewerHTML);
+    }
+    
+    // Add click event to all ID images (delegated event)
+    document.addEventListener('click', function(e) {
+        const target = e.target;
+        
+        // Check if clicked element is an ID image
+        if (target.classList.contains('resident-valid-id') || 
+            target.classList.contains('resident-valid-id-2') ||
+            target.classList.contains('request-valid-id') ||
+            target.classList.contains('request-valid-id-2')) {
+            
+            // Don't open viewer for default images
+            if (target.src.includes('default-id.jpg')) {
+                return;
+            }
+            
+            openImageViewer(target.src, target.alt);
+        }
+    });
+});
+
+
+// Function to open image in full screen
+function openImageViewer(imageSrc, imageTitle) {
+    const modal = document.getElementById('imageViewerModal');
+    const img = document.getElementById('imageViewerImg');
+    const title = document.getElementById('imageViewerTitle');
+    
+    if (modal && img && title) {
+        img.src = imageSrc;
+        title.textContent = imageTitle || 'ID Photo';
+        
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    const imageViewerModal = document.getElementById('imageViewerModal');
+    if (imageViewerModal && imageViewerModal.classList.contains('show')) {
+        if (e.key === 'Escape') {
+            const modal = bootstrap.Modal.getInstance(imageViewerModal);
+            if (modal) modal.hide();
+        }
+    }
 });

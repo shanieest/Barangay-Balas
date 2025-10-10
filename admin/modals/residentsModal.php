@@ -289,116 +289,280 @@
     
     <!-- View Resident Modal -->
     <div class="modal fade" id="viewResidentModal" tabindex="-1" aria-labelledby="viewResidentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title" id="viewResidentModalLabel">Resident Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <img src="img/default-profile.jpg" class="img-thumbnail mb-3 resident-photo" width="150">
-                            <h5 class="resident-name"></h5>
-                            <p class="text-muted resident-id"></p>
-                            <span class="badge resident-status-badge"></span>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewResidentModalLabel">Resident Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img src="img/default-profile.jpg" class="img-thumbnail mb-3 resident-photo" width="150">
+                        <h5 class="resident-name"></h5>
+                        <p class="text-muted resident-id"></p>
+                        <span class="badge resident-status-badge"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Birthdate:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 resident-birthdate"></p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Sex:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 resident-sex"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Contact:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 resident-contact"></p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Email:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 resident-email"></p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Age:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 resident-age"></p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-8">
+
+                        <div class="row mb-3">
+                            <div class="col-sm-12">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0"><strong>Address:</strong></p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <p class="text-muted mb-0 resident-address"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- UPDATED: Two ID Photos -->
+                        <h6 class="mb-3">Valid ID Photos:</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small">Front</label>
+                                <div class="border rounded p-2">
+                                    <img src="img/default-id.jpg" class="img-fluid resident-valid-id" alt="Valid ID Front">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3 id-photo-2-container">
+                                <label class="text-muted small">Back</label>
+                                <div class="border rounded p-2">
+                                    <img src="img/default-id.jpg" class="img-fluid resident-valid-id-2" alt="Valid ID Back">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Account Information Section -->
+                        <div class="account-details mt-4" style="display: none;">
+                            <h6>Account Information:</h6>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Birthdate:</strong></p>
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4">
+                                            <p class="mb-0"><strong>Status:</strong></p>
                                         </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 resident-birthdate"></p>
-                                        </div>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Sex:</strong></p>
-                                        </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 resident-sex"></p>
+                                        <div class="col-sm-8">
+                                            <span class="badge account-status-badge"></span>
                                         </div>
                                     </div>
-                                   
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Contact:</strong></p>
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4">
+                                            <p class="mb-0"><strong>Processed By:</strong></p>
                                         </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 resident-contact"></p>
-                                        </div>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Email:</strong></p>
-                                        </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 resident-email"></p>
+                                        <div class="col-sm-8">
+                                            <p class="text-muted mb-0 resident-processed-by"></p>
                                         </div>
                                     </div>
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Age:</strong></p>
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4">
+                                            <p class="mb-0"><strong>Date Processed:</strong></p>
                                         </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 resident-age"></p>
+                                        <div class="col-sm-8">
+                                            <p class="text-muted mb-0 resident-date-processed"></p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="row mb-3">
-                                <div class="col-sm-12">
-                                    <div class="row">
-                                        <div class="col-sm-3">
-                                            <p class="mb-0"><strong>Address:</strong></p>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="row mb-2">
+                                        <div class="col-sm-2">
+                                            <p class="mb-0"><strong>Notes:</strong></p>
                                         </div>
-                                        <div class="col-sm-9">
-                                            <p class="text-muted mb-0 resident-address"></p>
+                                        <div class="col-sm-10">
+                                            <p class="text-muted mb-0 resident-account-notes"></p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+    </div>
+    
+    <!-- View Account Request Modal -->
+    <div class="modal fade" id="viewRequestModal" tabindex="-1" aria-labelledby="viewRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="viewRequestModalLabel">Account Request Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img src="img/default-profile.jpg" class="img-thumbnail mb-3 request-photo" width="150">
+                        <h5 class="request-name"></h5>
+                        <p class="text-muted request-id"></p>
+                        <span class="badge request-status-badge mb-2"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Birthdate:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 request-birthdate"></p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Sex:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 request-sex"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Contact:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 request-contact"></p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-5">
+                                        <p class="mb-0"><strong>Email:</strong></p>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <p class="text-muted mb-0 request-email"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                            <hr>
-
-                            <h6 class="mb-3">Valid ID:</h6>
-                            <img src="img/default-id.jpg" class="img-fluid rounded border img-preview resident-valid-id" alt="Valid ID">
-                            
-                            <!-- Account Information Section -->
-                            <div class="account-details mt-4" style="display: none;">
-                                <h6>Account Information:</h6>
+                        <div class="row mb-3">
+                            <div class="col-sm-12">
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="row mb-2">
-                                            <div class="col-sm-4">
-                                                <p class="mb-0"><strong>Status:</strong></p>
-                                            </div>
-                                            <div class="col-sm-8">
-                                                <span class="badge account-status-badge"></span>
-                                            </div>
+                                    <div class="col-sm-3">
+                                        <p class="mb-0"><strong>Address:</strong></p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <p class="text-muted mb-0 request-address"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- UPDATED: Two ID Photos -->
+                        <h6 class="mb-3">Valid ID Photos:</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small">Front</label>
+                                <div class="border rounded p-2">
+                                    <img src="img/default-id.jpg" class="img-fluid request-valid-id" alt="Valid ID Front">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3 id-photo-2-container">
+                                <label class="text-muted small">Back</label>
+                                <div class="border rounded p-2">
+                                    <img src="img/default-id.jpg" class="img-fluid request-valid-id-2" alt="Valid ID Back">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Request Details -->
+                        <div class="account-details mt-4">
+                            <h6>Request Information:</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4">
+                                            <p class="mb-0"><strong>Date Requested:</strong></p>
+                                        </div>
+                                        <div class="col-sm-8">
+                                            <p class="text-muted mb-0 request-date-requested"></p>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Only show if processed -->
+                            <div id="requestProcessedInfo" style="display: none;">
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="row mb-2">
                                             <div class="col-sm-4">
                                                 <p class="mb-0"><strong>Processed By:</strong></p>
                                             </div>
                                             <div class="col-sm-8">
-                                                <p class="text-muted mb-0 resident-processed-by"></p>
+                                                <p class="text-muted mb-0 request-processed-by"></p>
                                             </div>
                                         </div>
+                                    </div>
+                                    <div class="col-md-6">
                                         <div class="row mb-2">
                                             <div class="col-sm-4">
                                                 <p class="mb-0"><strong>Date Processed:</strong></p>
                                             </div>
                                             <div class="col-sm-8">
-                                                <p class="text-muted mb-0 resident-date-processed"></p>
+                                                <p class="text-muted mb-0 request-date-processed"></p>
                                             </div>
                                         </div>
                                     </div>
@@ -410,7 +574,7 @@
                                                 <p class="mb-0"><strong>Notes:</strong></p>
                                             </div>
                                             <div class="col-sm-10">
-                                                <p class="text-muted mb-0 resident-account-notes"></p>
+                                                <p class="text-muted mb-0 request-notes"></p>
                                             </div>
                                         </div>
                                     </div>
@@ -419,155 +583,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="approveRequestBtn">Approve</button>
+                <button type="button" class="btn btn-danger" id="rejectRequestBtn">Reject</button>
             </div>
         </div>
     </div>
-    
-    <!-- View Account Request Modal -->
-    <div class="modal fade" id="viewRequestModal" tabindex="-1" aria-labelledby="viewRequestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="viewRequestModalLabel">Account Request Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <img src="img/default-profile.jpg" class="img-thumbnail mb-3 request-photo" width="150">
-                            <h5 class="request-name"></h5>
-                            <p class="text-muted request-id"></p>
-                            <span class="badge request-status-badge mb-2"></span>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Birthdate:</strong></p>
-                                        </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 request-birthdate"></p>
-                                        </div>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Sex:</strong></p>
-                                        </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 request-sex"></p>
-                                        </div>
-                                    </div>
-                                   
-                                    
-
-
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Contact:</strong></p>
-                                        </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 request-contact"></p>
-                                        </div>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <div class="col-sm-5">
-                                            <p class="mb-0"><strong>Email:</strong></p>
-                                        </div>
-                                        <div class="col-sm-7">
-                                            <p class="text-muted mb-0 request-email"></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-sm-12">
-                                    <div class="row">
-                                        <div class="col-sm-3">
-                                            <p class="mb-0"><strong>Address:</strong></p>
-                                        </div>
-                                        <div class="col-sm-9">
-                                            <p class="text-muted mb-0 request-address"></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr>
-
-                            <h6 class="mb-3">Valid ID:</h6>
-                            <img src="img/default-id.jpg" class="img-fluid rounded border img-preview request-valid-id" alt="Valid ID">
-                            
-                            <!-- Request Details -->
-                            <div class="account-details mt-4">
-                                <h6>Request Information:</h6>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="row mb-2">
-                                            <div class="col-sm-4">
-                                                <p class="mb-0"><strong>Date Requested:</strong></p>
-                                            </div>
-                                            <div class="col-sm-8">
-                                                <p class="text-muted mb-0 request-date-requested"></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Only show if processed -->
-                                <div id="requestProcessedInfo" style="display: none;">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="row mb-2">
-                                                <div class="col-sm-4">
-                                                    <p class="mb-0"><strong>Processed By:</strong></p>
-                                                </div>
-                                                <div class="col-sm-8">
-                                                    <p class="text-muted mb-0 request-processed-by"></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="row mb-2">
-                                                <div class="col-sm-4">
-                                                    <p class="mb-0"><strong>Date Processed:</strong></p>
-                                                </div>
-                                                <div class="col-sm-8">
-                                                    <p class="text-muted mb-0 request-date-processed"></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <div class="row mb-2">
-                                                <div class="col-sm-2">
-                                                    <p class="mb-0"><strong>Notes:</strong></p>
-                                                </div>
-                                                <div class="col-sm-10">
-                                                    <p class="text-muted mb-0 request-notes"></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="approveRequestBtn">Approve</button>
-                    <button type="button" class="btn btn-danger" id="rejectRequestBtn">Reject</button>
-                </div>
-            </div>
-        </div>
     </div>
     
     <!-- Approve/Reject Request Modal -->
@@ -616,3 +639,36 @@
             </div>
         </div>
     </div>
+
+    <style>
+.id-photo-2-container {
+    display: block; /* Will be controlled by JavaScript */
+}
+
+.id-photo-2-container img {
+    max-height: 300px;
+    object-fit: contain;
+}
+
+.resident-valid-id, 
+.resident-valid-id-2,
+.request-valid-id,
+.request-valid-id-2 {
+    max-height: 300px;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.resident-valid-id:hover, 
+.resident-valid-id-2:hover,
+.request-valid-id:hover,
+.request-valid-id-2:hover {
+    transform: scale(1.05);
+}
+
+/* Optional: Add modal for full-size image viewing */
+.img-preview {
+    cursor: pointer;
+}
+</style>

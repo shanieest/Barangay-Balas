@@ -56,7 +56,7 @@ $userName = $user
                     <span><?php echo $userName; ?></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" href="/barangay-balas/pages/profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="/barangay-balas/pages/residents/profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="/barangay-balas/auth/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                 </ul>

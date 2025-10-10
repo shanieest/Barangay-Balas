@@ -29,145 +29,7 @@ if (isset($_SESSION['login_error'])) {
     <!-- Bootstrap Datepicker CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        :root {
-            --primary-red: #990000;
-            --primary-blue: #0033cc;
-            --primary-blue-light: #3d6bff;
-            --primary-blue-lighter: #e6ecff;
-        }
-        
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .auth-container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border-top: 5px solid var(--primary-red);
-        }
-        .auth-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .auth-header h2 {
-            color: var(--primary-blue);
-            font-weight: 600;
-        }
-        .auth-logo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 15px;
-        }
-        .form-control {
-            height: 45px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid #ced4da;
-        }
-        .form-control:focus {
-            border-color: var(--primary-blue-light);
-            box-shadow: 0 0 0 0.2rem var(--primary-blue-lighter);
-        }
-        .btn-auth {
-            background-color: var(--primary-blue);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 5px;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 10px;
-            transition: all 0.3s;
-        }
-        .btn-auth:hover {
-            background-color: var(--primary-blue-light);
-            transform: translateY(-2px);
-        }
-        .btn-auth:active {
-            transform: translateY(0);
-        }
-        .auth-footer {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .auth-footer a {
-            color: var(--primary-blue);
-            text-decoration: none;
-        }
-        .auth-footer a:hover {
-            text-decoration: underline;
-            color: var(--primary-red);
-        }
-        .nav-tabs {
-            border-bottom: none;
-            margin-bottom: 25px;
-        }
-        .nav-tabs .nav-link {
-            border: none;
-            color: #7f8c8d;
-            font-weight: 600;
-            padding: 10px 20px;
-        }
-        .nav-tabs .nav-link.active {
-            color: var(--primary-blue);
-            background: none;
-            border-bottom: 3px solid var(--primary-red);
-        }
-        .custom-file-label::after {
-            content: "Browse";
-            background-color: var(--primary-blue-lighter);
-            color: var(--primary-blue);
-            border-left: 1px solid #ced4da;
-        }
-        .id-preview {
-            max-width: 100%;
-            margin-top: 10px;
-            display: none;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 5px;
-        }
-        .form-section {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        .form-section-title {
-            color: var(--primary-red);
-            margin-bottom: 15px;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        .datepicker table tr td.active.active, 
-        .datepicker table tr td.active.highlighted.active, 
-        .datepicker table tr td.active.highlighted:active, 
-        .datepicker table tr td.active:active {
-            background-color: var(--primary-blue);
-            background-image: none;
-        }
-        .datepicker table tr td.today {
-            background-color: var(--primary-blue-lighter);
-        }
-        .input-group-text {
-            background-color: var(--primary-blue-lighter);
-            color: var(--primary-blue);
-            border-color: #ced4da;
-        }
-        .form-check-input:checked {
-            background-color: var(--primary-blue);
-            border-color: var(--primary-blue);
-        }
-        .alert-primary {
-            background-color: var(--primary-blue-lighter);
-            border-color: var(--primary-blue-lighter);
-            color: var(--primary-blue);
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/signup.css">
 </head>
 <body>
     <div class="container">
@@ -312,12 +174,10 @@ if (isset($_SESSION['login_error'])) {
                                 </select>
                              </div>
 
-
                             <div class="form-group">
                                 <label for="full_address">Full Address</label>
                                 <textarea class="form-control" id="full_address" name="full_address" rows="2" readonly></textarea>
                             </div>
-
                         </div>
 
                         <div class="form-section">
@@ -346,7 +206,7 @@ if (isset($_SESSION['login_error'])) {
                         <div class="form-section">
                             <h5 class="form-section-title"><i class="fas fa-id-card"></i> ID Verification</h5>
                             <div class="alert alert-primary">
-                                <i class="fas fa-info-circle"></i> Please upload a clear photo of your valid government-issued ID.
+                                <i class="fas fa-info-circle"></i> Please upload 2 clear photos of your valid government-issued ID (front and back).
                             </div>
                            <div class="form-group">
                                 <label for="idType">ID Type</label>
@@ -365,18 +225,25 @@ if (isset($_SESSION['login_error'])) {
                                 <input type="text" class="form-control" id="otherIdType" name="otherIdType" placeholder="Enter ID Type">
                             </div>
 
-                             <div class="form-group">
-                                <label for="idNumber">ID Number</label>
-                                <input type="text" class="form-control" id="idNumber" name="idNumber" placeholder="Enter ID number" required>
+                            <!-- First ID Photo -->
+                            <div class="id-upload-container">
+                                <label class="id-upload-label">Upload ID Photo 1 (Front)*</label>
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="idUpload1" name="validId1" accept="image/*,.pdf" required>
+                                    <label class="custom-file-label" for="idUpload1">Choose file</label>
+                                </div>
+                                <img id="idPreview1" class="id-preview" alt="ID Preview 1">
+                                <small class="form-text text-muted">Max file size: 5MB (JPG, PNG, PDF)</small>
                             </div>
 
-                            <div class="form-group">
-                                <label for="idUpload">Upload ID</label>
+                            <!-- Second ID Photo -->
+                            <div class="id-upload-container">
+                                <label class="id-upload-label">Upload ID Photo 2 (Back)*</label>
                                 <div class="custom-file">
-                                    <input type="file" class="custom-file-input" id="idUpload" name="validId" accept="image/*,.pdf" required>
-                                    <label class="custom-file-label" for="validId">Choose file</label>
+                                    <input type="file" class="custom-file-input" id="idUpload2" name="validId2" accept="image/*,.pdf" required>
+                                    <label class="custom-file-label" for="idUpload2">Choose file</label>
                                 </div>
-                                <img id="idPreview" class="id-preview" alt="ID Preview">
+                                <img id="idPreview2" class="id-preview" alt="ID Preview 2">
                                 <small class="form-text text-muted">Max file size: 5MB (JPG, PNG, PDF)</small>
                             </div>
                         </div>
@@ -406,8 +273,8 @@ if (isset($_SESSION['login_error'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
     <!-- Custom JS -->
    <script>
-            $(document).ready(function() {
-        $('#loginForm').on('submit', function(e) {
+        $(document).ready(function() {
+            $('#loginForm').on('submit', function(e) {
                 e.preventDefault();
                 
                 $('#loginBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Logging in...');
@@ -432,6 +299,7 @@ if (isset($_SESSION['login_error'])) {
                     }
                 });
             });
+
             $('#registrationForm').on('submit', function(e) {
                 e.preventDefault();
                 
@@ -464,8 +332,7 @@ if (isset($_SESSION['login_error'])) {
                     }
                 });
             });
-        });
-        $(document).ready(function(){
+
             $('.datepicker').datepicker({
                 format: 'mm/dd/yyyy',
                 autoclose: true,
@@ -484,15 +351,29 @@ if (isset($_SESSION['login_error'])) {
                 $('#age').val(age);
             });
 
-            $('#idUpload').change(function(){
+            // Handle ID Upload 1
+            $('#idUpload1').change(function(){
                 var file = this.files[0];
                 if (file) {
                     var reader = new FileReader();
                     reader.onload = function(e){
-                        $('#idPreview').attr('src', e.target.result).show();
+                        $('#idPreview1').attr('src', e.target.result).show();
                     }
                     reader.readAsDataURL(file);
-                    $('.custom-file-label').text(file.name);
+                    $(this).next('.custom-file-label').text(file.name);
+                }
+            });
+
+            // Handle ID Upload 2
+            $('#idUpload2').change(function(){
+                var file = this.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e){
+                        $('#idPreview2').attr('src', e.target.result).show();
+                    }
+                    reader.readAsDataURL(file);
+                    $(this).next('.custom-file-label').text(file.name);
                 }
             });
 
@@ -535,7 +416,6 @@ if (isset($_SESSION['login_error'])) {
                 document.getElementById('otherIdType').removeAttribute('required');
             }
         });
-
    </script>
 </body>
 </html>

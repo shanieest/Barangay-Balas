@@ -3,6 +3,10 @@ require_once 'includes/db.php';
 require_once 'includes/auth.php';
 requireAuth();
 
+require_once __DIR__ . '/../config/emailer.php';
+require_once __DIR__ . '/../email_templates/reservation_status.php';
+
+
 header('Content-Type: application/json');
 
 $action = $_REQUEST['action'] ?? '';
@@ -178,9 +182,27 @@ function handleApprove() {
         'success' => true, 
         'message' => 'Service reservation approved successfully'
     ]);
-    
-    $check_stmt->close();
-    $update_stmt->close();
+
+    $emailQuery = $conn->prepare("
+        SELECT sr.resident_name, sr.email, GROUP_CONCAT(st.service_name SEPARATOR ', ') as service_list
+        FROM service_reservations sr
+        LEFT JOIN service_reservation_items sri ON sr.id = sri.reservation_id
+        LEFT JOIN service_types st ON sri.service_type_id = st.id
+        WHERE sr.id = ?
+        GROUP BY sr.id
+    ");
+    $emailQuery->bind_param("i", $reservation_id);
+    $emailQuery->execute();
+    $resData = $emailQuery->get_result()->fetch_assoc();
+
+    if ($resData && !empty($resData['email'])) {
+        $emailData = reservationStatusEmail($resData['resident_name'], 'Approved', $resData['service_list'], $notes);
+        sendEmail($resData['email'], $emailData['subject'], $emailData['message']);
+    }
+
+        
+        $check_stmt->close();
+        $update_stmt->close();
 }
 
 function handleReject() {
@@ -237,6 +259,24 @@ function handleReject() {
     logActivity($admin_id, "Rejected service reservation (ID: $reservation_id)", $conn);
     
     $conn->commit();
+
+    $emailQuery = $conn->prepare("
+        SELECT sr.resident_name, sr.email, GROUP_CONCAT(st.service_name SEPARATOR ', ') as service_list
+        FROM service_reservations sr
+        LEFT JOIN service_reservation_items sri ON sr.id = sri.reservation_id
+        LEFT JOIN service_types st ON sri.service_type_id = st.id
+        WHERE sr.id = ?
+        GROUP BY sr.id
+    ");
+    $emailQuery->bind_param("i", $reservation_id);
+    $emailQuery->execute();
+    $resData = $emailQuery->get_result()->fetch_assoc();
+
+    if ($resData && !empty($resData['email'])) {
+        $emailData = reservationStatusEmail($resData['resident_name'], 'Rejected', $resData['service_list'], $rejection_reason);
+        sendEmail($resData['email'], $emailData['subject'], $emailData['message']);
+    }
+
     
     echo json_encode([
         'success' => true, 
@@ -311,6 +351,24 @@ function handleUpdateStatus() {
     logActivity($admin_id, "Updated service reservation status to '$status' (ID: $reservation_id)", $conn);
     
     $conn->commit();
+
+    $emailQuery = $conn->prepare("
+        SELECT sr.resident_name, sr.email, GROUP_CONCAT(st.service_name SEPARATOR ', ') as service_list
+        FROM service_reservations sr
+        LEFT JOIN service_reservation_items sri ON sr.id = sri.reservation_id
+        LEFT JOIN service_types st ON sri.service_type_id = st.id
+        WHERE sr.id = ?
+        GROUP BY sr.id
+    ");
+    $emailQuery->bind_param("i", $reservation_id);
+    $emailQuery->execute();
+    $resData = $emailQuery->get_result()->fetch_assoc();
+
+    if ($resData && !empty($resData['email'])) {
+        $emailData = reservationStatusEmail($resData['resident_name'], $status, $resData['service_list'], $notes);
+        sendEmail($resData['email'], $emailData['subject'], $emailData['message']);
+    }
+
     
     echo json_encode([
         'success' => true, 

@@ -11,6 +11,7 @@ ini_set('error_log', __DIR__ . '/php_errors.log');
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 
+
 header('Content-Type: application/json');
 
 $response = ['success' => false, 'message' => ''];
@@ -269,9 +270,13 @@ function handleAccountRequests() {
 function handleAddResident() {
     global $conn, $response;
     
+    // Ensure JSON response
     header('Content-Type: application/json');
     
     try {
+        // Clear any output buffers
+        if (ob_get_length()) ob_clean();
+        
         // Get input data
         $data = $_POST;
 
@@ -300,6 +305,11 @@ function handleAddResident() {
             throw new Exception('Missing required fields: ' . implode(', ', $missingFields));
         }
         
+        // Validate email format if provided
+        if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('Invalid email format');
+        }
+        
         // Process birthdate
         $birthdateInput = trim($data['birthdate']);
         
@@ -322,7 +332,7 @@ function handleAddResident() {
             $birthdate = date('Y-m-d', $timestamp);
         }
 
-        // Calculate age in PHP (backup calculation)
+        // Calculate age
         $age = 0;
         if (isset($data['age']) && is_numeric($data['age'])) {
             $age = (int)$data['age'];
@@ -342,22 +352,22 @@ function handleAddResident() {
         $address = "House {$data['houseNumber']}, Purok {$data['purok']}, Balas, Mexico, Pampanga, Philippines";
 
         // Handle optional fields
-        $middleName = !empty($data['middleName']) ? $data['middleName'] : null;
-        $suffix = !empty($data['suffix']) ? $data['suffix'] : null;
-        $email = !empty($data['email']) ? $data['email'] : null;
+        $middleName = !empty($data['middleName']) ? trim($data['middleName']) : null;
+        $suffix = !empty($data['suffix']) ? trim($data['suffix']) : null;
+        $email = !empty($data['email']) ? trim($data['email']) : null;
         $createAccount = isset($data['createAccount']) && $data['createAccount'] === 'true';
 
         // Get current user ID for processed_by field
         $processedBy = getUserId();
 
         // DEBUG: Log final values
-        error_log("Final values - birthdate: $birthdate, age: $age");
+        error_log("Final values - birthdate: $birthdate, age: $age, createAccount: " . ($createAccount ? 'true' : 'false'));
 
         // Start transaction
         $conn->begin_transaction();
 
         try {
-            // Insert resident - FIXED: Proper parameter binding with correct types
+            // Insert resident
             $stmt = $conn->prepare("INSERT INTO residents 
                 (first_name, last_name, middle_name, suffix, sex, birthdate, age, contact_number, email, house_number, purok, address)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -366,20 +376,19 @@ function handleAddResident() {
                 throw new Exception('Database error (prepare residents): ' . $conn->error);
             }
 
-            // FIXED: Correct parameter binding - age should be 'i' for integer
             $stmt->bind_param("ssssssisssss", 
-                $data['firstName'],      // s - string
-                $data['lastName'],       // s - string  
-                $middleName,            // s - string (can be null)
-                $suffix,                // s - string (can be null)
-                $data['sex'],           // s - string
-                $birthdate,             // s - string (date)
-                $age,                   // i - integer
-                $data['contactNumber'], // s - string
-                $email,                 // s - string (can be null)
-                $data['houseNumber'],   // s - string
-                $data['purok'],         // s - string
-                $address                // s - string
+                $data['firstName'],
+                $data['lastName'],
+                $middleName,
+                $suffix,
+                $data['sex'],
+                $birthdate,
+                $age,
+                $data['contactNumber'],
+                $email,
+                $data['houseNumber'],
+                $data['purok'],
+                $address
             );
 
             if (!$stmt->execute()) {
@@ -393,6 +402,10 @@ function handleAddResident() {
             if ($createAccount) {
                 if (empty($data['password'])) {
                     throw new Exception('Password is required when creating an account');
+                }
+                
+                if (empty($email)) {
+                    throw new Exception('Email is required when creating an account');
                 }
 
                 $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
@@ -420,6 +433,8 @@ function handleAddResident() {
                 if (!$stmt->execute()) {
                     throw new Exception('Failed to create resident account: ' . $stmt->error);
                 }
+                
+                error_log("Account created for resident ID: $residentId");
             }
 
             // Commit transaction
@@ -428,16 +443,13 @@ function handleAddResident() {
             $response = [
                 'success' => true,
                 'message' => 'Resident added successfully.' . ($createAccount ? ' Account created.' : ''),
-                'resident_id' => $residentId,
-                'debug_info' => [
-                    'birthdate' => $birthdate,
-                    'age' => $age
-                ]
+                'resident_id' => $residentId
             ];
 
         } catch (Exception $e) {
             // Rollback transaction on error
             $conn->rollback();
+            error_log('Transaction error: ' . $e->getMessage());
             throw $e;
         }
 
@@ -449,6 +461,8 @@ function handleAddResident() {
         ];
     }
     
+    // Final output buffer check
+    if (ob_get_length()) ob_clean();
     echo json_encode($response);
     exit();
 }
@@ -551,29 +565,60 @@ function handleProcessRequest() {
     if (!$id || !$action) {
         throw new Exception("Request ID and action are required");
     }
-    
+
     $user_id = intval(getUserId());
     $status = $action === 'approve' ? 'Approved' : 'Disapproved';
 
     error_log("Processing request id=$id action=$action user_id=$user_id note=$note");
 
+    // ✅ Update account status
     $stmt = $conn->prepare("UPDATE resident_accounts SET 
         account_status = ?, processed_by = ?, date_processed = NOW(), notes = ?
         WHERE id = ?");
-
     if (!$stmt) {
         throw new Exception("Database prepare failed: " . $conn->error);
     }
 
     $stmt->bind_param("sisi", $status, $user_id, $note, $id);
-
     if (!$stmt->execute()) {
         throw new Exception("Failed to process request: " . $stmt->error);
     }
 
+    // ✅ Fetch resident details for email
+    $query = "SELECT r.first_name, r.last_name, r.email 
+              FROM residents r 
+              JOIN resident_accounts ra ON r.id = ra.resident_id 
+              WHERE ra.id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $resident = $result->fetch_assoc();
+
+    if ($resident && !empty($resident['email'])) {
+        require_once __DIR__ . '/../config/emailer.php';
+        require_once __DIR__ . '/../email_templates/account_status.php';
+
+        $residentName = $resident['first_name'] . ' ' . $resident['last_name'];
+        $email = accountStatusEmail($residentName, $status, $note);
+
+        $sendResult = sendEmail($resident['email'], $email['subject'], $email['message']);
+
+        if (!$sendResult) {
+            error_log("Email failed to send to " . $resident['email']);
+        } else {
+            error_log("Email sent successfully to " . $resident['email']);
+        }
+    }
+
     $response['success'] = true;
-    $response['message'] = "Request {$action}d successfully";
-    echo json_encode($response);
+    $response['message'] = "Account {$status} successfully";
+
+    if (ob_get_length()) ob_clean();
+        header('Content-Type: application/json');
+        echo json_encode($response);
+        exit;
+
 }
 
 
