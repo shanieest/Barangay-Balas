@@ -6,8 +6,11 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#scheduled-datetime-section').hide();
         $('#processed-by-section').hide();
         $('#rejection-reason-section').hide();
+        $('#setup-time-section').hide();
+        $('#duration-type-section').hide();
+        $('#event-location-section').hide();
         
-        $('#view-reservation-id, #view-resident-name, #view-service-type, #view-reservation-date, #view-duration, #view-status, #view-purpose, #view-contact, #view-email, #view-date-requested, #view-notes').text('Loading...');
+        $('#view-reservation-id, #view-resident-name, #view-service-type, #view-reservation-date, #view-duration, #view-status, #view-purpose, #view-contact, #view-email, #view-date-requested, #view-notes, #view-setup-time, #view-duration-type, #view-event-location').text('Loading...');
         
         $.ajax({
             url: 'reservation-backend.php?action=get&id=' + reservationId,
@@ -27,7 +30,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#view-contact').text(reservation.contact_number || 'N/A');
                     $('#view-email').text(reservation.email || 'N/A');
                     $('#view-date-requested').text(reservation.date_requested || 'N/A');
-                    $('#view-notes').text(reservation.notes || 'No additional notes');
+                    
+                    // Extract and display additional fields from notes
+                    var notes = reservation.notes || '';
+                    
+                    // Extract Setup Time
+                    var setupTimeMatch = notes.match(/Setup Time:\s*(\d+:\d+)/);
+                    if (setupTimeMatch && setupTimeMatch[1]) {
+                        $('#view-setup-time').text(setupTimeMatch[1]);
+                        $('#setup-time-section').show();
+                    }
+                    
+                    // Extract Duration Type
+                    var durationTypeMatch = notes.match(/Duration Type:\s*(\w+)/);
+                    if (durationTypeMatch && durationTypeMatch[1]) {
+                        $('#view-duration-type').text(durationTypeMatch[1].replace('_', ' ').toUpperCase());
+                        $('#duration-type-section').show();
+                    }
+                    
+                    // Extract Event Location
+                    var eventLocationMatch = notes.match(/Event Location:\s*([^]*)/);
+                    if (eventLocationMatch && eventLocationMatch[1]) {
+                        $('#view-event-location').text(eventLocationMatch[1].trim());
+                        $('#event-location-section').show();
+                    }
+                    
+                    // Display remaining notes (without the extracted fields)
+                    var cleanNotes = notes
+                        .replace(/Setup Time:\s*\d+:\d+\s*/, '')
+                        .replace(/Duration Type:\s*\w+\s*/, '')
+                        .replace(/Event Location:\s*[^]*/, '')
+                        .trim();
+                    
+                    $('#view-notes').text(cleanNotes || 'No additional notes');
                     
                     if (reservation.scheduled_datetime) {
                         $('#view-scheduled-datetime').text(reservation.scheduled_datetime);
@@ -63,11 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         $('#approve-service-id').val(reservationId);
         $('#approve-notes').val('');
-        
-        var now = new Date();
-        var localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-        $('#approve-schedule').attr('min', localDateTime.toISOString().slice(0, 16));
-        $('#approve-schedule').val('');
     });
 
     $('#rejectServiceModal').on('show.bs.modal', function (event) {

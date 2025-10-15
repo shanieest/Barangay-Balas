@@ -2,7 +2,6 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 
-
 header('Content-Type: application/json');
 
 $response = ['success' => false, 'message' => ''];
@@ -44,7 +43,7 @@ function handleGetOfficials() {
     global $conn, $response;
     
     $query = "SELECT id, username, first_name, last_name, middle_name, email, 
-              contact_number, position, status, role, created_at, last_login
+              contact_number, position, committee_position, status, role, created_at, last_login
               FROM admin_users 
               ORDER BY 
               CASE role
@@ -112,7 +111,7 @@ function handleAddOfficial() {
         throw new Exception("Invalid JSON data");
     }
     
-    // Validate required fields
+    // Validate required fields - committee_position removed from required
     $required = ['first_name', 'last_name', 'position', 'email', 'password', 'role'];
     foreach ($required as $field) {
         if (empty($data[$field])) {
@@ -182,10 +181,10 @@ function handleAddOfficial() {
         }
     }
     
-    // Insert new official
+    // Insert new official - committee_position is now optional
     $stmt = $conn->prepare("INSERT INTO admin_users 
-        (username, password, first_name, last_name, middle_name, email, contact_number, position, role, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        (username, password, first_name, last_name, middle_name, email, contact_number, position, committee_position, role, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
     if (!$stmt) {
         throw new Exception("Prepare failed: " . $conn->error);
@@ -195,10 +194,11 @@ function handleAddOfficial() {
     $contact_number = trim($data['contact_number'] ?? '');
     $status = $data['status'] ?? 'Active';
     $position = trim($data['position']);
+    $committee_position = trim($data['committee_position'] ?? ''); // Now optional
     $email = trim($data['email']);
     $role = $data['role'];
     
-    $stmt->bind_param("ssssssssss", 
+    $stmt->bind_param("sssssssssss", 
         $username, 
         $hashed_password,
         $first_name, 
@@ -207,6 +207,7 @@ function handleAddOfficial() {
         $email, 
         $contact_number, 
         $position,
+        $committee_position,
         $role,
         $status
     );
@@ -233,17 +234,12 @@ function handleUpdateOfficial() {
         throw new Exception("Valid official ID is required");
     }
 
-    // Validate required fields
-    $required = ['first_name', 'last_name', 'position', 'email', 'role'];
+    // Validate required fields - committee_position removed from required
+    $required = ['first_name', 'last_name', 'position', 'role'];
     foreach ($required as $field) {
         if (empty($data[$field])) {
             throw new Exception("Missing required field: " . ucfirst(str_replace('_', ' ', $field)));
         }
-    }
-
-    // Validate email format
-    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-        throw new Exception("Invalid email format");
     }
 
     // Validate contact number
@@ -286,15 +282,15 @@ function handleUpdateOfficial() {
     // Build update query
     $sql = "UPDATE admin_users SET 
         first_name = ?, last_name = ?, middle_name = ?, 
-        email = ?, contact_number = ?, position = ?, role = ?, status = ?";
+      contact_number = ?, position = ?, committee_position = ?, role = ?, status = ?";
     
     $params = [
         trim($data['first_name']),
         trim($data['last_name']),
         trim($data['middle_name'] ?? ''),
-        trim($data['email']),
         trim($data['contact_number'] ?? ''),
         trim($data['position']),
+        trim($data['committee_position'] ?? ''), // Now optional
         $data['role'],
         $data['status'] ?? 'Active'
     ];

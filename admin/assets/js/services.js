@@ -1,4 +1,4 @@
-//modal
+//modal events and fetch calls for document requests
 document.addEventListener('DOMContentLoaded', function() {
  
     const viewRequestModal = document.getElementById('viewRequestModal');

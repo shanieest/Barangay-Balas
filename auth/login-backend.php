@@ -1,4 +1,5 @@
 <?php
+// login-backend.php
 session_start();
 require_once '../config/db.php';
 
@@ -29,10 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $stmt = $conn->prepare("SELECT r.*, a.password, a.account_status 
-                              FROM residents r
-                              JOIN resident_accounts a ON r.id = a.resident_id
-                              WHERE r.email = ?");
+        // Check if account exists and get details
+        $stmt = $conn->prepare("SELECT r.*, a.password, a.account_status, a.is_archived, a.archived_reason
+                               FROM residents r
+                               JOIN resident_accounts a ON r.id = a.resident_id
+                               WHERE r.email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -45,31 +47,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $user = $result->fetch_assoc();
 
+        // Check if account is archived
+        if ($user['is_archived'] == 1) {
+            $reason = $user['archived_reason'] ?? 'inactivity';
+            $response['message'] = "Your account has been archived due to $reason. Please contact the barangay administration to reactivate your account.";
+            echo json_encode($response);
+            exit();
+        }
+
+        // Check if account is approved
         if ($user['account_status'] !== 'Approved') {
             $response['message'] = "Your account is pending approval. Please contact barangay administration.";
             echo json_encode($response);
             exit();
         }
 
+        // Verify password
         if (password_verify($password, $user['password'])) {
+            // Regenerate session ID for security
             session_regenerate_id(true);
             
+            // Set session variables
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
             $_SESSION['user_role'] = 'resident';
             $_SESSION['logged_in'] = true;
+            $_SESSION['last_activity'] = time();
 
+            //  UPDATE LAST LOGIN TIME
+            $updateLoginStmt = $conn->prepare("UPDATE resident_accounts 
+                                               SET last_login = NOW() 
+                                               WHERE resident_id = ?");
+            $updateLoginStmt->bind_param("i", $user['id']);
+            $updateLoginStmt->execute();
+
+
+            // Handle Remember Me
             if ($rememberMe) {
                 $token = bin2hex(random_bytes(32));
                 $expiry = time() + 60 * 60 * 24 * 30; // 30 days
                 
-                setcookie('remember_token', $token, $expiry, '/');
+                setcookie('remember_token', $token, $expiry, '/', '', true, true);
                 
-                $updateStmt = $conn->prepare("UPDATE resident_accounts 
-                                             SET remember_token = ?, token_expiry = ?
-                                             WHERE resident_id = ?");
-                $updateStmt->bind_param("ssi", $token, date('Y-m-d H:i:s', $expiry), $user['id']);
+                $updateStmt = $conn->prepare("UPDATE resident_accounts
+                                              SET remember_token = ?, token_expiry = ?
+                                              WHERE resident_id = ?");
+                $tokenExpiry = date('Y-m-d H:i:s', $expiry);
+                $updateStmt->bind_param("ssi", $token, $tokenExpiry, $user['id']);
                 $updateStmt->execute();
             }
 
@@ -80,7 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $response['message'] = "Invalid email or password";
         }
     } catch (Exception $e) {
-        $response['message'] = "Login error: " . $e->getMessage();
+        error_log("Login error: " . $e->getMessage());
+        $response['message'] = "Login error. Please try again later.";
     }
 } else {
     $response['message'] = "Invalid request method";

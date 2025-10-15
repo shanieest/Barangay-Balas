@@ -66,6 +66,7 @@ function loadOfficials() {
                     <td>
                         ${escapeHtml(official.position)}<br>
                         <span class="badge ${roleBadgeClass}">${escapeHtml(official.role)}</span>
+                        ${official.committee_position ? '<br><small class="text-muted"><i class="fas fa-users me-1"></i>' + escapeHtml(official.committee_position) + '</small>' : ''}
                     </td>
                     <td>
                         ${escapeHtml(official.email)}<br>
@@ -168,13 +169,10 @@ function loadOfficialData(id) {
             document.getElementById('editOfficialMiddleName').value = official.middle_name || '';
             document.getElementById('editOfficialLastName').value = official.last_name || '';
             document.getElementById('editOfficialPosition').value = official.position || '';
+            document.getElementById('editOfficialCommitteePosition').value = official.committee_position || '';
             document.getElementById('editOfficialRole').value = official.role || 'Official';
-            document.getElementById('editOfficialEmail').value = official.email || '';
             document.getElementById('editOfficialContact').value = official.contact_number || '';
             document.getElementById('editOfficialStatus').value = official.status || 'Active';
-            
-            // Clear password field
-            document.getElementById('editOfficialPassword').value = '';
             
             new bootstrap.Modal(document.getElementById('editOfficialModal')).show();
         })
@@ -205,6 +203,7 @@ function addOfficial(e) {
         middle_name: document.getElementById('officialMiddleName').value.trim(),
         last_name: document.getElementById('officialLastName').value.trim(),
         position: document.getElementById('officialPosition').value,
+        committee_position: document.getElementById('officialCommitteePosition').value, // Now optional
         role: document.getElementById('officialRole').value,
         email: document.getElementById('officialEmail').value.trim(),
         contact_number: document.getElementById('officialContact').value.trim(),
@@ -212,6 +211,7 @@ function addOfficial(e) {
         password: password
     };
     
+    // Removed committee_position from required validation
     if (!formData.first_name || !formData.last_name || !formData.position || !formData.email || !formData.role) {
         showAlert('Please fill in all required fields', 'error');
         return;
@@ -268,35 +268,21 @@ function addOfficial(e) {
 function updateOfficial(e) {
     e.preventDefault();
     
-    const password = document.getElementById('editOfficialPassword').value;
-    if (password && password.length < 8) {
-        showAlert('Password must be at least 8 characters long', 'error');
-        return;
-    }
-    
     const formData = {
         id: document.getElementById('editOfficialId').value,
         first_name: document.getElementById('editOfficialFirstName').value.trim(),
         middle_name: document.getElementById('editOfficialMiddleName').value.trim(),
         last_name: document.getElementById('editOfficialLastName').value.trim(),
         position: document.getElementById('editOfficialPosition').value,
+        committee_position: document.getElementById('editOfficialCommitteePosition').value, // Now optional
         role: document.getElementById('editOfficialRole').value,
-        email: document.getElementById('editOfficialEmail').value.trim(),
         contact_number: document.getElementById('editOfficialContact').value.trim(),
         status: document.getElementById('editOfficialStatus').value
     };
     
-    if (password) {
-        formData.password = password;
-    }
-    
-    if (!formData.first_name || !formData.last_name || !formData.position || !formData.email || !formData.role) {
+    // Removed committee_position from required validation
+    if (!formData.first_name || !formData.last_name || !formData.position || !formData.role) {
         showAlert('Please fill in all required fields', 'error');
-        return;
-    }
-    
-    if (!isValidEmail(formData.email)) {
-        showAlert('Please enter a valid email address', 'error');
         return;
     }
     

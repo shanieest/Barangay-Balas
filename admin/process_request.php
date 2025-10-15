@@ -1,4 +1,5 @@
 <?php
+// process_request.php
 require 'includes/db.php';
 require 'includes/auth.php';
 require '../vendor/autoload.php';

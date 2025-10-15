@@ -83,6 +83,53 @@
       overflow: hidden;
       border-radius: 0.5rem;
     }
+    
+    /* Service Card Colors */
+    .service-blue {
+      color: #0d6efd;
+    }
+    
+    .service-yellow {
+      color: #ffc107;
+    }
+    
+    .service-red {
+      color: #dc3545;
+    }
+    
+    .service-purple {
+      color: #6f42c1;
+    }
+    
+    .service-green {
+      color: #198754;
+    }
+    
+    .service-orange {
+      color: #fd7e14;
+    }
+    
+    /* Service Section Background */
+    #services {
+      background-color: #f8f9fa;
+    }
+    
+    /* Service Card Enhancements */
+    .service-card {
+      border-radius: 10px;
+      border: none;
+      transition: all 0.3s ease;
+    }
+    
+    .service-card:hover {
+      transform: translateY(-10px);
+    }
+    
+    /* Service Icons */
+    .service-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
         
     @media (max-width: 575.98px) {
       /* Ensure proper spacing from top for fixed headers */
@@ -575,31 +622,79 @@
 <section id="services" class="py-5">
   <div class="container">
     <h2 class="section-title fw-bolder">Barangay Online Services</h2>
-    <div class="row g-4">
-      <div class="col-md-4 col-sm-6">
-        <div class="card info-card shadow-sm p-3 text-center">
+    
+    <!-- Document Requests Section -->
+    <div class="row mb-5">
+      <div class="col-12">
+        <h3 class="text-center mb-4">Document Requests</h3>
+      </div>
+      <div class="col-md-4 col-sm-6 mb-4">
+        <div class="card service-card shadow-sm p-3 text-center h-100">
           <div class="card-body">
-            <i class="bi bi-person-badge display-5 text-warning mb-3"></i>
+            <i class="bi bi-file-earmark-text service-icon service-blue"></i>
             <h5 class="card-title">Barangay Clearance</h5>
-            <p class="card-text">Quick and easy processing of barangay clearance documents online.</p>
+            <p class="card-text">Request your barangay clearance online for employment, business permits, and other official purposes.</p>
           </div>
         </div>
       </div>
-      <div class="col-md-4 col-sm-6">
-        <div class="card info-card shadow-sm p-3 text-center">
+      <div class="col-md-4 col-sm-6 mb-4">
+        <div class="card service-card shadow-sm p-3 text-center h-100">
           <div class="card-body">
-            <i class="bi bi-house-door display-5 text-warning mb-3"></i>
-            <h5 class="card-title">Residency Certificate</h5>
-            <p class="card-text">Get your certificate of residency without visiting the barangay hall.</p>
+            <i class="bi bi-house-check service-icon service-yellow"></i>
+            <h5 class="card-title">Certificate of Residency</h5>
+            <p class="card-text">Get your certificate of residency without visiting the barangay hall. Required for various government transactions.</p>
           </div>
         </div>
       </div>
-      <div class="col-md-4 col-sm-12">
-        <div class="card info-card shadow-sm p-3 text-center">
+      <div class="col-md-4 col-sm-6 mb-4">
+        <div class="card service-card shadow-sm p-3 text-center h-100">
           <div class="card-body">
-            <i class="bi bi-people-fill display-5 text-warning mb-3"></i>
-            <h5 class="card-title">Indigency</h5>
-            <p class="card-text">Accessing medical assistance, and educational support.</p>
+            <i class="bi bi-people service-icon service-red"></i>
+            <h5 class="card-title">Certificate of Indigency</h5>
+            <p class="card-text">Apply for certificate of indigency online for accessing medical assistance, educational support, and social services.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Online Reservation Section -->
+    <div class="row">
+      <div class="col-12">
+        <h3 class="text-center mb-4">Online Reservations</h3>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card service-card shadow-sm p-3 text-center h-100">
+          <div class="card-body">
+            <i class="bi bi-house service-icon service-purple"></i>
+            <h5 class="card-title">Tent Reservation</h5>
+            <p class="card-text">Reserve barangay tents for events, gatherings, and emergency situations.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card service-card shadow-sm p-3 text-center h-100">
+          <div class="card-body">
+            <i class="bi bi-table service-icon service-green"></i>
+            <h5 class="card-title">Tables & Chairs</h5>
+            <p class="card-text">Book tables and chairs for parties, meetings, and community events.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card service-card shadow-sm p-3 text-center h-100">
+          <div class="card-body">
+            <i class="bi bi-speaker service-icon service-orange"></i>
+            <h5 class="card-title">Sound System</h5>
+            <p class="card-text">Reserve barangay sound system equipment for your events and programs.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card service-card shadow-sm p-3 text-center h-100">
+          <div class="card-body">
+            <i class="bi bi-truck service-icon service-red"></i>
+            <h5 class="card-title">Vehicle Reservation</h5>
+            <p class="card-text">Book barangay vehicles for official community activities and transport needs.</p>
           </div>
         </div>
       </div>
@@ -614,18 +709,24 @@
     <div class="row">
       <div class="col-12">
         <div class="map-container shadow">
-          <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d30819.63833916192!2d120.71717999999998!3d15.078242999999999!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3396fa72b5b92d3f%3A0x4e5f0a93bbada2a0!2sBalas%2C%20Mexico%2C%20Pampanga!5e0!3m2!1sen!2sph!4v1757904223740!5m2!1sen!2sph"
-             width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3852.454450002765!2d120.71718!3d15.078243!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f18!3m3!1m2!1s0x3396fa72b5b92d3f%3A0x4e5f0a93bbada2a0!2sBalas%2C%20Mexico%2C%20Pampanga!5e0!3m2!1sen!2sph!4v1757904223740!5m2!1sen!2sph"
+            width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
         </div>
       </div>
     </div>
   </div>
 </section>
 
+
+
 <!-- Contact Us Section -->
 <section id="contact" class="py-5">
   <div class="container">
     <div class="row align-items-center g-4 g-md-5">
+
       <!-- Left -->
       <div class="col-lg-6">
         <div class="mb-4">
@@ -667,27 +768,33 @@
       <!-- Right -->
       <div class="col-lg-6">
         <div class="card border-0 shadow-sm p-4 rounded-4">
-          <form>
+          <form action="send_contact.php" method="POST">
             <div class="mb-3">
               <label class="form-label">Your Name</label>
-              <input type="text" class="form-control" placeholder="Juan Dela Cruz" />
+              <input type="text" name="name" class="form-control" placeholder="Juan Dela Cruz" required />
             </div>
             <div class="mb-3">
               <label class="form-label">Your Email</label>
-              <input type="email" class="form-control" placeholder="juan@example.com" />
+              <input type="email" name="email" class="form-control" placeholder="juan@example.com" required />
             </div>
             <div class="mb-3">
               <label class="form-label">Message</label>
-              <textarea class="form-control" rows="4" placeholder="Write your message here..."></textarea>
+              <textarea name="message" class="form-control" rows="4" placeholder="Write your message here..." required></textarea>
             </div>
             <button class="btn btn-warning w-100" type="submit">Send Message</button>
+
+            <?php if (isset($_GET['success'])): ?>
+              <div class="alert alert-success mt-3">Message sent successfully!</div>
+            <?php elseif (isset($_GET['error'])): ?>
+              <div class="alert alert-danger mt-3">Failed to send message. Please try again later.</div>
+            <?php endif; ?>
           </form>
         </div>
       </div>
-
     </div>
   </div>
 </section>
+
 
 <?php include 'includes/footer.php'; ?>
 <?php include 'includes/foot.php'; ?>

@@ -46,6 +46,14 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label for="officialCommitteePosition" class="form-label">Committee Position <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="officialCommitteePosition" placeholder="e.g., Committee on Health">
+                            <div class="form-text">
+                                Specify the committee or area of responsibility (e.g., Peace & Order, Health, Education)
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
                             <label for="officialRole" class="form-label">System Role <span class="text-danger">*</span></label>
                             <select class="form-select" id="officialRole" required>
                                 <option value="">Select Role...</option>
@@ -152,6 +160,14 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label for="editOfficialCommitteePosition" class="form-label">Committee Position <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editOfficialCommitteePosition" placeholder="e.g., Committee on Health">
+                            <div class="form-text">
+                                Specify the committee or area of responsibility
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
                             <label for="editOfficialRole" class="form-label">System Role <span class="text-danger">*</span></label>
                             <select class="form-select" id="editOfficialRole" required>
                                 <option value="Admin">Admin - Full System Access</option>
@@ -176,21 +192,6 @@
                             <label for="editOfficialContact" class="form-label">Contact Number</label>
                             <input type="tel" class="form-control" id="editOfficialContact" pattern="[0-9]{11}" maxlength="11" placeholder="09123456789">
                             <div class="form-text">11-digit phone number</div>
-                        </div>
-                    </div>
-                    
-                    <h6 class="border-bottom pb-2 mb-3 mt-4">Contact & Login</h6>
-                    <div class="mb-3">
-                        <label for="editOfficialEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="editOfficialEmail" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="editOfficialPassword" class="form-label">New Password</label>
-                        <input type="password" class="form-control" id="editOfficialPassword" minlength="8">
-                        <div class="form-text">
-                            <i class="fas fa-key me-1"></i>
-                            Leave blank to keep current password
                         </div>
                     </div>
                 </div>

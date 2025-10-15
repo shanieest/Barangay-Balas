@@ -736,3 +736,29 @@ Stack trace:
 [11-Oct-2025 01:03:09 Asia/Manila] Final values - birthdate: 2001-11-11, age: 23, createAccount: true
 [11-Oct-2025 01:03:09 Asia/Manila] Resident inserted with ID: 62
 [11-Oct-2025 01:03:09 Asia/Manila] Account created for resident ID: 62
+[12-Oct-2025 23:51:52 Asia/Manila] Processing request id=59 action=approve user_id=1 note=Beta
+[12-Oct-2025 23:51:57 Asia/Manila] Email sent successfully to neptwix@gmail.com
+[13-Oct-2025 11:02:15 Asia/Manila] Processing request id=60 action=approve user_id=1 note=
+[13-Oct-2025 11:02:21 Asia/Manila] Email sent successfully to fdianelosanfernando@gmail.com
+[14-Oct-2025 22:43:48 Asia/Manila] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Jarshane
+    [lastName] => Tolentino
+    [middleName] => Sigua
+    [suffix] => 
+    [sex] => female
+    [contactNumber] => 09156699382
+    [email] => jarshanetolentino@gmail.com
+    [houseNumber] => 409
+    [purok] => 3
+    [address] => House 409, Purok 3, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2003-11-21
+    [age] => 21
+    [password] => 11111111
+)
+
+[14-Oct-2025 22:43:48 Asia/Manila] Using provided age: 21
+[14-Oct-2025 22:43:48 Asia/Manila] Final values - birthdate: 2003-11-21, age: 21, createAccount: true
+[14-Oct-2025 22:43:48 Asia/Manila] Resident inserted with ID: 65
+[14-Oct-2025 22:43:48 Asia/Manila] Account created for resident ID: 65

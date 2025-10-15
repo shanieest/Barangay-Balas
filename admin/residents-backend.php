@@ -73,8 +73,13 @@ function handleListResidents() {
 
     $offset = ($page - 1) * $per_page;
 
+    // ✅ UPDATED: Include archived status in query
     $query = "SELECT r.*, 
               ra.account_status, 
+              ra.is_archived,
+              ra.archived_at,
+              ra.archived_reason,
+              ra.last_login,
               ra.notes as account_notes, 
               ra.date_processed as account_date_processed, 
               CONCAT(a.first_name, ' ', a.last_name) as account_processed_by
@@ -91,7 +96,9 @@ function handleListResidents() {
         $params[] = $id;
         $types .= 'i';
     } else {
-        $where[] = "ra.account_status = 'Approved'";
+        // ✅ UPDATED: Only show non-archived approved accounts
+        $where[] = "ra.account_status = 'Approved' AND (ra.is_archived = 0 OR ra.is_archived IS NULL)";
+        
         if ($search) {
             $where[] = "(CONCAT(r.first_name, ' ', r.last_name) LIKE ? 
                        OR r.contact_number LIKE ? 
@@ -143,7 +150,16 @@ function handleListResidents() {
         } else {
             $row['age'] = null;
         }
-        // Remove verification_status from output
+        
+        // Calculate days since last login
+        if (!empty($row['last_login'])) {
+            $lastLogin = new DateTime($row['last_login']);
+            $now = new DateTime();
+            $row['days_since_login'] = $now->diff($lastLogin)->days;
+        } else {
+            $row['days_since_login'] = null;
+        }
+        
         unset($row['verification_status']);
         $residents[] = $row;
     }

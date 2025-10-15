@@ -1,0 +1,260 @@
+<?php
+//document_requests.php
+require 'includes/db.php';
+require_once __DIR__ . '/includes/auth.php';
+requireAuth();
+
+$records_per_page = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $records_per_page;
+
+$doc_count_sql = "SELECT status, COUNT(*) as count 
+                  FROM document_requests 
+                  GROUP BY status";
+$doc_count_result = $conn->query($doc_count_sql);
+$doc_counts = ['Pending' => 0, 'Approved' => 0, 'Disapproved' => 0];
+while ($row = $doc_count_result->fetch_assoc()) {
+    $doc_counts[$row['status']] = $row['count'];
+}
+
+$tab = isset($_GET['tab']) ? $_GET['tab'] : 'pending';
+$status_filter = match($tab) {
+    'approved' => 'Approved',
+    'disapproved' => 'Disapproved',
+    default => 'Pending'
+};
+
+$doc_sql = "SELECT dr.id, dr.purpose, dr.status, dr.date_requested, dr.date_processed, dr.notes, 
+               dr.document_file_path, dt.document_type, 
+               CONCAT(r.first_name, ' ', r.last_name) AS resident_name
+        FROM document_requests dr
+        LEFT JOIN document_types dt ON dr.document_type_id = dt.id
+        LEFT JOIN residents r ON dr.resident_id = r.id
+        WHERE dr.status = ?
+        ORDER BY dr.date_requested DESC
+        LIMIT ? OFFSET ?";
+
+$doc_stmt = $conn->prepare($doc_sql);
+$doc_stmt->bind_param('sii', $status_filter, $records_per_page, $offset);
+$doc_stmt->execute();
+$doc_result = $doc_stmt->get_result();
+
+$documents = [];
+while ($row = $doc_result->fetch_assoc()) {
+    $documents[] = $row;
+}
+
+$total_pages = ceil($doc_counts[$status_filter] / $records_per_page);
+
+function generatePaginationLinks($current_page, $total_pages, $base_url, $additional_params = []) {
+    $links = '';
+    $params = http_build_query($additional_params);
+    $separator = $params ? '&' : '';
+    
+    if ($total_pages <= 1) return $links;
+    
+    $links .= '<nav aria-label="Page navigation"><ul class="pagination pagination-sm justify-content-center mb-0">';
+    
+    $prev_disabled = $current_page <= 1 ? 'disabled' : '';
+    $prev_page = max(1, $current_page - 1);
+    $links .= '<li class="page-item ' . $prev_disabled . '">';
+    $links .= '<a class="page-link" href="' . $base_url . '?' . $params . $separator . 'page=' . $prev_page . '">Previous</a>';
+    $links .= '</li>';
+    
+    $start_page = max(1, $current_page - 2);
+    $end_page = min($total_pages, $current_page + 2);
+    
+    if ($start_page > 1) {
+        $links .= '<li class="page-item"><a class="page-link" href="' . $base_url . '?' . $params . $separator . 'page=1">1</a></li>';
+        if ($start_page > 2) {
+            $links .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    for ($i = $start_page; $i <= $end_page; $i++) {
+        $active = $i == $current_page ? 'active' : '';
+        $links .= '<li class="page-item ' . $active . '">';
+        $links .= '<a class="page-link" href="' . $base_url . '?' . $params . $separator . 'page=' . $i . '">' . $i . '</a>';
+        $links .= '</li>';
+    }
+    
+    if ($end_page < $total_pages) {
+        if ($end_page < $total_pages - 1) {
+            $links .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+        $links .= '<li class="page-item"><a class="page-link" href="' . $base_url . '?' . $params . $separator . 'page=' . $total_pages . '">' . $total_pages . '</a></li>';
+    }
+    
+    $next_disabled = $current_page >= $total_pages ? 'disabled' : '';
+    $next_page = min($total_pages, $current_page + 1);
+    $links .= '<li class="page-item ' . $next_disabled . '">';
+    $links .= '<a class="page-link" href="' . $base_url . '?' . $params . $separator . 'page=' . $next_page . '">Next</a>';
+    $links .= '</li>';
+    
+    $links .= '</ul></nav>';
+    return $links;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Requests | Barangay Balas Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="sb-nav-fixed">
+<?php include 'includes/navbar.php'; ?>
+<div id="layoutSidenav">
+  <?php include 'includes/sidebar.php'; ?>
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4">
+        <h1 class="mt-4">Document Requests</h1>
+        <ol class="breadcrumb mb-4">
+          <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+          <li class="breadcrumb-item active">Document Requests</li>
+        </ol>
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-file-alt me-1"></i> Manage Document Requests
+          </div>
+          <div class="card-body">
+            <ul class="nav nav-tabs mb-3" id="requestsTab" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link <?= $tab === 'pending' ? 'active' : '' ?>" 
+                   href="?tab=pending&page=1">
+                  Pending <span class="badge bg-warning ms-1"><?= $doc_counts['Pending'] ?></span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link <?= $tab === 'approved' ? 'active' : '' ?>" 
+                   href="?tab=approved&page=1">
+                  Approved <span class="badge bg-success ms-1"><?= $doc_counts['Approved'] ?></span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link <?= $tab === 'disapproved' ? 'active' : '' ?>" 
+                   href="?tab=disapproved&page=1">
+                  Disapproved <span class="badge bg-danger ms-1"><?= $doc_counts['Disapproved'] ?></span>
+                </a>
+              </li>
+            </ul>
+
+            <!-- Pagination Info -->
+            <?php if ($total_pages > 1): ?>
+              <div class="pagination-info">
+                Showing <?= (($page - 1) * $records_per_page) + 1 ?> to 
+                <?= min($page * $records_per_page, $doc_counts[$status_filter]) ?> 
+                of <?= $doc_counts[$status_filter] ?> entries
+              </div>
+            <?php endif; ?>
+
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Resident</th>
+                    <th>Document</th>
+                    <th>Date Requested</th>
+                    <?php if ($tab === 'pending'): ?>
+                      <th>Purpose</th>
+                    <?php else: ?>
+                      <th>Date <?= ucfirst($tab) ?></th>
+                      <?php if ($tab === 'disapproved'): ?>
+                        <th>Reason</th>
+                      <?php endif; ?>
+                    <?php endif; ?>
+                    <?php if (canModify()) { ?>
+                      <th>Actions</th>
+                    <?php } ?>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if (count($documents) > 0): ?>
+                    <?php foreach ($documents as $row): ?>
+                      <tr>
+                        <td><?= $row['id'] ?></td>
+                        <td><?= htmlspecialchars($row['resident_name']) ?></td>
+                        <td><?= htmlspecialchars($row['document_type']) ?></td>
+                        <td><?= htmlspecialchars($row['date_requested']) ?></td>
+                        <?php if ($tab === 'pending'): ?>
+                          <td><?= htmlspecialchars($row['purpose']) ?></td>
+                          <?php if (canModify()) : ?>
+                          <td class="action-buttons">
+                            <button class="btn btn-sm btn-info me-1 mb-1" data-bs-toggle="modal" data-bs-target="#viewRequestModal" data-id="<?= $row['id'] ?>">
+                              <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-sm btn-success me-1 mb-1" data-bs-toggle="modal" data-bs-target="#approveRequestModal" data-id="<?= $row['id'] ?>">
+                              <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-sm btn-danger mb-1" data-bs-toggle="modal" data-bs-target="#disapproveRequestModal" data-id="<?= $row['id'] ?>">
+                              <i class="fas fa-times"></i> Disapprove
+                            </button>
+                          </td>
+                          <?php endif; ?>
+                        <?php else: ?>
+                          <td><?= htmlspecialchars($row['date_processed']) ?></td>
+                          <?php if ($tab === 'disapproved'): ?>
+                            <td><?= htmlspecialchars($row['notes']) ?></td>
+                          <?php endif; ?>
+                          <?php if (canModify()) : ?>
+                          <td class="action-buttons">
+                            <button class="btn btn-sm btn-info me-1 mb-1" data-bs-toggle="modal" data-bs-target="#viewRequestModal" data-id="<?= $row['id'] ?>">
+                              <i class="fas fa-eye"></i> View
+                            </button>
+                            <?php if ($tab === 'approved' && !empty($row['document_file_path'])): ?>
+                              <a href="download-document.php?id=<?= (int)$row['id'] ?>" class="btn btn-sm btn-primary mb-1">
+                                  <i class="fas fa-download"></i> Download
+                              </a>
+                            <?php endif; ?>
+                          </td>
+                          <?php endif; ?>
+                        <?php endif; ?>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <tr><td colspan="<?= $tab === 'disapproved' ? '7' : '6' ?>" class="text-center">No <?= $tab ?> requests</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="row mt-3">
+              <div class="col-12">
+                <?php 
+                echo generatePaginationLinks(
+                  $page, 
+                  $total_pages, 
+                  'document_requests.php', 
+                  ['tab' => $tab]
+                );
+                ?>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <?php include 'includes/footer.php'; ?>
+  </div>
+</div>
+
+<?php include 'modals/documentsModal.php'; ?>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="assets/js/script.js"></script>
+<script src="assets/js/services.js"></script>
+
+<script>
+window.USER_CAN_MODIFY = <?php echo canModify() ? 'true' : 'false'; ?>;
+</script>
+
+</body>
+</html>

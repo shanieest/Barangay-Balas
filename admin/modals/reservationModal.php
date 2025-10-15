@@ -22,9 +22,26 @@
           <div class="col-md-6">
             <h6 class="fw-bold">Additional Information</h6>
             <p><strong>Purpose:</strong> <span id="view-purpose"></span></p>
+            
+            <!-- Setup Time Section -->
+            <div id="setup-time-section" style="display: none;">
+              <p><strong>Setup Time:</strong> <span id="view-setup-time"></span></p>
+            </div>
+            
+            <!-- Duration Type Section -->
+            <div id="duration-type-section" style="display: none;">
+              <p><strong>Duration Type:</strong> <span id="view-duration-type"></span></p>
+            </div>
+            
+            <!-- Event Location Section -->
+            <div id="event-location-section" style="display: none;">
+              <p><strong>Event Location:</strong> <span id="view-event-location"></span></p>
+            </div>
+            
             <p><strong>Contact Number:</strong> <span id="view-contact"></span></p>
             <p><strong>Email:</strong> <span id="view-email"></span></p>
             <p><strong>Date Requested:</strong> <span id="view-date-requested"></span></p>
+            
             <div id="scheduled-datetime-section" style="display: none;">
               <p><strong>Scheduled Date/Time:</strong> <span id="view-scheduled-datetime"></span></p>
             </div>
@@ -32,9 +49,9 @@
               <p><strong>Processed By:</strong> <span id="view-processed-by"></span></p>
             </div>
             <div id="rejection-reason-section" style="display: none;">
-              <p><strong>Rejection Reason:</strong> <span id="view-rejection-reason"></span></p>
+              <p><strong>Disapproval Reason:</strong> <span id="view-rejection-reason"></span></p>
             </div>
-            <p><strong>Notes:</strong> <span id="view-notes"></span></p>
+            <p><strong>Admin Notes:</strong> <span id="view-notes"></span></p>
           </div>
         </div>
       </div>
@@ -64,7 +81,6 @@
             <label for="approve-notes" class="form-label">Approval Notes (Optional)</label>
             <textarea class="form-control" id="approve-notes" name="notes" rows="3" placeholder="Enter any notes for the approval..."></textarea>
           </div>
-  
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -77,12 +93,12 @@
   </div>
 </div>
 
-<!-- Reject Service Reservation Modal -->
+<!-- Disapprove Service Reservation Modal -->
 <div class="modal fade" id="rejectServiceModal" tabindex="-1" aria-labelledby="rejectServiceModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="rejectServiceModalLabel">Reject Service Reservation</h5>
+        <h5 class="modal-title" id="rejectServiceModalLabel">Disapprove Service Reservation</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form id="rejectServiceForm" method="POST" action="reservation-backend.php">
@@ -90,17 +106,17 @@
           <input type="hidden" id="reject-service-id" name="reservation_id">
           <div class="alert alert-warning">
             <i class="fas fa-exclamation-triangle"></i>
-            Are you sure you want to reject this service reservation?
+            Are you sure you want to disapprove this service reservation?
           </div>
           <div class="mb-3">
-            <label for="reject-reason" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
-            <textarea class="form-control" id="reject-reason" name="rejection_reason" rows="3" placeholder="Please provide a reason for rejection..." required></textarea>
+            <label for="reject-reason" class="form-label">Reason for Disapproval <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="reject-reason" name="rejection_reason" rows="3" placeholder="Please provide a reason for disapproval..." required></textarea>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="submit" class="btn btn-danger">
-            <i class="fas fa-times"></i> Reject Reservation
+            <i class="fas fa-times"></i> Disapprove Reservation
           </button>
         </div>
       </form>

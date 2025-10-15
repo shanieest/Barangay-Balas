@@ -1,11 +1,11 @@
 <?php
+//reservation-backend.php
 require_once 'includes/db.php';
 require_once 'includes/auth.php';
 requireAuth();
 
 require_once __DIR__ . '/../config/emailer.php';
 require_once __DIR__ . '/../email_templates/reservation_status.php';
-
 
 header('Content-Type: application/json');
 
@@ -56,13 +56,16 @@ function handleGet() {
     
     $sql = "SELECT sr.*, 
                GROUP_CONCAT(st.service_name SEPARATOR ', ') as service_names,
-               CONCAT(sr.reservation_date_start, 
-                      CASE WHEN sr.reservation_date_end != sr.reservation_date_start 
-                           THEN CONCAT(' to ', sr.reservation_date_end) 
-                           ELSE '' 
-                      END) as reservation_date,
+               CONCAT(
+                   DATE_FORMAT(sr.reservation_date_start, '%M %e, %Y'),
+                   CASE WHEN sr.reservation_date_end != sr.reservation_date_start 
+                        THEN CONCAT(' to ', DATE_FORMAT(sr.reservation_date_end, '%M %e, %Y'))
+                        ELSE '' 
+                   END
+               ) as reservation_date,
                CONCAT(sr.duration_days, ' day', CASE WHEN sr.duration_days > 1 THEN 's' ELSE '' END) as duration,
-               au.first_name as processed_by_name
+               au.first_name as processed_by_name,
+               DATE_FORMAT(sr.date_requested, '%M %e, %Y, %h:%i%p') as formatted_date_requested
         FROM service_reservations sr
         LEFT JOIN service_reservation_items sri ON sr.id = sri.reservation_id
         LEFT JOIN service_types st ON sri.service_type_id = st.id
@@ -97,7 +100,7 @@ function handleGet() {
             'In Progress' => '<span class="badge bg-info">' . $row['status'] . '</span>',
             'Completed' => '<span class="badge bg-secondary">' . $row['status'] . '</span>',
             'Cancelled' => '<span class="badge bg-danger">' . $row['status'] . '</span>',
-            'Rejected' => '<span class="badge bg-danger">' . $row['status'] . '</span>',
+            'Disapproved' => '<span class="badge bg-danger">' . $row['status'] . '</span>',
             default => '<span class="badge bg-light text-dark">' . $row['status'] . '</span>'
         };
         
@@ -111,7 +114,7 @@ function handleGet() {
             'purpose' => $row['purpose'],
             'contact_number' => $row['contact_number'],
             'email' => $row['email'],
-            'date_requested' => date('M d, Y g:i A', strtotime($row['date_requested'])),
+            'date_requested' => $row['formatted_date_requested'],
             'notes' => $row['notes'],
             'processed_by' => $row['processed_by_name'],
             'rejection_reason' => $row['rejection_reason'],
@@ -140,8 +143,6 @@ function handleApprove() {
         throw new Exception('Reservation ID is required');
     }
     
-   
-    
     $conn->begin_transaction();
     
     $check_sql = "SELECT id, status, resident_name FROM service_reservations WHERE id = ?";
@@ -162,13 +163,12 @@ function handleApprove() {
     $update_sql = "UPDATE service_reservations 
                    SET status = 'Approved', 
                        notes = ?, 
-                       scheduled_datetime = ?,
                        date_processed = NOW(),
                        processed_by = ?
                    WHERE id = ?";
     
     $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("ssii", $notes, $scheduled_datetime, $admin_id, $reservation_id);
+    $update_stmt->bind_param("sii", $notes, $admin_id, $reservation_id);
     
     if (!$update_stmt->execute()) {
         throw new Exception('Failed to update reservation status');
@@ -200,9 +200,8 @@ function handleApprove() {
         sendEmail($resData['email'], $emailData['subject'], $emailData['message']);
     }
 
-        
-        $check_stmt->close();
-        $update_stmt->close();
+    $check_stmt->close();
+    $update_stmt->close();
 }
 
 function handleReject() {
@@ -220,7 +219,7 @@ function handleReject() {
     }
     
     if (empty($rejection_reason)) {
-        throw new Exception('Rejection reason is required');
+        throw new Exception('Disapproval reason is required');
     }
     
     $conn->begin_transaction();
@@ -237,12 +236,12 @@ function handleReject() {
     
     $reservation = $check_result->fetch_assoc();
     if ($reservation['status'] !== 'Pending') {
-        throw new Exception('Only pending reservations can be rejected');
+        throw new Exception('Only pending reservations can be disapproved');
     }
     
     // Update reservation status
     $update_sql = "UPDATE service_reservations 
-                   SET status = 'Rejected', 
+                   SET status = 'Disapproved', 
                        rejection_reason = ?,
                        date_processed = NOW(),
                        processed_by = ?
@@ -256,7 +255,7 @@ function handleReject() {
     }
     
     // Log activity
-    logActivity($admin_id, "Rejected service reservation (ID: $reservation_id)", $conn);
+    logActivity($admin_id, "Disapproved service reservation (ID: $reservation_id)", $conn);
     
     $conn->commit();
 
@@ -273,14 +272,14 @@ function handleReject() {
     $resData = $emailQuery->get_result()->fetch_assoc();
 
     if ($resData && !empty($resData['email'])) {
-        $emailData = reservationStatusEmail($resData['resident_name'], 'Rejected', $resData['service_list'], $rejection_reason);
+        $emailData = reservationStatusEmail($resData['resident_name'], 'Disapproved', $resData['service_list'], $rejection_reason);
         sendEmail($resData['email'], $emailData['subject'], $emailData['message']);
     }
 
     
     echo json_encode([
         'success' => true, 
-        'message' => 'Service reservation rejected successfully'
+        'message' => 'Service reservation disapproved successfully'
     ]);
     
     $check_stmt->close();
@@ -328,7 +327,7 @@ function handleUpdateStatus() {
     $reservation = $check_result->fetch_assoc();
     $current_status = $reservation['status'];
     
-    if ($current_status === 'Pending' || $current_status === 'Rejected') {
+    if ($current_status === 'Pending' || $current_status === 'Disapproved') {
         throw new Exception('Cannot update status from ' . $current_status . '. Please approve the reservation first.');
     }
     
@@ -379,6 +378,14 @@ function handleUpdateStatus() {
     $update_stmt->close();
 }
 
+function calculateReservationDuration($start_date, $end_date) {
+    // Calculate duration without restrictions
+    $end_date_obj = !empty($end_date) ? new DateTime($end_date) : $start_date;
+    $duration_days = $start_date->diff($end_date_obj)->days + 1;
+    
+    return $duration_days;
+}
+
 function handleCreate() {
     global $conn, $admin_id;
     
@@ -402,10 +409,16 @@ function handleCreate() {
     if (empty($purpose)) throw new Exception('Purpose is required');
     if (empty($service_types)) throw new Exception('At least one service type is required');
     
-    // Calculate duration
+    // Validate reservation date is not in the past
     $start_date = new DateTime($reservation_date_start);
-    $end_date = !empty($reservation_date_end) ? new DateTime($reservation_date_end) : $start_date;
-    $duration_days = $start_date->diff($end_date)->days + 1;
+    $today = new DateTime();
+    
+    if ($start_date < $today->setTime(0, 0, 0)) {
+        throw new Exception('Reservation date cannot be in the past');
+    }
+    
+    // Calculate duration without restrictions
+    $duration_days = calculateReservationDuration($start_date, $reservation_date_end);
     
     $conn->begin_transaction();
     
@@ -477,10 +490,16 @@ function handleUpdate() {
     if (empty($purpose)) throw new Exception('Purpose is required');
     if (empty($service_types)) throw new Exception('At least one service type is required');
     
-    // Calculate duration
+    // Validate reservation date is not in the past
     $start_date = new DateTime($reservation_date_start);
-    $end_date = !empty($reservation_date_end) ? new DateTime($reservation_date_end) : $start_date;
-    $duration_days = $start_date->diff($end_date)->days + 1;
+    $today = new DateTime();
+    
+    if ($start_date < $today->setTime(0, 0, 0)) {
+        throw new Exception('Reservation date cannot be in the past');
+    }
+    
+    // Calculate duration without restrictions
+    $duration_days = calculateReservationDuration($start_date, $reservation_date_end);
     
     $conn->begin_transaction();
     
@@ -569,9 +588,9 @@ function handleDelete() {
     
     $reservation = $check_result->fetch_assoc();
     
-    // Only allow deletion of pending or rejected reservations
-    if (!in_array($reservation['status'], ['Pending', 'Rejected'])) {
-        throw new Exception('Cannot delete reservations that are not pending or rejected');
+    // Only allow deletion of pending or disapproved reservations
+    if (!in_array($reservation['status'], ['Pending', 'Disapproved'])) {
+        throw new Exception('Cannot delete reservations that are not pending or disapproved');
     }
     
     // Delete service items first (foreign key constraint)
@@ -623,11 +642,13 @@ function handleList() {
     
     $sql = "SELECT sr.*, 
                GROUP_CONCAT(st.service_name SEPARATOR ', ') as service_names,
-               CONCAT(sr.reservation_date_start, 
-                      CASE WHEN sr.reservation_date_end != sr.reservation_date_start 
-                           THEN CONCAT(' to ', sr.reservation_date_end) 
-                           ELSE '' 
-                      END) as reservation_date,
+               CONCAT(
+                   DATE_FORMAT(sr.reservation_date_start, '%M %e, %Y'),
+                   CASE WHEN sr.reservation_date_end != sr.reservation_date_start 
+                        THEN CONCAT(' to ', DATE_FORMAT(sr.reservation_date_end, '%M %e, %Y'))
+                        ELSE '' 
+                   END
+               ) as reservation_date,
                CONCAT(sr.duration_days, ' day', CASE WHEN sr.duration_days > 1 THEN 's' ELSE '' END) as duration
         FROM service_reservations sr
         LEFT JOIN service_reservation_items sri ON sr.id = sri.reservation_id

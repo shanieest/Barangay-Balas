@@ -109,7 +109,7 @@ $stmt->close();
                                         </a>
                                     <?php endwhile; ?>
                                 </div>
-                                <a href="history.php" class="btn btn-sm btn-primary mt-3">View All Requests</a>
+                                <a href="services-history.php" class="btn btn-sm btn-primary mt-3">View All Requests</a>
                             </div>
                         </div>
                     </div>
