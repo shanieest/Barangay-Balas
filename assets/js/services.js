@@ -1,4 +1,4 @@
-//services.js - Enhanced reservation functionality with automatic resident name detection
+// services.js - Enhanced reservation functionality with automatic resident name detection and duration validation
 
 document.addEventListener("DOMContentLoaded", function () {
   const requestButtons = document.querySelectorAll(".request-btn");
@@ -78,6 +78,39 @@ function initializeFormHandlers() {
 function setupDateValidation(form) {
     const startDate = form.querySelector('[name="reservation_date_start"]');
     const endDate = form.querySelector('[name="reservation_date_end"]');
+    const durationMessage = document.createElement('div');
+    durationMessage.className = 'text-danger small mt-1 d-none';
+    durationMessage.id = 'durationMessage';
+    
+    if (startDate && endDate) {
+        // Insert duration message after end date input
+        endDate.parentNode.appendChild(durationMessage);
+        
+        const validateDuration = () => {
+            if (startDate.value && endDate.value) {
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                const durationDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                
+                if (durationDays > 10) {
+                    durationMessage.textContent = `Duration exceeds 10 days (${durationDays} days selected)`;
+                    durationMessage.classList.remove('d-none');
+                    endDate.setCustomValidity('Duration cannot exceed 10 days');
+                } else {
+                    durationMessage.textContent = `Duration: ${durationDays} day(s)`;
+                    durationMessage.className = 'text-success small mt-1';
+                    durationMessage.classList.remove('d-none');
+                    endDate.setCustomValidity('');
+                }
+            } else {
+                durationMessage.classList.add('d-none');
+                endDate.setCustomValidity('');
+            }
+        };
+        
+        startDate.addEventListener('change', validateDuration);
+        endDate.addEventListener('change', validateDuration);
+    }
     
     if (startDate) {
         // Set minimum date to tomorrow
@@ -94,9 +127,28 @@ function setupDateValidation(form) {
                 if (endDate.value && endDate.value < this.value) {
                     endDate.value = this.value;
                 }
+                if (typeof validateDuration === 'function') {
+                    validateDuration();
+                }
             });
         }
     }
+}
+
+// Validate reservation duration (max 10 days)
+function validateReservationDuration(startDate, endDate) {
+    if (!startDate) return false;
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate || startDate);
+    
+    // Calculate duration in days (inclusive of both start and end dates)
+    const durationDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    
+    return {
+        isValid: durationDays <= 10,
+        days: durationDays
+    };
 }
 
 // Quantity change function
@@ -149,6 +201,17 @@ function submitReservation(form, messageElementId, serviceTypeName) {
     
     if (!residentId || !firstName || !lastName) {
         showMessage(messageElement, 'You must be logged in to make a reservation.', 'danger');
+        resetSubmitButton(submitBtn, originalBtnText);
+        return;
+    }
+    
+    // Validate duration before submission
+    const startDate = formData.get('reservation_date_start');
+    const endDate = formData.get('reservation_date_end') || startDate;
+    const durationValidation = validateReservationDuration(startDate, endDate);
+    
+    if (!durationValidation.isValid) {
+        showMessage(messageElement, `Reservation duration cannot exceed 10 days. You selected ${durationValidation.days} days. Please adjust your dates.`, 'danger');
         resetSubmitButton(submitBtn, originalBtnText);
         return;
     }
@@ -288,6 +351,12 @@ function resetForm(form) {
             }
         });
     }
+    
+    // Hide duration message
+    const durationMessage = form.querySelector('#durationMessage');
+    if (durationMessage) {
+        durationMessage.classList.add('d-none');
+    }
 }
 
 // Reset submit button state
@@ -310,7 +379,37 @@ function showMessage(element, message, type) {
     }
 }
 
+// Calculate and display duration when dates change
+function calculateDuration(startDateId, endDateId, displayElementId) {
+    const startDate = document.getElementById(startDateId);
+    const endDate = document.getElementById(endDateId);
+    const displayElement = document.getElementById(displayElementId);
+    
+    if (!startDate || !endDate || !displayElement) return;
+    
+    const updateDuration = () => {
+        if (startDate.value && endDate.value) {
+            const start = new Date(startDate.value);
+            const end = new Date(endDate.value);
+            const durationDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            
+            displayElement.textContent = `${durationDays} day(s)`;
+            
+            if (durationDays > 10) {
+                displayElement.className = 'text-danger';
+            } else {
+                displayElement.className = 'text-success';
+            }
+        } else {
+            displayElement.textContent = '0 day(s)';
+        }
+    };
+    
+    startDate.addEventListener('change', updateDuration);
+    endDate.addEventListener('change', updateDuration);
+}
+
 // Global function to make changeQuantity available to onclick handlers
 window.changeQuantity = changeQuantity;
-
-
+window.calculateDuration = calculateDuration;
+window.validateReservationDuration = validateReservationDuration;

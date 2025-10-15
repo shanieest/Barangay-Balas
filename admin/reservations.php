@@ -163,6 +163,23 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+/* TEMPORARY FIX - Add this to your page */
+.calendar-grid {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+.calendar-day {
+    width: 100% !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+</style>
 </head>
 <body class="sb-nav-fixed">
 <?php include 'includes/navbar.php'; ?>
@@ -176,6 +193,150 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
           <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
           <li class="breadcrumb-item active">Service Reservations</li>
         </ol>
+
+        <!-- Reports Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-chart-bar me-1"></i> Service Reservation Reports
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="report-type" class="form-label">Report Type</label>
+                        <select class="form-select" id="report-type">
+                            <option value="monthly">Monthly Report</option>
+                            <option value="yearly">Yearly Report</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="month-selection">
+                        <label for="report-month" class="form-label">Month</label>
+                        <select class="form-select" id="report-month">
+                            <?php
+                            $months = [
+                                '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
+                                '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
+                                '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
+                            ];
+                            $current_month = date('m');
+                            foreach ($months as $num => $name) {
+                                $selected = $num == $current_month ? 'selected' : '';
+                                echo "<option value='$num' $selected>$name</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="report-year" class="form-label">Year</label>
+                        <select class="form-select" id="report-year">
+                            <?php
+                            $current_year = date('Y');
+                            for ($year = $current_year; $year >= 2020; $year--) {
+                                $selected = $year == $current_year ? 'selected' : '';
+                                echo "<option value='$year' $selected>$year</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary w-100" id="generate-report">
+                            <i class="fas fa-chart-bar me-1"></i> Generate Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Results -->
+                <div id="report-results" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 id="report-title"></h5>
+                                <div>
+                                    <button type="button" class="btn btn-success btn-sm me-2" id="export-excel">
+                                        <i class="fas fa-file-excel me-1"></i> Export Excel
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm" id="export-csv">
+                                        <i class="fas fa-file-csv me-1"></i> Export CSV
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="row mb-4" id="summary-cards">
+                        <!-- Summary cards will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Charts and Tables -->
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-chart-pie me-1"></i> Status Distribution
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="statusChart" width="400" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-chart-bar me-1"></i> Service Type Breakdown
+                                </div>
+                                <div class="card-body">
+                                    <div id="service-breakdown-table">
+                                        <!-- Service breakdown table will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Breakdown -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-table me-1"></i> Detailed Breakdown
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped" id="breakdown-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Period</th>
+                                                    <th>Total</th>
+                                                    <th>Approved</th>
+                                                    <th>Pending</th>
+                                                    <th>In Progress</th>
+                                                    <th>Completed</th>
+                                                    <th>Cancelled</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="breakdown-table-body">
+                                                <!-- Breakdown data will be populated by JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Availability Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-calendar-alt me-1"></i> Reservation Calendar - Date Availability
+            </div>
+            <div class="card-body p-3">
+                <div id="availability-calendar"></div>
+                
+            </div>
+        </div>
 
         <div class="card mb-4">
           <div class="card-header">
@@ -329,7 +490,9 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="assets/js/script.js"></script>
+<script src="assets/js/calendar.js"></script>
 <script src="assets/js/reservation.js"></script>
 
 <script>

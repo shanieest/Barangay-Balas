@@ -47,3 +47,23 @@
         .search-box {
             max-width: 300px;
         }
+
+       /* History column styles */
+.resident-history {
+    max-width: 200px;
+    min-width: 150px;
+}
+
+.resident-history .badge {
+    font-size: 0.7em;
+    white-space: nowrap;
+}
+
+.history-placeholder {
+    font-style: italic;
+}
+
+/* Toast container */
+.toast-container {
+    z-index: 9999;
+}

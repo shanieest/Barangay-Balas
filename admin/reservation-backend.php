@@ -1,5 +1,5 @@
 <?php
-//reservation-backend.php
+// reservation-backend.php (complete with reports)
 require_once 'includes/db.php';
 require_once 'includes/auth.php';
 requireAuth();
@@ -37,6 +37,15 @@ try {
             break;
         case 'list':
             handleList();
+            break;
+        case 'get_calendar_data':
+            handleGetCalendarData();
+            break;
+        case 'generate_service_report':
+            handleGenerateServiceReport();
+            break;
+        case 'export_service_report':
+            handleExportServiceReport();
             break;
         default:
             throw new Exception('Invalid action specified');
@@ -678,6 +687,344 @@ function handleList() {
         'success' => true, 
         'reservations' => $reservations,
         'count' => count($reservations)
+    ]);
+    
+    $stmt->close();
+}
+
+function handleGenerateServiceReport() {
+    global $conn;
+    
+    $report_type = $_GET['report_type'] ?? 'monthly'; // monthly or yearly
+    $month = $_GET['month'] ?? date('m');
+    $year = $_GET['year'] ?? date('Y');
+    
+    if ($report_type === 'yearly') {
+        $start_date = "$year-01-01";
+        $end_date = "$year-12-31";
+        $date_format = "%Y-%m";
+        $group_by = "MONTH(sr.date_requested)";
+        $period_format = "CONCAT(YEAR(sr.date_requested), '-', LPAD(MONTH(sr.date_requested), 2, '0'))";
+    } else {
+        $start_date = "$year-$month-01";
+        $end_date = "$year-$month-" . date('t', strtotime($start_date));
+        $date_format = "%Y-%m-%d";
+        $group_by = "DATE(sr.date_requested)";
+        $period_format = "DATE(sr.date_requested)";
+    }
+    
+    // Summary statistics
+    $summary_sql = "SELECT 
+                    COUNT(*) as total_reservations,
+                    SUM(CASE WHEN sr.status = 'Approved' THEN 1 ELSE 0 END) as approved_reservations,
+                    SUM(CASE WHEN sr.status = 'Pending' THEN 1 ELSE 0 END) as pending_reservations,
+                    SUM(CASE WHEN sr.status IN ('Cancelled', 'Disapproved') THEN 1 ELSE 0 END) as cancelled_reservations,
+                    SUM(CASE WHEN sr.status = 'Completed' THEN 1 ELSE 0 END) as completed_reservations,
+                    SUM(CASE WHEN sr.status = 'In Progress' THEN 1 ELSE 0 END) as in_progress_reservations
+                FROM service_reservations sr
+                WHERE sr.date_requested BETWEEN ? AND ?";
+    
+    $summary_stmt = $conn->prepare($summary_sql);
+    $summary_stmt->bind_param("ss", $start_date, $end_date);
+    $summary_stmt->execute();
+    $summary_result = $summary_stmt->get_result();
+    $summary = $summary_result->fetch_assoc();
+    
+    // Monthly/Yearly breakdown
+    $breakdown_sql = "SELECT 
+                        $period_format as period,
+                        COUNT(*) as total,
+                        SUM(CASE WHEN sr.status = 'Approved' THEN 1 ELSE 0 END) as approved,
+                        SUM(CASE WHEN sr.status = 'Pending' THEN 1 ELSE 0 END) as pending,
+                        SUM(CASE WHEN sr.status IN ('Cancelled', 'Disapproved') THEN 1 ELSE 0 END) as cancelled,
+                        SUM(CASE WHEN sr.status = 'Completed' THEN 1 ELSE 0 END) as completed,
+                        SUM(CASE WHEN sr.status = 'In Progress' THEN 1 ELSE 0 END) as in_progress
+                    FROM service_reservations sr
+                    WHERE sr.date_requested BETWEEN ? AND ?
+                    GROUP BY $group_by
+                    ORDER BY sr.date_requested";
+    
+    $breakdown_stmt = $conn->prepare($breakdown_sql);
+    $breakdown_stmt->bind_param("ss", $start_date, $end_date);
+    $breakdown_stmt->execute();
+    $breakdown_result = $breakdown_stmt->get_result();
+    
+    $breakdown = [];
+    while ($row = $breakdown_result->fetch_assoc()) {
+        $breakdown[] = $row;
+    }
+    
+    // Service type breakdown
+    $service_sql = "SELECT 
+                        st.service_name,
+                        COUNT(*) as total_requests,
+                        SUM(sri.quantity) as total_quantity
+                    FROM service_reservation_items sri
+                    JOIN service_types st ON sri.service_type_id = st.id
+                    JOIN service_reservations sr ON sri.reservation_id = sr.id
+                    WHERE sr.date_requested BETWEEN ? AND ?
+                    GROUP BY st.service_name
+                    ORDER BY total_requests DESC";
+    
+    $service_stmt = $conn->prepare($service_sql);
+    $service_stmt->bind_param("ss", $start_date, $end_date);
+    $service_stmt->execute();
+    $service_result = $service_stmt->get_result();
+    
+    $service_breakdown = [];
+    while ($row = $service_result->fetch_assoc()) {
+        $service_breakdown[] = $row;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'report_type' => $report_type,
+        'period' => $report_type === 'yearly' ? $year : date('F Y', strtotime($start_date)),
+        'summary' => $summary,
+        'breakdown' => $breakdown,
+        'service_breakdown' => $service_breakdown,
+        'date_range' => [
+            'start' => $start_date,
+            'end' => $end_date
+        ]
+    ]);
+    
+    $summary_stmt->close();
+    $breakdown_stmt->close();
+    $service_stmt->close();
+}
+
+function handleExportServiceReport() {
+    global $conn;
+    
+    $report_type = $_GET['report_type'] ?? 'monthly';
+    $month = $_GET['month'] ?? date('m');
+    $year = $_GET['year'] ?? date('Y');
+    $format = $_GET['format'] ?? 'excel';
+    
+    if ($report_type === 'yearly') {
+        $start_date = "$year-01-01";
+        $end_date = "$year-12-31";
+        $filename = "service_reservations_yearly_$year";
+    } else {
+        $start_date = "$year-$month-01";
+        $end_date = "$year-$month-" . date('t', strtotime($start_date));
+        $month_name = date('F', strtotime($start_date));
+        $filename = "service_reservations_{$month_name}_{$year}";
+    }
+    
+    // Get detailed data for export
+    $sql = "SELECT 
+                sr.id,
+                CONCAT('SR-', LPAD(sr.id, 3, '0')) as reservation_id,
+                sr.resident_name,
+                sr.contact_number,
+                sr.email,
+                sr.purpose,
+                sr.status,
+                sr.reservation_date_start,
+                sr.reservation_date_end,
+                sr.duration_days,
+                sr.date_requested,
+                sr.date_processed,
+                GROUP_CONCAT(DISTINCT st.service_name SEPARATOR ', ') as services,
+                au.first_name as processed_by,
+                sr.notes,
+                sr.rejection_reason
+            FROM service_reservations sr
+            LEFT JOIN service_reservation_items sri ON sr.id = sri.reservation_id
+            LEFT JOIN service_types st ON sri.service_type_id = st.id
+            LEFT JOIN admin_users au ON sr.processed_by = au.id
+            WHERE sr.date_requested BETWEEN ? AND ?
+            GROUP BY sr.id
+            ORDER BY sr.date_requested DESC";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $start_date, $end_date);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $data = [];
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+    
+    if ($format === 'excel') {
+        exportToExcel($data, $filename, $report_type, $month, $year);
+    } else {
+        exportToCSV($data, $filename);
+    }
+    
+    $stmt->close();
+}
+
+function exportToExcel($data, $filename, $report_type, $month, $year) {
+    // Create PHPExcel object (you might need to include PHPExcel library)
+    // For simplicity, we'll create an HTML table that Excel can open
+    
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment; filename="' . $filename . '.xls"');
+    
+    echo '<html><head><meta charset="UTF-8"></head><body>';
+    echo '<table border="1">';
+    
+    // Report header
+    echo '<tr><td colspan="14" style="text-align:center;font-weight:bold;background-color:#f0f0f0;">';
+    echo 'SERVICE RESERVATIONS REPORT - ' . strtoupper($report_type) . ' - ';
+    echo $report_type === 'yearly' ? $year : date('F Y', strtotime("$year-$month-01"));
+    echo '</td></tr>';
+    echo '<tr><td colspan="14"></td></tr>';
+    
+    // Column headers
+    echo '<tr style="background-color:#e0e0e0;font-weight:bold;">';
+    echo '<th>Reservation ID</th>';
+    echo '<th>Resident Name</th>';
+    echo '<th>Contact Number</th>';
+    echo '<th>Email</th>';
+    echo '<th>Purpose</th>';
+    echo '<th>Services</th>';
+    echo '<th>Status</th>';
+    echo '<th>Reservation Start</th>';
+    echo '<th>Reservation End</th>';
+    echo '<th>Duration (Days)</th>';
+    echo '<th>Date Requested</th>';
+    echo '<th>Date Processed</th>';
+    echo '<th>Processed By</th>';
+    echo '<th>Notes</th>';
+    echo '</tr>';
+    
+    // Data rows
+    foreach ($data as $row) {
+        echo '<tr>';
+        echo '<td>' . htmlspecialchars($row['reservation_id']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['resident_name']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['contact_number']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['email']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['purpose']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['services']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['status']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['reservation_date_start']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['reservation_date_end']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['duration_days']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['date_requested']) . '</td>';
+        echo '<td>' . htmlspecialchars($row['date_processed'] ?? 'N/A') . '</td>';
+        echo '<td>' . htmlspecialchars($row['processed_by'] ?? 'N/A') . '</td>';
+        echo '<td>' . htmlspecialchars($row['notes'] ?? '') . '</td>';
+        echo '</tr>';
+    }
+    
+    // Summary row
+    echo '<tr><td colspan="14"></td></tr>';
+    echo '<tr style="background-color:#f0f0f0;font-weight:bold;">';
+    echo '<td colspan="14">Total Reservations: ' . count($data) . '</td>';
+    echo '</tr>';
+    
+    echo '</table>';
+    echo '</body></html>';
+    exit;
+}
+
+function exportToCSV($data, $filename) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
+    
+    $output = fopen('php://output', 'w');
+    
+    // Add BOM for UTF-8
+    fputs($output, "\xEF\xBB\xBF");
+    
+    // Headers
+    fputcsv($output, [
+        'Reservation ID',
+        'Resident Name',
+        'Contact Number',
+        'Email',
+        'Purpose',
+        'Services',
+        'Status',
+        'Reservation Start Date',
+        'Reservation End Date',
+        'Duration (Days)',
+        'Date Requested',
+        'Date Processed',
+        'Processed By',
+        'Notes'
+    ]);
+    
+    // Data
+    foreach ($data as $row) {
+        fputcsv($output, [
+            $row['reservation_id'],
+            $row['resident_name'],
+            $row['contact_number'],
+            $row['email'],
+            $row['purpose'],
+            $row['services'],
+            $row['status'],
+            $row['reservation_date_start'],
+            $row['reservation_date_end'],
+            $row['duration_days'],
+            $row['date_requested'],
+            $row['date_processed'] ?? 'N/A',
+            $row['processed_by'] ?? 'N/A',
+            $row['notes'] ?? ''
+        ]);
+    }
+    
+    fclose($output);
+    exit;
+}
+function handleGetCalendarData() {
+    global $conn;
+    
+    $year = $_GET['year'] ?? date('Y');
+    $month = $_GET['month'] ?? date('m');
+    
+    $start_date = "$year-$month-01";
+    $end_date = "$year-$month-" . date('t', strtotime($start_date));
+    
+    // Get reservations with service details - FIXED QUERY
+    $sql = "SELECT 
+                sr.reservation_date_start,
+                COALESCE(sr.reservation_date_end, sr.reservation_date_start) as reservation_date_end,
+                st.service_name,
+                st.id as service_id,
+                sri.quantity,
+                sr.status
+            FROM service_reservations sr
+            JOIN service_reservation_items sri ON sr.id = sri.reservation_id
+            JOIN service_types st ON sri.service_type_id = st.id
+            WHERE (
+                (sr.reservation_date_start BETWEEN ? AND ?) 
+                OR (COALESCE(sr.reservation_date_end, sr.reservation_date_start) BETWEEN ? AND ?)
+                OR (? BETWEEN sr.reservation_date_start AND COALESCE(sr.reservation_date_end, sr.reservation_date_start))
+            )
+            AND sr.status IN ('Approved', 'In Progress')"; // Only count approved/in progress reservations
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sssss", $start_date, $end_date, $start_date, $end_date, $start_date);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $reservations = [];
+    while ($row = $result->fetch_assoc()) {
+        $reservations[] = $row;
+    }
+    
+    // Get all available services
+    $services_sql = "SELECT id, service_name, description FROM service_types WHERE is_active = 1";
+    $services_result = $conn->query($services_sql);
+    $services = [];
+    while ($row = $services_result->fetch_assoc()) {
+        $services[] = $row;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'reservations' => $reservations,
+            'services' => $services
+        ]
     ]);
     
     $stmt->close();

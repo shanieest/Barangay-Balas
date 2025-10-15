@@ -1,5 +1,3 @@
-
-
 // Global variables
 let currentResidentId = null;
 let currentRequestId = null;
@@ -79,8 +77,8 @@ function renderResidentsTable(residents, pagination) {
     tableBody.innerHTML = '';
     
     if (!residents || residents.length === 0) {
+        const colspan = window.USER_CAN_MODIFY ? 8 : 7;
         const row = document.createElement('tr');
-        const colspan = window.USER_CAN_MODIFY ? '7' : '6';
         row.innerHTML = `<td colspan="${colspan}" class="text-center">No residents found</td>`;
         tableBody.appendChild(row);
         updatePagination('resident', pagination);
@@ -90,6 +88,9 @@ function renderResidentsTable(residents, pagination) {
     residents.forEach((resident, index) => {
         const row = createResidentRow(resident, index);
         tableBody.appendChild(row);
+        
+        // Load history for this resident immediately
+        loadResidentHistory(resident.id);
     });
     
     updatePagination('resident', pagination);
@@ -107,14 +108,22 @@ function createResidentRow(resident, index) {
     // Account status badge
     const accountStatusBadge = createAccountStatusBadge(resident.account_status);
     
-    // Build row HTML
+    // Calculate row number based on current page
+    const rowNumber = (currentResidentPage - 1) * perPage + index + 1;
+    
+    // Build row HTML with history column
     let rowHTML = `
-        <td>${index + 1}</td>
+        <td>${rowNumber}</td>
         <td>${resident.last_name}, ${resident.first_name} ${resident.middle_name || ''} ${resident.suffix || ''}</td>
         <td>${resident.email || 'N/A'}</td>
         <td>${resident.contact_number}</td>
         <td>${resident.birthdate}</td>
         <td>${accountStatusBadge}</td>
+        <td class="resident-history" data-resident-id="${resident.id}">
+            <div class="history-placeholder">
+                <span class="text-muted">Loading history...</span>
+            </div>
+        </td>
     `;
     
     // Only add actions column if user can modify
@@ -150,6 +159,83 @@ function createAccountStatusBadge(status) {
     
     const badgeClass = badgeClasses[status] || 'bg-secondary';
     return `<span class="badge ${badgeClass}">${status}</span>`;
+}
+
+// Function to load and display resident history
+function loadResidentHistory(residentId) {
+    const historyCell = document.querySelector(`.resident-history[data-resident-id="${residentId}"]`);
+    if (!historyCell) return;
+
+    // Show loading state
+    historyCell.innerHTML = '<span class="text-muted">Loading...</span>';
+
+    getResidentHistory(residentId)
+        .then(history => {
+            const historyContent = formatResidentHistory(history);
+            historyCell.innerHTML = historyContent;
+        })
+        .catch(error => {
+            console.error('Error loading history for resident', residentId, error);
+            historyCell.innerHTML = '<span class="text-danger">Error loading history</span>';
+        });
+}
+
+// Function to fetch resident history
+function getResidentHistory(residentId) {
+    return fetch(`residents-backend.php?action=get_resident_history&id=${residentId}`)
+        .then(handleResponse)
+        .then(data => {
+            if (data.success) {
+                return data.data;
+            } else {
+                throw new Error(data.message || 'Failed to load resident history');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading resident history:', error);
+            return [];
+        });
+}
+
+// Function to format resident history for display
+function formatResidentHistory(history) {
+    if (!history || history.length === 0) {
+        return '<span class="text-muted">No requests yet</span>';
+    }
+
+    const items = [];
+    
+    // Group by type and count
+    const documentRequests = history.filter(item => item.type === 'document');
+    const serviceReservations = history.filter(item => item.type === 'service');
+
+    if (documentRequests.length > 0) {
+        const docTypes = {};
+        documentRequests.forEach(doc => {
+            const docType = doc.document_type || 'Document';
+            docTypes[docType] = (docTypes[docType] || 0) + 1;
+        });
+
+        Object.keys(docTypes).forEach(docType => {
+            const count = docTypes[docType];
+            items.push(`<span class="badge bg-primary me-1 mb-1">${docType}: ${count}</span>`);
+        });
+    }
+
+    if (serviceReservations.length > 0) {
+        const serviceTypes = {};
+        serviceReservations.forEach(service => {
+            const serviceName = service.service_name || 'Service';
+            serviceTypes[serviceName] = (serviceTypes[serviceName] || 0) + 1;
+        });
+
+        Object.keys(serviceTypes).forEach(serviceName => {
+            const count = serviceTypes[serviceName];
+            items.push(`<span class="badge bg-success me-1 mb-1">${serviceName}: ${count}</span>`);
+        });
+    }
+
+    return items.join('');
 }
 
 // FIXED: Renamed and improved event listener attachment
@@ -199,29 +285,43 @@ function updatePagination(type, pagination) {
     const prefix = type === 'resident' ? 'resident' : 'request';
     const totalPages = pagination.total_pages;
     const currentPage = pagination.page;
+    const totalItems = pagination.total;
     
     // Update pagination info
     const paginationInfo = getElement(`#${prefix}-pagination .pagination-info`);
     if (paginationInfo) {
-        const startItem = (currentPage - 1) * perPage + 1;
-        const endItem = Math.min(currentPage * perPage, pagination.total);
-        paginationInfo.textContent = `Showing ${startItem} to ${endItem} of ${pagination.total} entries`;
+        if (totalItems === 0) {
+            paginationInfo.textContent = `Showing 0 to 0 of 0 entries`;
+        } else {
+            const startItem = (currentPage - 1) * perPage + 1;
+            const endItem = Math.min(currentPage * perPage, totalItems);
+            paginationInfo.textContent = `Showing ${startItem} to ${endItem} of ${totalItems} entries`;
+        }
     }
     
     // Update pagination buttons
     const prevBtn = document.getElementById(`prev${prefix.charAt(0).toUpperCase() + prefix.slice(1)}Page`);
     const nextBtn = document.getElementById(`next${prefix.charAt(0).toUpperCase() + prefix.slice(1)}Page`);
     
-    if (prevBtn) prevBtn.classList.toggle('disabled', currentPage === 1);
-    if (nextBtn) nextBtn.classList.toggle('disabled', currentPage >= totalPages);
+    if (prevBtn) {
+        prevBtn.classList.toggle('disabled', currentPage === 1);
+        prevBtn.querySelector('a').tabIndex = currentPage === 1 ? -1 : 0;
+    }
     
-    // Update page numbers (simple implementation)
+    if (nextBtn) {
+        nextBtn.classList.toggle('disabled', currentPage >= totalPages);
+        nextBtn.querySelector('a').tabIndex = currentPage >= totalPages ? -1 : 0;
+    }
+    
+    // Update page numbers
     const paginationContainer = getElement(`#${prefix}-pagination .pagination`);
     if (paginationContainer) {
-        const pageItems = paginationContainer.querySelectorAll('.page-item:not(:first-child):not(:last-child)');
+        // Remove existing page numbers (keep Previous and Next)
+        const pageItems = paginationContainer.querySelectorAll('.page-item:not(.page-prev):not(.page-next)');
         pageItems.forEach(item => item.remove());
         
         // Add page numbers
+        const prevItem = paginationContainer.querySelector('.page-prev');
         for (let i = 1; i <= totalPages; i++) {
             const pageItem = document.createElement('li');
             pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
@@ -236,8 +336,8 @@ function updatePagination(type, pagination) {
                 }
             });
             
-            if (nextBtn) {
-                nextBtn.parentNode.insertBefore(pageItem, nextBtn);
+            if (prevItem && prevItem.nextSibling) {
+                paginationContainer.insertBefore(pageItem, prevItem.nextSibling);
             }
         }
     }
@@ -274,8 +374,8 @@ function renderRequestsTable(requests, pagination) {
     tableBody.innerHTML = '';
     
     if (!requests || requests.length === 0) {
+        const colspan = window.USER_CAN_MODIFY ? 8 : 7;
         const row = document.createElement('tr');
-        const colspan = window.USER_CAN_MODIFY ? '8' : '7';
         row.innerHTML = `<td colspan="${colspan}" class="text-center">No requests found</td>`;
         tableBody.appendChild(row);
         return;
@@ -305,9 +405,12 @@ function createRequestRow(request, index) {
     const processedBy = request.processed_by ? 
         `${request.processed_by} (${request.date_processed})` : 'N/A';
     
+    // Calculate row number based on current page
+    const rowNumber = (currentRequestPage - 1) * perPage + index + 1;
+    
     // Build row HTML
     let rowHTML = `
-        <td>${index + 1}</td>
+        <td>${rowNumber}</td>
         <td>${request.last_name}, ${request.first_name}</td>
         <td>${request.email}</td>
         <td>${request.contact_number}</td>
@@ -1170,8 +1273,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('User can modify:', window.USER_CAN_MODIFY);
     
     // Load initial resident list and account requests
-    refreshResidentList();
-    refreshAccountRequests();
+    refreshResidentList(1, '');
+    refreshAccountRequests(1, 'all');
     
     // Only attach form handlers if user can modify
     if (window.USER_CAN_MODIFY) {

@@ -1,9 +1,17 @@
 <?php
 // archived_accounts_backend.php
+require_once __DIR__ . '/../config/emailer.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 
 requireAuth();
+
+// Check if user is admin
+if (!isAdmin()) {
+    header('HTTP/1.1 403 Forbidden');
+    echo json_encode(['success' => false, 'message' => 'Access denied. Admin only.']);
+    exit();
+}
 
 header('Content-Type: application/json');
 
@@ -41,39 +49,44 @@ function handleListArchived() {
     
     $query = "SELECT r.*, 
                      ra.account_status, ra.is_archived, ra.archived_at, ra.archived_reason,
-                     ra.last_login
+                     ra.last_login, ra.date_processed
               FROM residents r
               JOIN resident_accounts ra ON r.id = ra.resident_id
               WHERE ra.is_archived = 1";
+    
+    $countQuery = "SELECT COUNT(*) as total
+                   FROM residents r
+                   JOIN resident_accounts ra ON r.id = ra.resident_id
+                   WHERE ra.is_archived = 1";
     
     $params = [];
     $types = '';
     
     if ($search) {
+        $searchTerm = "%$search%";
         $query .= " AND (CONCAT(r.first_name, ' ', r.last_name) LIKE ? 
                     OR r.email LIKE ? 
                     OR r.contact_number LIKE ?)";
-        $searchTerm = "%$search%";
+        $countQuery .= " AND (CONCAT(r.first_name, ' ', r.last_name) LIKE ? 
+                         OR r.email LIKE ? 
+                         OR r.contact_number LIKE ?)";
         $params = [$searchTerm, $searchTerm, $searchTerm];
         $types = 'sss';
     }
     
     // Count total
-    $countQuery = str_replace("SELECT r.*, ra.account_status, ra.is_archived, ra.archived_at, ra.archived_reason, ra.last_login", 
-                              "SELECT COUNT(*) as total", $query);
     $countStmt = $conn->prepare($countQuery);
     if (!empty($params)) {
         $countStmt->bind_param($types, ...$params);
     }
     $countStmt->execute();
-        $countResult = $countStmt->get_result();
+    $countResult = $countStmt->get_result();
 
-        if ($countResult && $row = $countResult->fetch_assoc()) {
-            $total = (int)$row['total'];
-        } else {
-            $total = 0;
-        }
-
+    if ($countResult && $row = $countResult->fetch_assoc()) {
+        $total = (int)$row['total'];
+    } else {
+        $total = 0;
+    }
     
     // Get data
     $query .= " ORDER BY ra.archived_at DESC LIMIT ? OFFSET ?";
@@ -82,7 +95,9 @@ function handleListArchived() {
     $types .= 'ii';
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param($types, ...$params);
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -140,7 +155,8 @@ function handleRestoreAccount() {
         $restoreStmt = $conn->prepare("UPDATE resident_accounts 
                                       SET is_archived = 0, 
                                           archived_at = NULL,
-                                          archived_reason = NULL
+                                          archived_reason = NULL,
+                                          account_status = 'Approved'
                                       WHERE resident_id = ?");
         $restoreStmt->bind_param("i", $residentId);
         $restoreStmt->execute();

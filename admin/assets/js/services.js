@@ -142,3 +142,89 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Report generation functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const monthlyReportForm = document.getElementById('monthlyReportForm');
+    const yearlyReportForm = document.getElementById('yearlyReportForm');
+    
+    // Set current year and month as default
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+    
+    document.getElementById('year_monthly').value = currentYear;
+    document.getElementById('month').value = currentMonth;
+    document.getElementById('year_yearly').value = currentYear;
+    
+    if (monthlyReportForm) {
+        monthlyReportForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateReport('monthly');
+        });
+    }
+    
+    if (yearlyReportForm) {
+        yearlyReportForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateReport('yearly');
+        });
+    }
+    
+    function generateReport(reportType) {
+        const form = reportType === 'monthly' ? monthlyReportForm : yearlyReportForm;
+        const formData = new FormData(form);
+        const button = form.querySelector('button[type="submit"]');
+        const originalText = button.innerHTML;
+        
+        // Add loading state
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating Report...';
+        button.disabled = true;
+        
+        fetch('process_request.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Download the generated file
+                window.location.href = data.filepath;
+                
+                // Show success message
+                showAlert('Report generated successfully! Your download should start shortly.', 'success');
+            } else {
+                showAlert('Error generating report: ' + data.message, 'danger');
+            }
+        })
+        .catch(err => {
+            console.error('Report generation error:', err);
+            showAlert('Something went wrong while generating the report.', 'danger');
+        })
+        .finally(() => {
+            // Restore button state
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+    
+    function showAlert(message, type) {
+        // Remove existing alerts
+        const existingAlert = document.querySelector('.alert-dismissible');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Insert after the report forms
+        const reportCard = document.querySelector('.card .card-header');
+        const cardBody = reportCard.closest('.card').querySelector('.card-body');
+        cardBody.appendChild(alertDiv);
+    }
+});

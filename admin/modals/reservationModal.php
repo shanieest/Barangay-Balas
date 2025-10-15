@@ -159,3 +159,29 @@
     </div>
   </div>
 </div>
+
+<!-- Date Details Modal -->
+<div class="modal fade" id="dateDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dateDetailsTitle">Service Availability</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="dateDetailsContent">
+                    Loading service availability...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <small class="text-muted me-auto">
+                    <i class="fas fa-circle text-danger me-1"></i>Fully Booked 
+                    <i class="fas fa-circle text-warning ms-2 me-1"></i>Partially Booked 
+                    <i class="fas fa-circle text-success ms-2 me-1"></i>Available
+                </small>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+    
+</div>

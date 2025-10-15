@@ -42,6 +42,7 @@ requireAuth();
                     </ul>
                     
                     <div class="tab-content" id="residentTabsContent">
+                        
                         <!-- Verified Residents Tab -->
                         <div class="tab-pane fade show active" id="verified-residents" role="tabpanel">
                             <div class="card mb-4">
@@ -86,6 +87,7 @@ requireAuth();
                                                     <th>Contact</th>
                                                     <th>Birthdate</th>
                                                     <th>Account Status</th>
+                                                    <th>Request History</th>
                                                     <?php if (canModify()) { ?>
                                                     <th>Actions</th>
                                                     <?php } ?>

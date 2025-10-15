@@ -97,6 +97,11 @@ function handleCreate() {
 
     $duration_days = $start_date->diff($end_date)->days + 1;
 
+    // NEW VALIDATION: Check if duration exceeds 10 days
+    if ($duration_days > 10) {
+        throw new Exception('Reservation duration cannot exceed 10 days. Please adjust your dates.');
+    }
+
     // Validate service types and quantities
     foreach ($service_types as $service_type_id) {
         $service_type_id = intval($service_type_id);

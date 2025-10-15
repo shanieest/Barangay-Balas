@@ -52,6 +52,9 @@ try {
         case 'export':
             handleExportResidents();
             break;
+         case 'get_resident_history':
+            handleGetResidentHistory();
+            break;
         default:
             $response['message'] = 'Invalid action';
             echo json_encode($response);
@@ -635,6 +638,66 @@ function handleProcessRequest() {
         echo json_encode($response);
         exit;
 
+}
+
+function handleGetResidentHistory() {
+    global $conn, $response;
+
+    $residentId = $_GET['id'] ?? null;
+
+    if (!$residentId) {
+        $response['success'] = false;
+        $response['message'] = 'Resident ID is required';
+        echo json_encode($response);
+        return;
+    }
+
+    $history = [];
+
+    try {
+        // Get document requests
+        $docQuery = "SELECT dr.*, dt.document_type, 'document' as type 
+                     FROM document_requests dr 
+                     LEFT JOIN document_types dt ON dr.document_type_id = dt.id 
+                     WHERE dr.resident_id = ? 
+                     ORDER BY dr.date_requested DESC";
+        
+        $stmt = $conn->prepare($docQuery);
+        $stmt->bind_param("i", $residentId);
+        $stmt->execute();
+        $docResult = $stmt->get_result();
+        
+        while ($row = $docResult->fetch_assoc()) {
+            $history[] = $row;
+        }
+
+        // Get service reservations
+        $serviceQuery = "SELECT sr.*, st.service_name, 'service' as type 
+                         FROM service_reservations sr 
+                         LEFT JOIN service_reservation_items sri ON sr.id = sri.reservation_id 
+                         LEFT JOIN service_types st ON sri.service_type_id = st.id 
+                         WHERE sr.resident_id = ? 
+                         ORDER BY sr.date_requested DESC";
+        
+        $stmt = $conn->prepare($serviceQuery);
+        $stmt->bind_param("i", $residentId);
+        $stmt->execute();
+        $serviceResult = $stmt->get_result();
+        
+        while ($row = $serviceResult->fetch_assoc()) {
+            $history[] = $row;
+        }
+
+        $response['success'] = true;
+        $response['data'] = $history;
+        
+    } catch (Exception $e) {
+        $response['success'] = false;
+        $response['message'] = 'Error fetching history: ' . $e->getMessage();
+        $response['data'] = [];
+    }
+    
+    echo json_encode($response);
 }
 
 

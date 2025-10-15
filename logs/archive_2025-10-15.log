@@ -1,0 +1,51 @@
+[2025-10-15 19:00:07] Starting automatic account archive process...
+[2025-10-15 19:00:07] Memory usage: 485144 bytes
+[2025-10-15 19:00:07] Cutoff date: 2024-10-15 19:00:07
+[2025-10-15 19:00:07] Batch size: 50
+[2025-10-15 19:00:07] ✗ Failed to archive Never Logged (ID: 68): You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '/ Set to pending so they can't login
+                                       ...' at line 5
+[2025-10-15 19:00:07] ✗ Failed to archive Inactive Resident (ID: 67): You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '/ Set to pending so they can't login
+                                       ...' at line 5
+[2025-10-15 19:00:07] 
+Archive process completed:
+[2025-10-15 19:00:07] - Total accounts archived: 0
+[2025-10-15 19:00:07] - Errors: 2
+[2025-10-15 19:00:07] - Memory usage: 504936 bytes
+[2025-10-15 19:00:07] 
+Error details:
+[2025-10-15 19:00:07]   - Failed to archive Never Logged (ID: 68): You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '/ Set to pending so they can't login
+                                       ...' at line 5
+[2025-10-15 19:00:07]   - Failed to archive Inactive Resident (ID: 67): You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '/ Set to pending so they can't login
+                                       ...' at line 5
+[2025-10-15 19:00:07] Script execution completed.
+--------------------------------------------------------------------------------
+
+[2025-10-15 19:02:26] === Starting automatic account archive process ===
+[2025-10-15 19:02:26] Project root: C:\xampp\htdocs\Barangay-Balas
+[2025-10-15 19:02:26] Cutoff date: 2024-10-15 19:02:26
+[2025-10-15 19:02:26] Looking for accounts inactive since: 2024-10-15 19:02:26
+[2025-10-15 19:02:26] Found 2 accounts to process
+[2025-10-15 19:02:26] ✓ Archived: Never Logged (ID: 68) - Last login: Never
+[2025-10-15 19:02:26] ✓ Archived: Inactive Resident (ID: 67) - Last login: 2024-09-11 00:33:04
+[2025-10-15 19:02:26] 
+=== Archive process completed ===
+[2025-10-15 19:02:26] Total accounts archived: 2
+[2025-10-15 19:02:26] Errors: 0
+[2025-10-15 19:02:26] Script execution completed at: 2025-10-15 19:02:26
+[2025-10-15 19:02:26] ============================================================
+
+[2025-10-15 19:07:54] === Starting automatic account archive process ===
+[2025-10-15 19:07:54] Project root: C:\xampp\htdocs\Barangay-Balas
+[2025-10-15 19:07:54] Cutoff date: 2024-10-15 19:07:54
+[2025-10-15 19:07:54] Looking for accounts inactive since: 2024-10-15 19:07:54
+[2025-10-15 19:07:54] Found 3 accounts to process
+[2025-10-15 19:07:54] ✓ Archived: Sofia Lopez (ID: 73) - Last login: Never
+[2025-10-15 19:07:54] ✓ Archived: Pedro Dela Cruz (ID: 72) - Last login: 2023-10-16 01:07:06
+[2025-10-15 19:07:54] ✓ Archived: Ana Reyes (ID: 71) - Last login: 2024-09-16 01:07:06
+[2025-10-15 19:07:54] 
+=== Archive process completed ===
+[2025-10-15 19:07:54] Total accounts archived: 3
+[2025-10-15 19:07:54] Errors: 0
+[2025-10-15 19:07:54] Script execution completed at: 2025-10-15 19:07:54
+[2025-10-15 19:07:54] ============================================================
+

@@ -1,38 +1,53 @@
 <?php
-/**
- * auto_archive_accounts.php
- * 
- * This script should be run daily via cron job
- * Setup cron: 0 2 * * * /usr/bin/php /path/to/auto_archive_accounts.php
- * (Runs daily at 2 AM)
- */
+require_once __DIR__ . 'config/emailer.php';
 
-require_once __DIR__ . '/config/db.php';
+
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Get the absolute path to the project root
+$projectRoot = __DIR__;
+
+// Include database configuration
+require_once $projectRoot . '/config/db.php';
 
 // Configuration
 define('INACTIVE_DAYS', 365); // 1 year = 365 days
+define('BATCH_SIZE', 50);
+
+// Create logs directory if it doesn't exist
+$logDir = $projectRoot . '/logs';
+if (!is_dir($logDir)) {
+    if (!mkdir($logDir, 0755, true)) {
+        die("Failed to create logs directory: $logDir");
+    }
+}
 
 // Log file
-$logFile = __DIR__ . '/logs/archive_' . date('Y-m-d') . '.log';
+$logFile = $logDir . '/archive_' . date('Y-m-d') . '.log';
 
 function logMessage($message) {
     global $logFile;
     $timestamp = date('Y-m-d H:i:s');
-    file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
+    $formattedMessage = "[$timestamp] $message\n";
+    file_put_contents($logFile, $formattedMessage, FILE_APPEND);
+    echo $formattedMessage;
 }
 
 try {
-    logMessage("Starting automatic account archive process...");
+    logMessage("=== Starting automatic account archive process ===");
+    logMessage("Project root: " . __DIR__);
     
     // Calculate cutoff date (1 year ago from today)
     $cutoffDate = date('Y-m-d H:i:s', strtotime('-' . INACTIVE_DAYS . ' days'));
     
     logMessage("Cutoff date: $cutoffDate");
-    
-    // Find accounts that haven't logged in for 1 year
-    // IMPORTANT: Only archive approved accounts
-    $query = "SELECT ra.resident_id, ra.last_login, 
-                     r.first_name, r.last_name, r.email
+    logMessage("Looking for accounts inactive since: $cutoffDate");
+
+    // Find accounts to archive
+    $query = "SELECT ra.resident_id, ra.last_login, ra.date_processed,
+                     r.first_name, r.last_name, r.email, r.contact_number
               FROM resident_accounts ra
               JOIN residents r ON ra.resident_id = r.id
               WHERE ra.account_status = 'Approved'
@@ -40,38 +55,52 @@ try {
                 AND (
                     (ra.last_login IS NOT NULL AND ra.last_login < ?)
                     OR (ra.last_login IS NULL AND ra.date_processed < ?)
-                )";
+                )
+              LIMIT ?";
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ss", $cutoffDate, $cutoffDate);
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
+    }
+    
+    $limit = BATCH_SIZE;
+    $stmt->bind_param("ssi", $cutoffDate, $cutoffDate, $limit);
     $stmt->execute();
     $result = $stmt->get_result();
     
     $archivedCount = 0;
     $errors = [];
     
+    logMessage("Found " . $result->num_rows . " accounts to process");
+    
     while ($row = $result->fetch_assoc()) {
         $residentId = $row['resident_id'];
         $lastLogin = $row['last_login'] ?? 'Never';
         $fullName = $row['first_name'] . ' ' . $row['last_name'];
+        $email = $row['email'];
         
         try {
             // Start transaction
             $conn->begin_transaction();
             
-            // Archive the account
+            // Archive the account - FIXED SQL SYNTAX
             $archiveStmt = $conn->prepare("UPDATE resident_accounts 
                                           SET is_archived = 1, 
                                               archived_at = NOW(),
-                                              archived_reason = 'Inactive for 1 year'
+                                              archived_reason = 'Inactive for 1 year',
+                                              account_status = 'Pending'
                                           WHERE resident_id = ?");
             $archiveStmt->bind_param("i", $residentId);
             $archiveStmt->execute();
             
+            if ($archiveStmt->affected_rows === 0) {
+                throw new Exception("No rows affected when archiving account");
+            }
+            
             // Log to archive history
             $historyStmt = $conn->prepare("INSERT INTO account_archive_history 
-                                          (resident_id, action, reason)
-                                          VALUES (?, 'archived', 'Automatically archived due to 1 year inactivity')");
+                                          (resident_id, action, reason, performed_by)
+                                          VALUES (?, 'archived', 'Automatically archived due to 1 year inactivity', NULL)");
             $historyStmt->bind_param("i", $residentId);
             $historyStmt->execute();
             
@@ -79,12 +108,7 @@ try {
             $conn->commit();
             
             $archivedCount++;
-            logMessage("✓ Archived account: $fullName (ID: $residentId) - Last login: $lastLogin");
-            
-            // Optional: Send email notification
-            if (!empty($row['email'])) {
-                sendArchiveNotificationEmail($row['email'], $fullName);
-            }
+            logMessage("✓ Archived: $fullName (ID: $residentId) - Last login: $lastLogin");
             
         } catch (Exception $e) {
             $conn->rollback();
@@ -94,12 +118,14 @@ try {
         }
     }
     
-    logMessage("\nArchive process completed:");
-    logMessage("- Total accounts archived: $archivedCount");
-    logMessage("- Errors: " . count($errors));
+    $stmt->close();
+    
+    logMessage("\n=== Archive process completed ===");
+    logMessage("Total accounts archived: $archivedCount");
+    logMessage("Errors: " . count($errors));
     
     if (!empty($errors)) {
-        logMessage("\nError details:");
+        logMessage("Error details:");
         foreach ($errors as $error) {
             logMessage("  - $error");
         }
@@ -107,68 +133,8 @@ try {
     
 } catch (Exception $e) {
     logMessage("CRITICAL ERROR: " . $e->getMessage());
-    error_log("Auto archive failed: " . $e->getMessage());
 }
 
-function sendArchiveNotificationEmail($email, $name) {
-    // Include your email configuration
-    require_once __DIR__ . '/config/emailer.php';
-    
-    $subject = "Barangay Balas - Account Archived Due to Inactivity";
-    
-    $message = "
-    <html>
-    <head>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f8f9fa; }
-            .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
-        </style>
-    </head>
-    <body>
-        <div class='container'>
-            <div class='header'>
-                <h2>Account Archived</h2>
-            </div>
-            <div class='content'>
-                <p>Dear $name,</p>
-                
-                <p>Your Barangay Balas resident account has been automatically archived due to inactivity for more than 1 year.</p>
-                
-                <p><strong>What does this mean?</strong></p>
-                <ul>
-                    <li>You will no longer be able to access the resident portal</li>
-                    <li>Your account data has been preserved</li>
-                    <li>You can request account reactivation at any time</li>
-                </ul>
-                
-                <p><strong>To reactivate your account:</strong></p>
-                <p>Please visit the Barangay Balas office or contact us at:</p>
-                <ul>
-                    <li>Email: barangaybalas@mexico.gov.ph</li>
-                    <li>Phone: (045) XXX-XXXX</li>
-                </ul>
-                
-                <p>We apologize for any inconvenience. This measure helps us maintain accurate records and system security.</p>
-            </div>
-            <div class='footer'>
-                <p>Barangay Balas, Mexico, Pampanga<br>
-                This is an automated message. Please do not reply to this email.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    ";
-    
-    try {
-        sendEmail($email, $subject, $message);
-        logMessage("  → Email notification sent to: $email");
-    } catch (Exception $e) {
-        logMessage("  → Failed to send email to $email: " . $e->getMessage());
-    }
-}
-
-logMessage("Script execution completed.\n" . str_repeat("-", 80) . "\n");
+logMessage("Script execution completed at: " . date('Y-m-d H:i:s'));
+logMessage(str_repeat("=", 60) . "\n");
 ?>

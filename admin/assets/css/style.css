@@ -564,3 +564,213 @@ footer {
             height: 80px;
             margin-bottom: 15px;
         }
+
+   /* Calendar Styles - FIXED */
+#availability-calendar {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+.calendar-nav-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.calendar-nav-btn:hover {
+    background: #0056b3;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    width: 100%;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-weight: bold;
+    padding: 10px 5px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #495057;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9em;
+    position: relative;
+    min-height: 40px;
+    background: white;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+}
+
+.calendar-day.available {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.calendar-day.unavailable {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f1b0b7;
+}
+
+.calendar-day.unavailable .unavailable-dot {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    font-size: 8px;
+    color: #dc3545;
+}
+
+.calendar-day.today {
+    border: 2px solid #007bff;
+    font-weight: bold;
+    background-color: #e7f3ff;
+    color: #0056b3;
+}
+
+.calendar-day.other-month {
+    color: #6c757d;
+    background-color: #f8f9fa;
+    opacity: 0.5;
+    cursor: default;
+}
+
+.calendar-day.other-month:hover {
+    transform: none;
+    background-color: #f8f9fa;
+}
+
+/* Ensure calendar takes full width */
+.card-body {
+    padding: 1.35rem;
+}
+
+/* Make sure grid works properly */
+.calendar-grid > * {
+    min-width: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .calendar-grid {
+        gap: 4px;
+    }
+    
+    .calendar-day {
+        min-height: 35px;
+        font-size: 0.8em;
+    }
+}
+
+/* Calendar Status Dots */
+.status-dot {
+    font-size: 8px;
+    margin-left: 2px;
+}
+
+.fully-booked-dot {
+    color: #dc3545;
+}
+
+.partially-booked-dot {
+    color: #ffc107;
+}
+
+.available-dot {
+    color: #198754;
+}
+
+/* Calendar Day States */
+.calendar-day.fully-booked {
+    background-color: #f8d7da;
+    border: 1px solid #f1aeb5;
+}
+
+.calendar-day.partially-booked {
+    background-color: #fff3cd;
+    border: 1px solid #ffdf7e;
+}
+
+.calendar-day.available {
+    background-color: #d1e7dd;
+    border: 1px solid #a3cfbb;
+}
+
+.calendar-day.today {
+    border: 2px solid #0d6efd !important;
+}
+
+/* Service List Styles */
+.service-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.service-list .badge {
+    font-size: 0.7em;
+}
+
+/* Enhanced Calendar Styles */
+.availability-summary .card {
+    border: none;
+    border-radius: 8px;
+}
+
+.service-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0 10px;
+}
+
+.service-list .border-bottom:last-child {
+    border-bottom: none !important;
+}
+
+/* Status indicators in modal */
+.availability-status .fa-3x {
+    opacity: 0.8;
+}
+
+/* Responsive improvements */
+@media (max-width: 576px) {
+    .availability-summary .col-4 {
+        margin-bottom: 10px;
+    }
+    
+    .service-list {
+        max-height: 200px;
+    }
+}

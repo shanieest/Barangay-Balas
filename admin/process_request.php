@@ -1,5 +1,5 @@
 <?php
-// process_request.php
+// process_request.php - Complete with report generation
 require 'includes/db.php';
 require 'includes/auth.php';
 require '../vendor/autoload.php';
@@ -7,11 +7,31 @@ require_once __DIR__ . '/../lib/phpqrcode/qrlib.php';
 require_once __DIR__ . '/../config/emailer.php';
 require_once __DIR__ . '/../email_templates/document_status.php';
 
-
 use PhpOffice\PhpWord\TemplateProcessor;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 header('Content-Type: application/json');
 
+// Handle report generation
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'generate_report') {
+    generateReport($conn);
+    exit;
+}
+
+// Handle report data
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'get_report_data') {
+    getReportData($conn);
+    exit;
+}
+
+// Handle report download
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['download_report'])) {
+    downloadReport();
+    exit;
+}
+
+// Original request processing code
 $response = [
     'success' => false,
     'message' => '',
@@ -187,45 +207,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $response['auto_download'] = $auto_download;
 
             // Fetch user's email and name
-$user_query = $conn->prepare("SELECT email, CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
-$user_query->bind_param('i', $request['resident_id']);
-$user_query->execute();
-$user_result = $user_query->get_result();
-$user = $user_result->fetch_assoc();
-$user_query->close();
+            $user_query = $conn->prepare("SELECT email, CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
+            $user_query->bind_param('i', $request['resident_id']);
+            $user_query->execute();
+            $user_result = $user_query->get_result();
+            $user = $user_result->fetch_assoc();
+            $user_query->close();
 
-if ($user && !empty($user['email'])) {
-    $template = requestStatusEmail(
-        $user['full_name'],
-        $request['document_type'],
-        $status,
-        $notes,
-        $relativePdfPath ? (isset($_SERVER['REQUEST_SCHEME']) && isset($_SERVER['HTTP_HOST'])
-            ? $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/' . $relativePdfPath
-            : $relativePdfPath)
-        : null
-    );
+            if ($user && !empty($user['email'])) {
+                $template = requestStatusEmail(
+                    $user['full_name'],
+                    $request['document_type'],
+                    $status,
+                    $notes,
+                    $relativePdfPath ? (isset($_SERVER['REQUEST_SCHEME']) && isset($_SERVER['HTTP_HOST'])
+                        ? $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/' . $relativePdfPath
+                        : $relativePdfPath)
+                    : null
+                );
 
-    sendEmail($user['email'], $template['subject'], $template['message']);
-}
+                sendEmail($user['email'], $template['subject'], $template['message']);
+            }
 
         } else {
             $response['success'] = true;
-$response['message'] = 'Request disapproved successfully.';
+            $response['message'] = 'Request disapproved successfully.';
 
-// Send email for disapproval too
-$user_query = $conn->prepare("SELECT email, CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
-$user_query->bind_param('i', $request['resident_id']);
-$user_query->execute();
-$user_result = $user_query->get_result();
-$user = $user_result->fetch_assoc();
-$user_query->close();
+            // Send email for disapproval too
+            $user_query = $conn->prepare("SELECT email, CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
+            $user_query->bind_param('i', $request['resident_id']);
+            $user_query->execute();
+            $user_result = $user_query->get_result();
+            $user = $user_result->fetch_assoc();
+            $user_query->close();
 
-if ($user && !empty($user['email'])) {
-    $template = requestStatusEmail($user['full_name'], $request['document_type'], $status, $notes);
-    sendEmail($user['email'], $template['subject'], $template['message']);
-}
-
+            if ($user && !empty($user['email'])) {
+                $template = requestStatusEmail($user['full_name'], $request['document_type'], $status, $notes);
+                sendEmail($user['email'], $template['subject'], $template['message']);
+            }
         }
 
         $conn->commit();
@@ -239,4 +258,318 @@ if ($user && !empty($user['email'])) {
 }
 
 echo json_encode($response);
+
+// Enhanced Report Generation Functions
+function generateReport($conn) {
+    $report_type = $_POST['report_type'] ?? '';
+    $month = $_POST['month'] ?? '';
+    $year = $_POST['year'] ?? '';
+    $export_type = $_POST['export_type'] ?? 'excel';
+    
+    try {
+        $data = getReportDataInternal($conn, $report_type, $month, $year);
+        
+        // Generate file
+        $filename = "document_requests_" . $report_type . "_" . ($month ? $month . "_" : "") . $year . "_" . date('Y-m-d');
+        
+        if ($export_type === 'excel') {
+            $filename .= ".xlsx";
+            $filepath = generateExcelReport($data, $filename);
+        } else {
+            $filename .= ".csv";
+            $filepath = generateCSVReport($data, $filename);
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'filename' => $filename,
+            'filepath' => 'process_request.php?download_report=' . urlencode($filename),
+            'message' => 'Report generated successfully'
+        ]);
+        
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error generating report: ' . $e->getMessage()
+        ]);
+    }
+}
+
+function getReportData($conn) {
+    $report_type = $_POST['report_type'] ?? '';
+    $month = $_POST['month'] ?? '';
+    $year = $_POST['year'] ?? '';
+    
+    try {
+        $data = getReportDataInternal($conn, $report_type, $month, $year);
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $data,
+            'message' => 'Report data fetched successfully'
+        ]);
+        
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error fetching report data: ' . $e->getMessage()
+        ]);
+    }
+}
+
+function getReportDataInternal($conn, $report_type, $month, $year) {
+    // Main data query
+    $query = "
+        SELECT 
+            dr.id,
+            dt.document_type,
+            CONCAT(r.first_name, ' ', r.last_name) AS resident_name,
+            r.house_number,
+            r.purok,
+            r.contact_number,
+            dr.purpose,
+            dr.status,
+            dr.date_requested,
+            dr.date_processed,
+            dr.notes,
+            CONCAT(au.first_name, ' ', au.last_name) AS processed_by_name
+        FROM document_requests dr
+        LEFT JOIN document_types dt ON dr.document_type_id = dt.id
+        LEFT JOIN residents r ON dr.resident_id = r.id
+        LEFT JOIN admin_users au ON dr.processed_by = au.id
+        WHERE 1=1
+    ";
+    
+    $params = [];
+    $types = '';
+    
+    if ($report_type === 'monthly' && $month && $year) {
+        $query .= " AND YEAR(dr.date_requested) = ? AND MONTH(dr.date_requested) = ?";
+        $params[] = $year;
+        $params[] = $month;
+        $types .= 'ii';
+    } elseif ($report_type === 'yearly' && $year) {
+        $query .= " AND YEAR(dr.date_requested) = ?";
+        $params[] = $year;
+        $types .= 'i';
+    }
+    
+    $query .= " ORDER BY dr.date_requested DESC";
+    
+    $stmt = $conn->prepare($query);
+    
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $requests = $result->fetch_all(MYSQLI_ASSOC);
+    
+    // Get summary statistics
+    $summary_query = "
+        SELECT 
+            status,
+            COUNT(*) as count,
+            document_type,
+            COUNT(*) as type_count
+        FROM document_requests dr
+        LEFT JOIN document_types dt ON dr.document_type_id = dt.id
+        WHERE 1=1
+    ";
+    
+    if ($report_type === 'monthly' && $month && $year) {
+        $summary_query .= " AND YEAR(dr.date_requested) = ? AND MONTH(dr.date_requested) = ?";
+    } elseif ($report_type === 'yearly' && $year) {
+        $summary_query .= " AND YEAR(dr.date_requested) = ?";
+    }
+    
+    $summary_query .= " GROUP BY status, document_type";
+    
+    $summary_stmt = $conn->prepare($summary_query);
+    
+    if (!empty($params)) {
+        $summary_stmt->bind_param($types, ...$params);
+    }
+    
+    $summary_stmt->execute();
+    $summary_result = $summary_stmt->get_result();
+    $summary_data = $summary_result->fetch_all(MYSQLI_ASSOC);
+    
+    // Calculate totals
+    $status_counts = [
+        'Pending' => 0,
+        'Approved' => 0,
+        'Disapproved' => 0
+    ];
+    
+    $document_type_counts = [];
+    $total = 0;
+    
+    foreach ($summary_data as $row) {
+        $status_counts[$row['status']] = $row['count'];
+        $document_type_counts[$row['document_type']] = ($document_type_counts[$row['document_type']] ?? 0) + $row['count'];
+        $total += $row['count'];
+    }
+    
+    // Get monthly breakdown for yearly reports
+    $monthly_breakdown = [];
+    if ($report_type === 'yearly' && $year) {
+        $monthly_query = "
+            SELECT 
+                MONTH(date_requested) as month,
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = 'Approved' THEN 1 ELSE 0 END) as approved,
+                SUM(CASE WHEN status = 'Disapproved' THEN 1 ELSE 0 END) as disapproved
+            FROM document_requests 
+            WHERE YEAR(date_requested) = ?
+            GROUP BY MONTH(date_requested)
+            ORDER BY month
+        ";
+        
+        $monthly_stmt = $conn->prepare($monthly_query);
+        $monthly_stmt->bind_param('i', $year);
+        $monthly_stmt->execute();
+        $monthly_result = $monthly_stmt->get_result();
+        $monthly_breakdown = $monthly_result->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    return [
+        'requests' => $requests,
+        'summary' => [
+            'total' => $total,
+            'status_counts' => $status_counts,
+            'document_type_counts' => $document_type_counts
+        ],
+        'monthly_breakdown' => $monthly_breakdown,
+        'report_type' => $report_type,
+        'month' => $month,
+        'year' => $year
+    ];
+}
+
+function generateExcelReport($data, $filename) {
+    $filepath = __DIR__ . '/../temp/' . $filename;
+    
+    // Create temp directory if it doesn't exist
+    if (!is_dir(dirname($filepath))) {
+        mkdir(dirname($filepath), 0755, true);
+    }
+    
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    
+    // Set headers
+    $headers = [
+        'ID', 'Document Type', 'Resident Name', 'House No', 'Purok', 
+        'Contact Number', 'Purpose', 'Status', 'Date Requested', 
+        'Date Processed', 'Notes', 'Processed By'
+    ];
+    
+    $sheet->fromArray($headers, null, 'A1');
+    
+    // Add data
+    $rowData = [];
+    foreach ($data['requests'] as $record) {
+        $rowData[] = [
+            $record['id'],
+            $record['document_type'],
+            $record['resident_name'],
+            $record['house_number'],
+            $record['purok'],
+            $record['contact_number'],
+            $record['purpose'],
+            $record['status'],
+            $record['date_requested'],
+            $record['date_processed'],
+            $record['notes'],
+            $record['processed_by_name']
+        ];
+    }
+    
+    $sheet->fromArray($rowData, null, 'A2');
+    
+    // Auto-size columns
+    foreach (range('A', 'L') as $column) {
+        $sheet->getColumnDimension($column)->setAutoSize(true);
+    }
+    
+    // Style headers
+    $headerStyle = [
+        'font' => ['bold' => true],
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'E6E6FA']
+        ]
+    ];
+    $sheet->getStyle('A1:L1')->applyFromArray($headerStyle);
+    
+    $writer = new Xlsx($spreadsheet);
+    $writer->save($filepath);
+    
+    return $filepath;
+}
+
+function generateCSVReport($data, $filename) {
+    $filepath = __DIR__ . '/../temp/' . $filename;
+    
+    // Create temp directory if it doesn't exist
+    if (!is_dir(dirname($filepath))) {
+        mkdir(dirname($filepath), 0755, true);
+    }
+    
+    $fp = fopen($filepath, 'w');
+    
+    // Add headers
+    $headers = [
+        'ID', 'Document Type', 'Resident Name', 'House No', 'Purok', 
+        'Contact Number', 'Purpose', 'Status', 'Date Requested', 
+        'Date Processed', 'Notes', 'Processed By'
+    ];
+    fputcsv($fp, $headers);
+    
+    // Add data
+    foreach ($data['requests'] as $record) {
+        fputcsv($fp, [
+            $record['id'],
+            $record['document_type'],
+            $record['resident_name'],
+            $record['house_number'],
+            $record['purok'],
+            $record['contact_number'],
+            $record['purpose'],
+            $record['status'],
+            $record['date_requested'],
+            $record['date_processed'],
+            $record['notes'],
+            $record['processed_by_name']
+        ]);
+    }
+    
+    fclose($fp);
+    return $filepath;
+}
+
+function downloadReport() {
+    $filename = basename($_GET['download_report']);
+    $filepath = __DIR__ . '/../temp/' . $filename;
+    
+    if (file_exists($filepath)) {
+        if (pathinfo($filename, PATHINFO_EXTENSION) === 'xlsx') {
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        } else {
+            header('Content-Type: text/csv');
+        }
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . filesize($filepath));
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        readfile($filepath);
+        exit;
+    } else {
+        http_response_code(404);
+        echo "File not found.";
+    }
+}
 ?>
