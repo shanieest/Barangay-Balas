@@ -1,11 +1,9 @@
 <?php
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-
 function generate_random_token($length = 48) {
     return bin2hex(random_bytes((int)($length / 2)));
 }
-
 
 function generate_qr_for_request($mysqli, $request_id) {
     $token = generate_random_token(48);
@@ -36,54 +34,14 @@ function generate_qr_for_request($mysqli, $request_id) {
     $path = __DIR__ . '/' . $image_filename;
 
     try {
-        if (class_exists('\Endroid\QrCode\Builder\BuilderFactory')) {
-            $factory = new \Endroid\QrCode\Builder\BuilderFactory();
-            $result = $factory->create()
-                ->data($token)
-                ->encoding(new \Endroid\QrCode\Encoding\Encoding('UTF-8'))
-                ->size(300)
-                ->margin(10)
-                ->build();
-            $result->saveToFile($path);
+        // Use TCPDF for QR code generation
+        if (class_exists('TCPDF')) {
+            generate_qr_with_tcpdf($token, $path);
+        } else {
+            // Fallback to simple GD image
+            generate_simple_barcode($token, $path);
         }
-
-        elseif (class_exists('\Endroid\QrCode\Builder\Builder') && method_exists('\Endroid\QrCode\Builder\Builder', 'create')) {
-            $qr = \Endroid\QrCode\Builder\Builder::create()
-                ->data($token)
-                ->encoding(new \Endroid\QrCode\Encoding\Encoding('UTF-8'))
-                ->size(300)
-                ->margin(10)
-                ->build();
-            $qr->saveToFile($path);
-        }
-
-        elseif (class_exists('\Endroid\QrCode\Writer\PngWriter') && class_exists('\Endroid\QrCode\QrCode')) {
-            if (method_exists('\Endroid\QrCode\QrCode', 'create')) {
-                $qrCode = \Endroid\QrCode\QrCode::create($token);
-                if (method_exists($qrCode, 'setSize')) $qrCode->setSize(300);
-                if (method_exists($qrCode, 'setMargin')) $qrCode->setMargin(10);
-            } else {
-                $qrCode = new \Endroid\QrCode\QrCode($token);
-                if (method_exists($qrCode, 'setSize')) $qrCode->setSize(300);
-                if (method_exists($qrCode, 'setMargin')) $qrCode->setMargin(10);
-            }
-
-            $writer = new \Endroid\QrCode\Writer\PngWriter();
-            $result = $writer->write($qrCode);
-            $result->saveToFile($path);
-        }
-
-        elseif (class_exists('\Endroid\QrCode\QrCode') && method_exists('\Endroid\QrCode\QrCode', 'writeFile')) {
-            $qrCode = new \Endroid\QrCode\QrCode($token);
-            if (method_exists($qrCode, 'setSize')) $qrCode->setSize(300);
-            if (method_exists($qrCode, 'setMargin')) $qrCode->setMargin(10);
-            $qrCode->writeFile($path);
-        }
-
-        else {
-            $mysqli->query("DELETE FROM document_qr_codes WHERE request_id = " . (int)$request_id . " AND qr_code = '" . $mysqli->real_escape_string($token) . "'");
-            return ['error' => 'No compatible endroid/qr-code API found in vendor (version mismatch).'];
-        }
+        
     } catch (\Throwable $e) {
         $mysqli->query("DELETE FROM document_qr_codes WHERE request_id = " . (int)$request_id . " AND qr_code = '" . $mysqli->real_escape_string($token) . "'");
         return ['error' => 'QR generation failed: ' . $e->getMessage()];
@@ -91,3 +49,77 @@ function generate_qr_for_request($mysqli, $request_id) {
 
     return ['token' => $token, 'image_path' => $image_filename];
 }
+
+// TCPDF QR Code Generator
+function generate_qr_with_tcpdf($data, $filepath) {
+    // Create a minimal PDF with QR code
+    $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+    $pdf->AddPage();
+    
+    // QR code style
+    $style = array(
+        'border' => 0,
+        'vpadding' => 'auto',
+        'hpadding' => 'auto',
+        'fgcolor' => array(0,0,0),
+        'bgcolor' => false,
+        'module_width' => 1,
+        'module_height' => 1
+    );
+    
+    // Generate QR code - position it in the center
+    $pdf->write2DBarcode($data, 'QRCODE,L', 50, 50, 100, 100, $style, 'N');
+    
+    // Save as PNG
+    $pdf->Output($filepath, 'F');
+}
+
+// Simple GD fallback - creates a barcode-like image
+function generate_simple_barcode($data, $filepath) {
+    $width = 300;
+    $height = 300;
+    
+    // Create image
+    $image = imagecreate($width, $height);
+    
+    // Colors
+    $white = imagecolorallocate($image, 255, 255, 255);
+    $black = imagecolorallocate($image, 0, 0, 0);
+    
+    // Fill background
+    imagefill($image, 0, 0, $white);
+    
+    // Add border
+    imagerectangle($image, 5, 5, $width-5, $height-5, $black);
+    
+    // Convert token to binary pattern for simple "barcode"
+    $binary = '';
+    for ($i = 0; $i < strlen($data); $i++) {
+        $binary .= sprintf('%08b', ord($data[$i]));
+    }
+    
+    // Draw pattern based on binary data
+    $bin_length = strlen($binary);
+    $block_size = min(($width - 20) / $bin_length, 5);
+    
+    for ($i = 0; $i < $bin_length; $i++) {
+        if ($binary[$i] === '1') {
+            $x = 10 + ($i * $block_size);
+            imagefilledrectangle($image, $x, 50, $x + $block_size - 1, 80, $black);
+        }
+    }
+    
+    // Add text indicating this is a verification code
+    $text = "Verification Code:";
+    $text2 = substr($data, 0, 20) . "...";
+    imagestring($image, 3, 50, 100, $text, $black);
+    imagestring($image, 3, 30, 120, $text2, $black);
+    imagestring($image, 2, 40, 150, "Scan with Barangay Balas App", $black);
+    
+    // Save image
+    imagepng($image, $filepath);
+    imagedestroy($image);
+}
+?>

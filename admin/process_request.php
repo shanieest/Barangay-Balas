@@ -132,10 +132,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                 throw new Exception("Template not found: {$request['document_type']}");
             }
 
+            // === ADD DYNAMIC BASE URL FUNCTION ===
+            function getBaseUrl() {
+                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
+                $host = $_SERVER['HTTP_HOST'];
+                $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
+                
+                // Remove the admin part if present
+                $scriptPath = str_replace('/admin', '', $scriptPath);
+                $scriptPath = str_replace('/services/certificates', '', $scriptPath);
+                
+                return $protocol . '://' . $host . $scriptPath;
+            }
+
+            $baseUrl = getBaseUrl();
+            // === END BASE URL ===
+
             // Generate QR code
             $qr_code = bin2hex(random_bytes(16));
             $qrPath = $qrDir . "/qr_{$request_id}_{$timestamp}.png";
-            $verifyUrl = "verify.php?code={$qr_code}";
+
+            // Use dynamic base URL - CHANGED TO direct_pdf_verify.php
+            $verifyUrl = $baseUrl . "/services/certificates/direct_pdf_verify.php?token={$qr_code}";
+
             QRcode::png($verifyUrl, $qrPath, QR_ECLEVEL_L, 4);
 
             // Insert QR code record
