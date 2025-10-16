@@ -71,9 +71,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         $conn->begin_transaction();
 
         $stmt = $conn->prepare("
-            SELECT dr.*, dt.document_type
+            SELECT dr.*, dt.document_type, r.email as resident_email
             FROM document_requests dr
             JOIN document_types dt ON dr.document_type_id = dt.id
+            LEFT JOIN residents r ON dr.resident_id = r.id
             WHERE dr.id = ?
         ");
         $stmt->bind_param('i', $request_id);
@@ -206,44 +207,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $response['file_path'] = $relativePdfPath;
             $response['auto_download'] = $auto_download;
 
-            // Fetch user's email and name
-            $user_query = $conn->prepare("SELECT email, CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
-            $user_query->bind_param('i', $request['resident_id']);
-            $user_query->execute();
-            $user_result = $user_query->get_result();
-            $user = $user_result->fetch_assoc();
-            $user_query->close();
+            // Send email notification
+            if (!empty($request['resident_email'])) {
+                // Build the download URL with request ID
+                $downloadUrl = isset($_SERVER['REQUEST_SCHEME']) && isset($_SERVER['HTTP_HOST'])
+                    ? $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/barangay-balas/services/download-document.php?id=' . $request_id
+                    : '#';
 
-            if ($user && !empty($user['email'])) {
-                $template = requestStatusEmail(
-                    $user['full_name'],
-                    $request['document_type'],
-                    $status,
-                    $notes,
-                    $relativePdfPath ? (isset($_SERVER['REQUEST_SCHEME']) && isset($_SERVER['HTTP_HOST'])
-                        ? $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/' . $relativePdfPath
-                        : $relativePdfPath)
-                    : null
-                );
+                // Get resident's full name
+                $user_query = $conn->prepare("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
+                $user_query->bind_param('i', $request['resident_id']);
+                $user_query->execute();
+                $user_result = $user_query->get_result();
+                $user = $user_result->fetch_assoc();
+                $user_query->close();
 
-                sendEmail($user['email'], $template['subject'], $template['message']);
+                if ($user && !empty($user['full_name'])) {
+                    $template = requestStatusEmail(
+                        $user['full_name'],
+                        $request['document_type'],
+                        $status,
+                        $notes,
+                        $downloadUrl
+                    );
+
+                    sendEmail($request['resident_email'], $template['subject'], $template['message']);
+                    error_log("✓ Email sent to: " . $request['resident_email']);
+                }
+            } else {
+                error_log("⚠ No email found for resident ID: " . $request['resident_id']);
             }
 
         } else {
             $response['success'] = true;
             $response['message'] = 'Request disapproved successfully.';
 
-            // Send email for disapproval too
-            $user_query = $conn->prepare("SELECT email, CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
-            $user_query->bind_param('i', $request['resident_id']);
-            $user_query->execute();
-            $user_result = $user_query->get_result();
-            $user = $user_result->fetch_assoc();
-            $user_query->close();
+            // Send email for disapproval
+            if (!empty($request['resident_email'])) {
+                // Get resident's full name
+                $user_query = $conn->prepare("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
+                $user_query->bind_param('i', $request['resident_id']);
+                $user_query->execute();
+                $user_result = $user_query->get_result();
+                $user = $user_result->fetch_assoc();
+                $user_query->close();
 
-            if ($user && !empty($user['email'])) {
-                $template = requestStatusEmail($user['full_name'], $request['document_type'], $status, $notes);
-                sendEmail($user['email'], $template['subject'], $template['message']);
+                if ($user && !empty($user['full_name'])) {
+                    $template = requestStatusEmail(
+                        $user['full_name'],
+                        $request['document_type'],
+                        $status,
+                        $notes
+                    );
+
+                    sendEmail($request['resident_email'], $template['subject'], $template['message']);
+                    error_log("✓ Disapproval email sent to: " . $request['resident_email']);
+                }
             }
         }
 
@@ -400,7 +419,8 @@ function getReportDataInternal($conn, $report_type, $month, $year) {
     $status_counts = [
         'Pending' => 0,
         'Approved' => 0,
-        'Disapproved' => 0
+        'Disapproved' => 0,
+        'Cancelled' => 0
     ];
     
     $document_type_counts = [];
@@ -421,7 +441,8 @@ function getReportDataInternal($conn, $report_type, $month, $year) {
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending,
                 SUM(CASE WHEN status = 'Approved' THEN 1 ELSE 0 END) as approved,
-                SUM(CASE WHEN status = 'Disapproved' THEN 1 ELSE 0 END) as disapproved
+                SUM(CASE WHEN status = 'Disapproved' THEN 1 ELSE 0 END) as disapproved,
+                SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled
             FROM document_requests 
             WHERE YEAR(date_requested) = ?
             GROUP BY MONTH(date_requested)

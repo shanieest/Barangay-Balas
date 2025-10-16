@@ -75,11 +75,6 @@ if (isset($_SESSION['login_error'])) {
                                 <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Enter your password" required>
                             </div>
                         </div>
-                        <div class="form-group form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
-                            <label class="form-check-label" for="rememberMe">Remember me</label>
-                            <a href="forgot-password.php" class="float-right" style="color: var(--primary-red);">Forgot password?</a>
-                        </div>
                         <button type="submit" class="btn btn-auth" id="loginBtn">
                             <i class="fas fa-sign-in-alt"></i> Login
                         </button>

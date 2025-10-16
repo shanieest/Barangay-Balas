@@ -303,7 +303,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                               <i class="fas fa-eye"></i> View
                             </button>
                             <?php if ($doc_tab === 'approved' && !empty($row['document_file_path'])): ?>
-                              <a href="download-document.php?id=<?= (int)$row['id'] ?>" class="btn btn-sm btn-primary mb-1">
+                              <a href="/barangay-balas/services/download-document.php?id=<?= (int)$row['id'] ?>" class="btn btn-sm btn-primary mb-1">
                                   <i class="fas fa-download"></i> Download
                               </a>
                             <?php endif; ?>

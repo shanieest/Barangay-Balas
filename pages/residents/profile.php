@@ -127,7 +127,7 @@ if (empty($_SESSION['csrf_token'])) {
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Civil Status <span class="text-danger">*</span></label>
-                                            <select class="form-select" name="civil_status" required>
+                                            <select class="form-select" name="civil_status">
                                                 <option value="">Select Status</option>
                                                 <option value="Single" <?= ($profile['civil_status'] ?? '') == 'Single' ? 'selected' : '' ?>>Single</option>
                                                 <option value="Married" <?= ($profile['civil_status'] ?? '') == 'Married' ? 'selected' : '' ?>>Married</option>
@@ -155,15 +155,21 @@ if (empty($_SESSION['csrf_token'])) {
                                     
                                     <!-- Address Information -->
                                     <div class="section-divider">
-                                        <div class="section-title"><i class="fas fa-home me-2"></i>Address Information</div>
+                                        <div class="section-title">
+                                            <i class="fas fa-home me-2"></i>Address Information
+                                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="toggleAddressEdit">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </button>
+                                        </div>
                                         <div class="row mb-3">
                                             <div class="col-md-4">
                                                 <label class="form-label">House Number <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" name="house_number" value="<?= htmlspecialchars($profile['house_number'] ?? '') ?>" required>
+                                                <input type="text" class="form-control" name="house_number" id="houseNumberInput" 
+                                                    value="<?= htmlspecialchars($profile['house_number'] ?? '') ?>" required readonly>
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">Purok <span class="text-danger">*</span></label>
-                                                <select class="form-select" name="purok" id="purokSelect" required>
+                                                <select class="form-select" name="purok" id="purokSelect" required readonly>
                                                     <option value="">Select Purok</option>
                                                     <option value="1" <?= ($profile['purok'] ?? '') == '1' ? 'selected' : '' ?>>Purok 1</option>
                                                     <option value="2" <?= ($profile['purok'] ?? '') == '2' ? 'selected' : '' ?>>Purok 2</option>
@@ -174,18 +180,18 @@ if (empty($_SESSION['csrf_token'])) {
                                                     <option value="7" <?= ($profile['purok'] ?? '') == '7' ? 'selected' : '' ?>>Purok 7</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label">Resident Status</label>
-                                                <select class="form-select" name="resident_status">
-                                                    <option value="Active" <?= ($profile['resident_status'] ?? 'Active') == 'Active' ? 'selected' : '' ?>>Active</option>
-                                                    <option value="Inactive" <?= ($profile['resident_status'] ?? '') == 'Inactive' ? 'selected' : '' ?>>Inactive</option>
-                                                </select>
-                                            </div>
                                         </div>
                                         
                                         <div class="mb-3">
                                             <label class="form-label">Complete Address <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="address" id="addressInput" value="<?= htmlspecialchars($profile['address'] ?? '') ?>" required>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" name="address" id="addressInput" 
+                                                    value="<?= htmlspecialchars($profile['address'] ?? '') ?>" required readonly>
+                                            
+                                            </div>
+                                            <div class="form-text text-muted">
+                                                <small>Address is automatically generated. Edit house number and purok to update.</small>
+                                            </div>
                                         </div>
                                     </div>
                                     

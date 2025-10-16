@@ -67,7 +67,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a href="download-document.php" class="btn btn-primary" id="downloadDocumentBtn" style="display:none;">
+                <a href="/barangay-balas/services/download-document.php" class="btn btn-primary" id="downloadDocumentBtn" style="display:none;">
                     <i class="fas fa-download me-1"></i> Download Document
                 </a>
             </div>

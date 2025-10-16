@@ -7,6 +7,7 @@ $documentRequests = [];
 $serviceReservations = [];
 
 if ($userId) {
+    // Get document requests
     $docQuery = "SELECT dr.*, dt.document_type AS document_name 
                  FROM document_requests dr 
                  LEFT JOIN document_types dt ON dr.document_type_id = dt.id 
@@ -19,6 +20,7 @@ if ($userId) {
     $documentRequests = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
+    // Get service reservations
     $resQuery = "SELECT sr.id, sr.date_requested, sr.reservation_date_start, 
                     sr.duration_days, sr.purpose, sr.status, sr.resident_name,
                     GROUP_CONCAT(DISTINCT st.service_name ORDER BY st.service_name SEPARATOR ', ') AS services
@@ -51,8 +53,6 @@ if ($userId) {
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="../../assets/css/services-history.css">
-
-
 </head>
 <body>
 <div class="wrapper">
@@ -89,6 +89,7 @@ if ($userId) {
                                     <option value="Processing">Processing</option>
                                     <option value="Released">Released</option>
                                     <option value="Disapproved">Disapproved</option>
+                                    <option value="Cancelled">Cancelled</option>
                                 </select>
                             </div>
                         </div>
@@ -113,39 +114,51 @@ if ($userId) {
                                                     'Pending' => 'bg-warning text-dark',
                                                     'Approved', 'Processing' => 'bg-info',
                                                     'Released' => 'bg-success',
-                                                    'Cancelled' => 'bg-danger',
+                                                    'Cancelled' => 'bg-secondary',
                                                     'Disapproved' => 'bg-danger',
                                                     default => 'bg-secondary'
                                                 };
                                                 ?>
                                                 <tr data-status="<?= strtolower($status) ?>">
-                                                    <td><?= date("Y-m-d", strtotime($request['date_requested'])) ?></td>
+                                                    <td><?= date("M j, Y", strtotime($request['date_requested'])) ?></td>
                                                     <td><?= htmlspecialchars($request['document_name'] ?? 'Unknown Document') ?></td>
                                                     <td><?= htmlspecialchars($request['purpose'] ?? '') ?></td>
                                                     <td>
                                                         <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($status) ?></span>
                                                     </td>
                                                     <td>
-                                                        <?php if ($status === 'Released' || $status === 'Approved' || $status === 'Processing'): ?>
+                                                        <?php if ($status === 'Released' || $status === 'Approved'): ?>
                                                             <button class="btn btn-sm btn-outline-info view-document" 
                                                                     data-id="<?= $request['id'] ?>" 
                                                                     data-name="<?= htmlspecialchars($request['document_name']) ?>"
                                                                     data-status="<?= htmlspecialchars($status) ?>">
                                                                 <i class="fas fa-eye me-1"></i>View Status
                                                             </button>
+                                                            <?php if (!empty($request['document_file_path'])): ?>
+                                                                <a href="/barangay-balas/services/download-document.php?id=<?= $request['id'] ?>" 
+                                                                   class="btn btn-sm btn-outline-success" 
+                                                                   target="_blank">
+                                                                    <i class="fas fa-download me-1"></i>Download
+                                                                </a>
+                                                            <?php endif; ?>
                                                         <?php elseif ($status === 'Pending'): ?>
                                                             <button class="btn btn-sm btn-outline-danger cancel-request" data-id="<?= $request['id'] ?>">
                                                                 <i class="fas fa-times me-1"></i>Cancel
                                                             </button>
                                                         <?php else: ?>
-                                                            <button class="btn btn-sm btn-outline-secondary" disabled>No Actions</button>
+                                                            <button class="btn btn-sm btn-outline-secondary view-document" 
+                                                                    data-id="<?= $request['id'] ?>" 
+                                                                    data-name="<?= htmlspecialchars($request['document_name']) ?>"
+                                                                    data-status="<?= htmlspecialchars($status) ?>">
+                                                                <i class="fas fa-eye me-1"></i>View Details
+                                                            </button>
                                                         <?php endif; ?>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php else: ?>
                                             <tr>
-                                                <td colspan="6" class="text-center text-muted py-4">
+                                                <td colspan="5" class="text-center text-muted py-4">
                                                     <i class="fas fa-folder-open fa-2x mb-3 d-block"></i>
                                                     No document requests found. <a href="services.php" class="text-primary">Make your first request</a>
                                                 </td>
@@ -199,14 +212,14 @@ if ($userId) {
                                                     'Approved' => 'bg-info',
                                                     'In Progress' => 'bg-primary',
                                                     'Completed' => 'bg-success',
-                                                    'Cancelled', 'Rejected' => 'bg-danger',
+                                                    'Cancelled', 'Rejected', 'Disapproved' => 'bg-danger',
                                                     default => 'bg-secondary'
                                                 };
                                                 ?>
                                                 <tr data-status="<?= strtolower(str_replace(' ', '-', $status)) ?>">
-                                                    <td><?= date("Y-m-d", strtotime($reservation['date_requested'])) ?></td>
+                                                    <td><?= date("M j, Y", strtotime($reservation['date_requested'])) ?></td>
                                                     <td><?= htmlspecialchars($reservation['services'] ?? 'No services listed') ?></td>
-                                                    <td><?= date("Y-m-d", strtotime($reservation['reservation_date_start'])) ?></td>
+                                                    <td><?= date("M j, Y", strtotime($reservation['reservation_date_start'])) ?></td>
                                                     <td><?= htmlspecialchars($reservation['duration_days']) ?> day(s)</td>
                                                     <td><?= htmlspecialchars($reservation['purpose'] ?? '') ?></td>
                                                     <td>
@@ -220,7 +233,8 @@ if ($userId) {
                                                                 data-name="<?= htmlspecialchars($reservation['services']) ?>"
                                                                 data-status="<?= htmlspecialchars($status) ?>"
                                                                 data-reservation-date="<?= date("Y-m-d", strtotime($reservation['reservation_date_start'])) ?>"
-                                                                data-duration="<?= htmlspecialchars($reservation['duration_days']) ?>">
+                                                                data-duration="<?= htmlspecialchars($reservation['duration_days']) ?>"
+                                                                data-purpose="<?= htmlspecialchars($reservation['purpose'] ?? '') ?>">
                                                             <i class="fas fa-info-circle me-1"></i>View Details
                                                         </button>
                                                         <?php if ($status === 'Pending'): ?>
@@ -248,7 +262,10 @@ if ($userId) {
             </div>
         </div>
     </div>
-     <?php include '../modals/servicesHistoryModal.php'; ?>
+</div>
+
+<!-- Modals -->
+<?php include '../modals/servicesHistoryModal.php'; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../assets/js/servicesHistory.js"></script>
