@@ -397,7 +397,7 @@ function addAdminDownloadNotice() {
     if (!sessionStorage.getItem('adminDownloadNoticeShown')) {
         setTimeout(() => {
             showAlert(
-                '<i class="fas fa-info-circle me-2"></i><strong>Admin Note:</strong> Downloaded documents are clean copies without watermarks. Residents receive watermarked copies with "TO GET HARD COPY, GO TO OFFICE" notice.',
+                '<i class="fas fa-info-circle me-2"></i><strong>Admin Note:</strong> Downloaded documents are clean copies without watermarks. Residents receive watermarked copies for authenticity.',
                 'info',
                 8000
             );

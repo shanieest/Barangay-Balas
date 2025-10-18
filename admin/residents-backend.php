@@ -76,7 +76,7 @@ function handleListResidents() {
 
     $offset = ($page - 1) * $per_page;
 
-    // ✅ UPDATED: Include archived status in query
+    //  Include archived status in query
     $query = "SELECT r.*, 
               ra.account_status, 
               ra.is_archived,
@@ -99,7 +99,7 @@ function handleListResidents() {
         $params[] = $id;
         $types .= 'i';
     } else {
-        // ✅ UPDATED: Only show non-archived approved accounts
+        //  Only show non-archived approved accounts
         $where[] = "ra.account_status = 'Approved' AND (ra.is_archived = 0 OR ra.is_archived IS NULL)";
         
         if ($search) {
@@ -205,11 +205,11 @@ function handleAccountRequests() {
     $types = '';
 
     if ($id) {
-        // ✅ Accept either account_id or resident_id
-        $where[] = "(ra.id = ? OR r.id = ?)";
+        // ✅ FIX: Use ONLY account_id (ra.id) for lookups
+        // This ensures we're always querying by the correct ID type
+        $where[] = "ra.id = ?";
         $params[] = $id;
-        $params[] = $id;
-        $types .= 'ii';
+        $types .= 'i';
     } else {
         if ($status !== 'all') {
             $where[] = "ra.account_status = ?";
@@ -263,11 +263,19 @@ function handleAccountRequests() {
         $requests[] = $row;
     }
 
-    if (empty($requests)) {
+    if (empty($requests) && $id) {
+        // ✅ More detailed error message for debugging
         $response['success'] = false;
-        $response['message'] = $id 
-            ? "No account request found for ID $id"
-            : "No account requests found";
+        $response['message'] = "No account request found with account ID: $id";
+        $response['debug'] = [
+            'searched_id' => $id,
+            'query_type' => 'account_id',
+            'hint' => 'Make sure you are passing the account_id (ra.id), not the resident_id (r.id)'
+        ];
+        $response['data'] = [];
+    } else if (empty($requests)) {
+        $response['success'] = false;
+        $response['message'] = "No account requests found";
         $response['data'] = [];
     } else {
         $response['success'] = true;
@@ -577,67 +585,131 @@ function handleDeleteResident() {
 function handleProcessRequest() {
     global $conn, $response;
     
+    // DEBUG: Log everything
+    error_log('=== PROCESS REQUEST DEBUG START ===');
+    error_log('POST data: ' . print_r($_POST, true));
+    
     $id = intval($_POST['id'] ?? 0);
     $action = $_POST['action'] ?? '';
     $note = $_POST['note'] ?? '';
 
+    error_log("Parsed values - ID: $id, Action: $action, Note: $note");
+    
     if (!$id || !$action) {
-        throw new Exception("Request ID and action are required");
+        error_log("ERROR: Missing ID or Action");
+        $response['success'] = false;
+        $response['message'] = "Request ID and action are required. Received ID: $id, Action: $action";
+        echo json_encode($response);
+        exit;
     }
 
     $user_id = intval(getUserId());
     $status = $action === 'approve' ? 'Approved' : 'Disapproved';
 
-    error_log("Processing request id=$id action=$action user_id=$user_id note=$note");
+    error_log("Processing: user_id=$user_id, status=$status");
 
-    // ✅ Update account status
-    $stmt = $conn->prepare("UPDATE resident_accounts SET 
-        account_status = ?, processed_by = ?, date_processed = NOW(), notes = ?
-        WHERE id = ?");
-    if (!$stmt) {
-        throw new Exception("Database prepare failed: " . $conn->error);
-    }
-
-    $stmt->bind_param("sisi", $status, $user_id, $note, $id);
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to process request: " . $stmt->error);
-    }
-
-    // ✅ Fetch resident details for email
-    $query = "SELECT r.first_name, r.last_name, r.email 
-              FROM residents r 
-              JOIN resident_accounts ra ON r.id = ra.resident_id 
-              WHERE ra.id = ?";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $resident = $result->fetch_assoc();
-
-    if ($resident && !empty($resident['email'])) {
-        require_once __DIR__ . '/../config/emailer.php';
-        require_once __DIR__ . '/../email_templates/account_status.php';
-
-        $residentName = $resident['first_name'] . ' ' . $resident['last_name'];
-        $email = accountStatusEmail($residentName, $status, $note);
-
-        $sendResult = sendEmail($resident['email'], $email['subject'], $email['message']);
-
-        if (!$sendResult) {
-            error_log("Email failed to send to " . $resident['email']);
-        } else {
-            error_log("Email sent successfully to " . $resident['email']);
-        }
-    }
-
-    $response['success'] = true;
-    $response['message'] = "Account {$status} successfully";
-
-    if (ob_get_length()) ob_clean();
-        header('Content-Type: application/json');
+    // DEBUG: Check what record we're updating
+    $checkStmt = $conn->prepare("SELECT id, resident_id, account_status FROM resident_accounts WHERE id = ?");
+    $checkStmt->bind_param("i", $id);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+    
+    if ($checkResult->num_rows === 0) {
+        error_log("ERROR: No account found with ID: $id");
+        $response['success'] = false;
+        $response['message'] = "No account request found with ID: $id";
         echo json_encode($response);
         exit;
+    }
+    
+    $accountData = $checkResult->fetch_assoc();
+    error_log("Found account to update: " . print_r($accountData, true));
 
+    // Start transaction
+    $conn->begin_transaction();
+
+    try {
+        // Update account status
+        $stmt = $conn->prepare("UPDATE resident_accounts SET 
+            account_status = ?, processed_by = ?, date_processed = NOW(), notes = ?
+            WHERE id = ?");
+        
+        if (!$stmt) {
+            throw new Exception("Database prepare failed: " . $conn->error);
+        }
+
+        $stmt->bind_param("sisi", $status, $user_id, $note, $id);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to process request: " . $stmt->error);
+        }
+
+        $affectedRows = $conn->affected_rows;
+        error_log("Update executed. Affected rows: $affectedRows");
+
+        // Verify the update
+        $verifyStmt = $conn->prepare("SELECT account_status FROM resident_accounts WHERE id = ?");
+        $verifyStmt->bind_param("i", $id);
+        $verifyStmt->execute();
+        $verifyResult = $verifyStmt->get_result();
+        $verifiedRow = $verifyResult->fetch_assoc();
+        
+        error_log("VERIFICATION: Account ID $id now has status: " . $verifiedRow['account_status']);
+
+        // Commit transaction
+        $conn->commit();
+        error_log("Transaction committed successfully");
+
+        // Fetch resident details for email
+        $query = "SELECT r.first_name, r.last_name, r.email 
+                  FROM residents r 
+                  JOIN resident_accounts ra ON r.id = ra.resident_id 
+                  WHERE ra.id = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $resident = $result->fetch_assoc();
+
+        if ($resident && !empty($resident['email'])) {
+            require_once __DIR__ . '/../config/emailer.php';
+            require_once __DIR__ . '/../email_templates/account_status.php';
+
+            $residentName = $resident['first_name'] . ' ' . $resident['last_name'];
+            $email = accountStatusEmail($residentName, $status, $note);
+
+            $sendResult = sendEmail($resident['email'], $email['subject'], $email['message']);
+
+            if (!$sendResult) {
+                error_log("Email failed to send to " . $resident['email']);
+            } else {
+                error_log("Email sent successfully to " . $resident['email']);
+            }
+        }
+
+        $response['success'] = true;
+        $response['message'] = "Account {$status} successfully";
+        $response['debug'] = [
+            'affected_rows' => $affectedRows,
+            'new_status' => $verifiedRow['account_status'],
+            'account_id' => $id
+        ];
+
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $conn->rollback();
+        error_log('Transaction error: ' . $e->getMessage());
+        $response['success'] = false;
+        $response['message'] = $e->getMessage();
+    }
+    
+    error_log('=== PROCESS REQUEST DEBUG END ===');
+    error_log('Response: ' . json_encode($response));
+
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
 }
 
 function handleGetResidentHistory() {

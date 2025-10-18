@@ -87,7 +87,6 @@ if ($userId) {
                                     <option value="Pending">Pending</option>
                                     <option value="Approved">Approved</option>
                                     <option value="Processing">Processing</option>
-                                    <option value="Released">Released</option>
                                     <option value="Disapproved">Disapproved</option>
                                     <option value="Cancelled">Cancelled</option>
                                 </select>

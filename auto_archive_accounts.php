@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . 'config/emailer.php';
+require_once 'config/emailer.php';
 
 
 // Enable error reporting for debugging
@@ -83,7 +83,7 @@ try {
             // Start transaction
             $conn->begin_transaction();
             
-            // Archive the account - FIXED SQL SYNTAX
+            // Archive the account 
             $archiveStmt = $conn->prepare("UPDATE resident_accounts 
                                           SET is_archived = 1, 
                                               archived_at = NOW(),

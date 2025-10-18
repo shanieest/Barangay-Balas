@@ -238,7 +238,7 @@ function formatResidentHistory(history) {
     return items.join('');
 }
 
-// FIXED: Renamed and improved event listener attachment
+// event listener attachment
 function attachButtonEventListeners() {
     console.log('Attaching button event listeners...');
     
@@ -408,6 +408,15 @@ function createRequestRow(request, index) {
     // Calculate row number based on current page
     const rowNumber = (currentRequestPage - 1) * perPage + index + 1;
     
+    // ✅ FIX: Always use account_id (ra.id) for actions
+    const accountId = request.account_id || request.id;
+    
+    console.log('Creating row for request:', {
+        resident_id: request.id,
+        account_id: request.account_id,
+        using_id: accountId
+    });
+    
     // Build row HTML
     let rowHTML = `
         <td>${rowNumber}</td>
@@ -421,19 +430,19 @@ function createRequestRow(request, index) {
     
     // Only add actions column if user can modify
     if (window.USER_CAN_MODIFY) {
-        // Action buttons (view for all, approve/reject only for pending requests)
+        // ✅ Use accountId for all buttons
         const actionButtons = request.account_status === 'Pending' ? `
-            <button class="btn btn-sm btn-success approve-request-btn" data-id="${request.id}">
+            <button class="btn btn-sm btn-success approve-request-btn" data-id="${accountId}" data-account-id="${accountId}">
                 <i class="fas fa-check"></i>
             </button>
-            <button class="btn btn-sm btn-danger reject-request-btn" data-id="${request.id}">
+            <button class="btn btn-sm btn-danger reject-request-btn" data-id="${accountId}" data-account-id="${accountId}">
                 <i class="fas fa-times"></i>
             </button>
         ` : '';
         
         rowHTML += `
             <td>
-                <button class="btn btn-sm btn-info view-request-btn" data-id="${request.id}">
+                <button class="btn btn-sm btn-info view-request-btn" data-id="${accountId}" data-account-id="${accountId}">
                     <i class="fas fa-eye"></i>
                 </button>
                 ${actionButtons}
@@ -804,6 +813,9 @@ function viewRequest(id) {
         return;
     }
 
+    console.log('=== VIEW REQUEST DEBUG ===');
+    console.log('Viewing request with ID:', id);
+
     fetch(`residents-backend.php?action=account_requests&id=${id}`)
         .then(response => {
             if (!response.ok) {
@@ -825,6 +837,10 @@ function viewRequest(id) {
             console.log('Parsed data:', data);
 
             if (!data.success) {
+                // ✅ Show debug info if available
+                if (data.debug) {
+                    console.error('Debug info:', data.debug);
+                }
                 throw new Error(data.message || 'Failed to load request');
             }
 
@@ -838,6 +854,7 @@ function viewRequest(id) {
             }
 
             if (request) {
+                console.log('Request data loaded:', request);
                 displayRequestModal(request);
             } else {
                 throw new Error('No request data received');
@@ -886,8 +903,15 @@ function displayRequestModal(request) {
         }
     }
 
-    const requestId = request.account_id || request.id;
-    const formattedRequestId = requestId ? `${requestId.toString().padStart(6, '0')}` : 'N/A';
+    // ✅ FIX: Properly identify account_id
+    const accountId = request.account_id; // This should always exist in the query result
+    const formattedRequestId = accountId ? `${accountId.toString().padStart(6, '0')}` : 'N/A';
+    
+    console.log('Account ID for display:', {
+        account_id: request.account_id,
+        resident_id: request.id,
+        using: accountId
+    });
 
     updateModalText(viewModal, '.request-name', fullName);
     updateModalText(viewModal, '.request-id', `Request ID: ${formattedRequestId}`);
@@ -920,7 +944,6 @@ function displayRequestModal(request) {
     }
     updateModalImage(viewModal, '.request-photo', photoPath);
 
-    // Handle BOTH valid ID paths for requests
     displayIdPhotos(
         viewModal, 
         request.valid_id_path, 
@@ -951,16 +974,20 @@ function displayRequestModal(request) {
     
     if (approveBtn && rejectBtn) {
         const isPending = accountStatus === 'Pending';
-        const buttonRequestId = request.account_id || request.id;
         
-        approveBtn.dataset.id = buttonRequestId;
-        rejectBtn.dataset.id = buttonRequestId;
+        // ✅ FIX: Use account_id for button data attributes
+        approveBtn.dataset.id = accountId;
+        rejectBtn.dataset.id = accountId;
         
         approveBtn.style.display = isPending ? 'inline-block' : 'none';
         rejectBtn.style.display = isPending ? 'inline-block' : 'none';
+        
+        console.log('Button IDs set to:', accountId);
     }
 
-    currentRequestId = request.account_id || request.id;
+    // ✅ Store account_id globally
+    currentRequestId = accountId;
+    
     const modal = new bootstrap.Modal(viewModal);
     modal.show();
 }

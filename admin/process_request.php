@@ -31,6 +31,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['download_report'])) {
     exit;
 }
 
+// Function to format date as "18th day of October 2025"
+function formatIssuedDate($date = null) {
+    if ($date === null) {
+        $date = time();
+    }
+    
+    if (is_string($date)) {
+        $date = strtotime($date);
+    }
+    
+    $day = date('j', $date);
+    $month = date('F', $date);
+    $year = date('Y', $date);
+    
+    // Add ordinal suffix
+    if ($day == 1 || $day == 21 || $day == 31) {
+        $ordinal = 'st';
+    } elseif ($day == 2 || $day == 22) {
+        $ordinal = 'nd';
+    } elseif ($day == 3 || $day == 23) {
+        $ordinal = 'rd';
+    } else {
+        $ordinal = 'th';
+    }
+    
+    return "Issued this {$day}{$ordinal} day of {$month} {$year}";
+}
+
 // Original request processing code
 $response = [
     'success' => false,
@@ -165,12 +193,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             }
             $stmt->close();
 
+            // Get the current date for issued date (using the processing date)
+            $currentDate = date('Y-m-d H:i:s');
+            $issuedDateFormatted = formatIssuedDate($currentDate);
+
             // Process template
             $templateProcessor = new TemplateProcessor($templatePath);
             $templateProcessor->setValue('first_name', htmlspecialchars($request['first_name']));
             $templateProcessor->setValue('middle_name', htmlspecialchars($request['middle_name'] ?? ''));
             $templateProcessor->setValue('last_name', htmlspecialchars($request['last_name']));
             $templateProcessor->setValue('date', date('F j, Y'));
+            $templateProcessor->setValue('issued_date', $issuedDateFormatted); // NEW: Add formatted issued date
             $templateProcessor->setValue('sex', htmlspecialchars($request['sex'] ?? ''));
             $templateProcessor->setValue('birthdate', htmlspecialchars($request['birthdate'] ?? ''));
             $templateProcessor->setValue('age', htmlspecialchars($request['age'] ?? ''));

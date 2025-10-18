@@ -642,7 +642,7 @@
 
     <style>
 .id-photo-2-container {
-    display: block; /* Will be controlled by JavaScript */
+    display: block; /*  controlled by JavaScript */
 }
 
 .id-photo-2-container img {

@@ -155,17 +155,30 @@ document.getElementById('serviceStatusFilter').addEventListener('change', functi
 
 // Download notice for documents
 document.addEventListener('click', function(e) {
-    if (e.target.closest('a[href*="/barangay-balas/services/download-document.php"]')) {
+    const link = e.target.closest('a[href*="/barangay-balas/services/download-document.php"]');
+    if (link) {
         e.preventDefault();
-        const downloadUrl = e.target.closest('a').href;
-        
+        const downloadUrl = link.href;
+
         // Set the download URL for the proceed button
-        document.getElementById('proceedDownload').href = downloadUrl;
-        
+        const proceedBtn = document.getElementById('proceedDownload');
+        proceedBtn.href = downloadUrl;
+
         // Show the notice modal
-        new bootstrap.Modal(document.getElementById('downloadNoticeModal')).show();
+        const modal = new bootstrap.Modal(document.getElementById('downloadNoticeModal'));
+        modal.show();
+
+        // Ensure clicking proceed closes modal before navigation
+        proceedBtn.onclick = function(ev) {
+            ev.preventDefault();
+            modal.hide();
+            setTimeout(() => {
+                window.location.href = downloadUrl;
+            }, 400); // small delay for modal close animation
+        };
     }
 });
+
 
 // Tab persistence
 document.addEventListener('DOMContentLoaded', function() {

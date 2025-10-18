@@ -762,3 +762,356 @@ Stack trace:
 [14-Oct-2025 22:43:48 Asia/Manila] Final values - birthdate: 2003-11-21, age: 21, createAccount: true
 [14-Oct-2025 22:43:48 Asia/Manila] Resident inserted with ID: 65
 [14-Oct-2025 22:43:48 Asia/Manila] Account created for resident ID: 65
+[18-Oct-2025 12:28:12 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 12:28:14 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 12:31:37 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 12:31:45 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:20:35 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:21:12 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:25:30 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:37:28 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:39:55 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:41:31 Asia/Manila] Processing request id=73 action=reject user_id=22 note=ssa
+[18-Oct-2025 13:41:55 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:51:08 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:51:28 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:51:43 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:51:51 Asia/Manila] Processing request id=69 action=approve user_id=22 note=
+[18-Oct-2025 13:51:55 Asia/Manila] Email sent successfully to sofia.lopez@test.com
+[18-Oct-2025 13:53:13 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:54:14 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:54:44 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:54:53 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 13:55:49 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 14:10:11 Asia/Manila] === PROCESS REQUEST DEBUG ===
+[18-Oct-2025 14:10:11 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:10:11 Asia/Manila] GET data: Array
+(
+    [action] => process_request
+)
+
+[18-Oct-2025 14:10:11 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:10:11 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 14:10:36 Asia/Manila] === PROCESS REQUEST DEBUG ===
+[18-Oct-2025 14:10:36 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:10:36 Asia/Manila] GET data: Array
+(
+    [action] => process_request
+)
+
+[18-Oct-2025 14:10:36 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:10:36 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 14:20:24 Asia/Manila] === PROCESS REQUEST DEBUG ===
+[18-Oct-2025 14:20:24 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:20:24 Asia/Manila] GET data: Array
+(
+    [action] => process_request
+)
+
+[18-Oct-2025 14:20:24 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:20:24 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 14:23:27 Asia/Manila] === PROCESS REQUEST DEBUG ===
+[18-Oct-2025 14:23:27 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:23:27 Asia/Manila] GET data: Array
+(
+    [action] => process_request
+)
+
+[18-Oct-2025 14:23:27 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:23:27 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 14:27:01 Asia/Manila] === PROCESS REQUEST DEBUG ===
+[18-Oct-2025 14:27:01 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:27:01 Asia/Manila] GET data: Array
+(
+    [action] => process_request
+)
+
+[18-Oct-2025 14:27:01 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:27:01 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 14:27:39 Asia/Manila] === PROCESS REQUEST DEBUG ===
+[18-Oct-2025 14:27:39 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:27:39 Asia/Manila] GET data: Array
+(
+    [action] => process_request
+)
+
+[18-Oct-2025 14:27:39 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:27:39 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 14:28:21 Asia/Manila] === PROCESS REQUEST DEBUG ===
+[18-Oct-2025 14:28:21 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:28:21 Asia/Manila] GET data: Array
+(
+    [action] => process_request
+)
+
+[18-Oct-2025 14:28:21 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:28:21 Asia/Manila] Processing request id=73 action=approve user_id=22 note=
+[18-Oct-2025 14:30:14 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:30:14 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:30:14 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:30:14 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:30:14 Asia/Manila] ERROR: No account found with ID: 73
+[18-Oct-2025 14:30:30 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:30:30 Asia/Manila] POST data: Array
+(
+    [id] => 69
+    [action] => approve
+)
+
+[18-Oct-2025 14:30:30 Asia/Manila] Parsed values - ID: 69, Action: approve, Note: 
+[18-Oct-2025 14:30:30 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:30:30 Asia/Manila] Found account to update: Array
+(
+    [id] => 69
+    [resident_id] => 73
+    [account_status] => Pending
+)
+
+[18-Oct-2025 14:30:30 Asia/Manila] Update executed. Affected rows: 1
+[18-Oct-2025 14:30:30 Asia/Manila] VERIFICATION: Account ID 69 now has status: Approved
+[18-Oct-2025 14:30:30 Asia/Manila] Transaction committed successfully
+[18-Oct-2025 14:30:35 Asia/Manila] Email sent successfully to sofia.lopez@test.com
+[18-Oct-2025 14:30:35 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[18-Oct-2025 14:30:35 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":69}}
+[18-Oct-2025 14:32:19 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:32:19 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:32:19 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:32:19 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:32:19 Asia/Manila] ERROR: No account found with ID: 73
+[18-Oct-2025 14:32:54 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:32:54 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:32:54 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:32:54 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:32:54 Asia/Manila] ERROR: No account found with ID: 73
+[18-Oct-2025 14:33:41 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:33:41 Asia/Manila] POST data: Array
+(
+    [id] => 69
+    [action] => approve
+)
+
+[18-Oct-2025 14:33:41 Asia/Manila] Parsed values - ID: 69, Action: approve, Note: 
+[18-Oct-2025 14:33:41 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:33:41 Asia/Manila] Found account to update: Array
+(
+    [id] => 69
+    [resident_id] => 73
+    [account_status] => Pending
+)
+
+[18-Oct-2025 14:33:41 Asia/Manila] Update executed. Affected rows: 1
+[18-Oct-2025 14:33:41 Asia/Manila] VERIFICATION: Account ID 69 now has status: Approved
+[18-Oct-2025 14:33:41 Asia/Manila] Transaction committed successfully
+[18-Oct-2025 14:33:45 Asia/Manila] Email sent successfully to sofia.lopez@test.com
+[18-Oct-2025 14:33:45 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[18-Oct-2025 14:33:45 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":69}}
+[18-Oct-2025 14:34:13 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:34:13 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:34:13 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:34:13 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:34:13 Asia/Manila] ERROR: No account found with ID: 73
+[18-Oct-2025 14:34:26 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:34:26 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:34:26 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:34:26 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:34:26 Asia/Manila] ERROR: No account found with ID: 73
+[18-Oct-2025 14:37:05 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:37:05 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:37:05 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:37:05 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:37:05 Asia/Manila] ERROR: No account found with ID: 73
+[18-Oct-2025 14:38:23 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:38:23 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:38:23 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:38:23 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:38:23 Asia/Manila] ERROR: No account found with ID: 73
+[18-Oct-2025 14:40:23 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:40:23 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+)
+
+[18-Oct-2025 14:40:23 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: 
+[18-Oct-2025 14:40:23 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:40:23 Asia/Manila] ERROR: No account found with ID: 73
+[18-Oct-2025 14:45:13 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:45:13 Asia/Manila] POST data: Array
+(
+    [id] => 69
+    [action] => approve
+)
+
+[18-Oct-2025 14:45:13 Asia/Manila] Parsed values - ID: 69, Action: approve, Note: 
+[18-Oct-2025 14:45:13 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:45:13 Asia/Manila] Found account to update: Array
+(
+    [id] => 69
+    [resident_id] => 73
+    [account_status] => Pending
+)
+
+[18-Oct-2025 14:45:13 Asia/Manila] Update executed. Affected rows: 1
+[18-Oct-2025 14:45:13 Asia/Manila] VERIFICATION: Account ID 69 now has status: Approved
+[18-Oct-2025 14:45:13 Asia/Manila] Transaction committed successfully
+[18-Oct-2025 14:45:17 Asia/Manila] Email sent successfully to sofia.lopez@test.com
+[18-Oct-2025 14:45:17 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[18-Oct-2025 14:45:17 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":69}}
+[18-Oct-2025 14:46:10 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:46:10 Asia/Manila] POST data: Array
+(
+    [id] => 69
+    [action] => approve
+)
+
+[18-Oct-2025 14:46:10 Asia/Manila] Parsed values - ID: 69, Action: approve, Note: 
+[18-Oct-2025 14:46:10 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:46:10 Asia/Manila] Found account to update: Array
+(
+    [id] => 69
+    [resident_id] => 73
+    [account_status] => Pending
+)
+
+[18-Oct-2025 14:46:10 Asia/Manila] Update executed. Affected rows: 1
+[18-Oct-2025 14:46:10 Asia/Manila] VERIFICATION: Account ID 69 now has status: Approved
+[18-Oct-2025 14:46:10 Asia/Manila] Transaction committed successfully
+[18-Oct-2025 14:46:14 Asia/Manila] Email sent successfully to sofia.lopez@test.com
+[18-Oct-2025 14:46:14 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[18-Oct-2025 14:46:14 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":69}}
+[18-Oct-2025 14:46:45 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 14:46:45 Asia/Manila] POST data: Array
+(
+    [id] => 69
+    [action] => approve
+)
+
+[18-Oct-2025 14:46:45 Asia/Manila] Parsed values - ID: 69, Action: approve, Note: 
+[18-Oct-2025 14:46:45 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 14:46:45 Asia/Manila] Found account to update: Array
+(
+    [id] => 69
+    [resident_id] => 73
+    [account_status] => Pending
+)
+
+[18-Oct-2025 14:46:45 Asia/Manila] Update executed. Affected rows: 1
+[18-Oct-2025 14:46:45 Asia/Manila] VERIFICATION: Account ID 69 now has status: Approved
+[18-Oct-2025 14:46:45 Asia/Manila] Transaction committed successfully
+[18-Oct-2025 14:46:49 Asia/Manila] Email sent successfully to sofia.lopez@test.com
+[18-Oct-2025 14:46:49 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[18-Oct-2025 14:46:49 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":69}}
+[18-Oct-2025 16:38:09 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 16:38:09 Asia/Manila] POST data: Array
+(
+    [id] => 68
+    [action] => approve
+)
+
+[18-Oct-2025 16:38:09 Asia/Manila] Parsed values - ID: 68, Action: approve, Note: 
+[18-Oct-2025 16:38:09 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 16:38:09 Asia/Manila] Found account to update: Array
+(
+    [id] => 68
+    [resident_id] => 72
+    [account_status] => Pending
+)
+
+[18-Oct-2025 16:38:09 Asia/Manila] Update executed. Affected rows: 1
+[18-Oct-2025 16:38:09 Asia/Manila] VERIFICATION: Account ID 68 now has status: Approved
+[18-Oct-2025 16:38:09 Asia/Manila] Transaction committed successfully
+[18-Oct-2025 16:38:12 Asia/Manila] Email sent successfully to pedro.delacruz@test.com
+[18-Oct-2025 16:38:12 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[18-Oct-2025 16:38:12 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":68}}
+[18-Oct-2025 20:37:56 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[18-Oct-2025 20:37:56 Asia/Manila] POST data: Array
+(
+    [id] => 70
+    [action] => approve
+)
+
+[18-Oct-2025 20:37:56 Asia/Manila] Parsed values - ID: 70, Action: approve, Note: 
+[18-Oct-2025 20:37:56 Asia/Manila] Processing: user_id=22, status=Approved
+[18-Oct-2025 20:37:56 Asia/Manila] Found account to update: Array
+(
+    [id] => 70
+    [resident_id] => 74
+    [account_status] => Pending
+)
+
+[18-Oct-2025 20:37:56 Asia/Manila] Update executed. Affected rows: 1
+[18-Oct-2025 20:37:56 Asia/Manila] VERIFICATION: Account ID 70 now has status: Approved
+[18-Oct-2025 20:37:56 Asia/Manila] Transaction committed successfully
+[18-Oct-2025 20:38:01 Asia/Manila] Email sent successfully to 2022307283@pampangastateu.edu.ph
+[18-Oct-2025 20:38:01 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[18-Oct-2025 20:38:01 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":70}}

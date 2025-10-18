@@ -13,7 +13,8 @@ $request_id = (int) $_GET['id'];
 $is_admin_download = isset($_GET['admin']) && $_GET['admin'] === 'true';
 
 try {
-    $stmt = $conn->prepare("SELECT document_file_path FROM document_requests WHERE id = ? AND status = 'Approved'");
+    // Accept both 'Approved' statuses
+    $stmt = $conn->prepare("SELECT document_file_path, status FROM document_requests WHERE id = ? AND status = 'Approved'");
     $stmt->bind_param('i', $request_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -21,7 +22,7 @@ try {
 
     if (!$request || empty($request['document_file_path'])) {
         http_response_code(404);
-        die("Error: Document not found or not approved yet for ID: " . $request_id);
+        die("Error: Document not found or not yet approved for ID: " . $request_id);
     }
 
     $file = basename($request['document_file_path']);
@@ -98,39 +99,8 @@ function addWatermarkWithFPDI($original_pdf_path, $request_id) {
         }
         $watermarked_path = $temp_dir . '/watermarked_' . $request_id . '_' . time() . '.pdf';
 
-        // Extend FPDI to add rotation capability
-        if (!class_exists('FPDIWithRotation')) {
-            class FPDIWithRotation extends \setasign\Fpdi\Fpdi {
-                protected $angle = 0;
-                function Rotate($angle, $x = -1, $y = -1) {
-                    if ($x == -1)
-                        $x = $this->GetX();
-                    if ($y == -1)
-                        $y = $this->GetY();
-                    if ($this->angle != 0)
-                        $this->_out('Q');
-                    $this->angle = $angle;
-                    if ($angle != 0) {
-                        $angle *= M_PI / 180;
-                        $c = cos($angle);
-                        $s = sin($angle);
-                        $cx = $x * $this->k;
-                        $cy = ($this->h - $y) * $this->k;
-                        $this->_out(sprintf('q %.5F %.5F %.5F %.5F %.5F %.5F cm', $c, $s, -$s, $c, $cx - $c * $cx + $s * $cy, $cy - $s * $cx - $c * $cy));
-                    }
-                }
-                function _endpage() {
-                    if ($this->angle != 0) {
-                        $this->angle = 0;
-                        $this->_out('Q');
-                    }
-                    parent::_endpage();
-                }
-            }
-        }
-
-        // Initialize FPDI with rotation
-        $pdf = new FPDIWithRotation();
+        // Use standard FPDI (no rotation needed)
+        $pdf = new \setasign\Fpdi\Fpdi();
         
         // Set source file
         $pageCount = $pdf->setSourceFile($original_pdf_path);
@@ -146,21 +116,19 @@ function addWatermarkWithFPDI($original_pdf_path, $request_id) {
             $pdf->AddPage($orientation, [$size['width'], $size['height']]);
             $pdf->useTemplate($templateId);
             
-            // Add watermark text (without transparency since FPDI doesn't support SetAlpha)
-            $pdf->SetFont('Arial', 'B', 16);
-            $pdf->SetTextColor(96, 96, 96); // Dark red color
+            // Add watermark text in lower left corner
+            $pdf->SetFont('Arial', 'B', 12); // Reduced font size to 12
+            $pdf->SetTextColor(96, 96, 96); // Dark gray color
             
-            $text = "Official stamped copies are available at the Barangay Office";
-            $textWidth = $pdf->GetStringWidth($text);
+            $text = "'This document is for reference only. Please visit the office to obtain a hard copy.'";
             
-            // Calculate position (center of page)
-            $x = ($size['width'] - $textWidth) / 2;
-            $y = $size['height'] / 2;
+            // Calculate position (lower left corner with margin)
+            $margin = 10; // 10 units margin from bottom and left
+            $x = $margin;
+            $y = $size['height'] - $margin; // Bottom of page minus margin
             
-            // Add rotated text
-            $pdf->Rotate(45, $x + ($textWidth / 2), $y);
+            // Add non-rotated text
             $pdf->Text($x, $y, $text);
-            $pdf->Rotate(0);
         }
         
         // Output PDF
