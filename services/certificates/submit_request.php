@@ -32,9 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $sex             = trim($_POST['sex']);
     $birthdate       = trim($_POST['birthdate']);
     $age             = intval($_POST['age']);
-    $email           = trim($_POST['email']);
     $purpose         = trim($_POST['purpose']);
-    $shipping_method = trim($_POST['shipping_method']);
 
     $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
               strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
@@ -42,12 +40,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $sql = "INSERT INTO document_requests (
                 resident_id, document_type_id, first_name, middle_name, last_name,
                 houseno, purok, civil_status, sex, birthdate,
-                age, email, purpose, shipping_method
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                age, purpose 
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     if ($stmt = $conn->prepare($sql)) {
         $stmt->bind_param(
-            'iissssssssisss',
+            'iissssssssis',
             $resident_id,
             $document_type_id,
             $first_name,
@@ -59,9 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sex,
             $birthdate,
             $age,
-            $email,
             $purpose,
-            $shipping_method
         );
 
         if ($stmt->execute()) {

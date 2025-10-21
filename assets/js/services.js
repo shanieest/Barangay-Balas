@@ -1,4 +1,4 @@
-// services.js - Enhanced reservation functionality with automatic resident name detection and duration validation
+// services.js - Enhanced reservation functionality with vehicle type selection
 
 document.addEventListener("DOMContentLoaded", function () {
   const requestButtons = document.querySelectorAll(".request-btn");
@@ -20,7 +20,21 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initialize form handlers
   initializeFormHandlers();
   initializeQuantityControls();
+  initializeVehicleTypeSelection();
 });
+
+// Initialize vehicle type selection
+function initializeVehicleTypeSelection() {
+  const vehicleTypeSelect = document.getElementById('vehicleType');
+  const vehicleServiceInput = document.getElementById('vehicleServiceInput');
+  
+  if (vehicleTypeSelect && vehicleServiceInput) {
+    vehicleTypeSelect.addEventListener('change', function() {
+      const selectedValue = this.value;
+      vehicleServiceInput.value = selectedValue;
+    });
+  }
+}
 
 // Initialize quantity controls
 function initializeQuantityControls() {
@@ -63,7 +77,7 @@ function initializeFormHandlers() {
     const vehicleForm = document.getElementById('vehicleReservationForm');
     if (vehicleForm) {
         vehicleForm.addEventListener('submit', handleVehicleReservation);
-        setupDateValidation(vehicleForm);
+        setupVehicleDateValidation(vehicleForm);
     }
 
     // Tent reservation form
@@ -74,7 +88,68 @@ function initializeFormHandlers() {
     }
 }
 
-// Set up date validation for forms
+// Set up date validation specifically for vehicle forms (2-day limit)
+function setupVehicleDateValidation(form) {
+    const startDate = form.querySelector('[name="reservation_date_start"]');
+    const endDate = form.querySelector('[name="reservation_date_end"]');
+    const durationMessage = document.createElement('div');
+    durationMessage.className = 'text-danger small mt-1 d-none';
+    durationMessage.id = 'vehicleDurationMessage';
+    
+    if (startDate && endDate) {
+        // Insert duration message after end date input
+        endDate.parentNode.appendChild(durationMessage);
+        
+        const validateDuration = () => {
+            if (startDate.value && endDate.value) {
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                const durationDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                
+                if (durationDays > 2) {
+                    durationMessage.textContent = `Vehicle reservations cannot exceed 2 days (${durationDays} days selected)`;
+                    durationMessage.classList.remove('d-none');
+                    endDate.setCustomValidity('Vehicle reservations cannot exceed 2 days');
+                } else {
+                    durationMessage.textContent = `Duration: ${durationDays} day(s)`;
+                    durationMessage.className = 'text-success small mt-1';
+                    durationMessage.classList.remove('d-none');
+                    endDate.setCustomValidity('');
+                }
+            } else {
+                durationMessage.classList.add('d-none');
+                endDate.setCustomValidity('');
+            }
+        };
+        
+        startDate.addEventListener('change', validateDuration);
+        endDate.addEventListener('change', validateDuration);
+    }
+    
+    if (startDate) {
+        // Set minimum date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowString = tomorrow.toISOString().split('T')[0];
+        startDate.setAttribute('min', tomorrowString);
+        
+        if (endDate) {
+            endDate.setAttribute('min', tomorrowString);
+            
+            startDate.addEventListener('change', function() {
+                endDate.min = this.value;
+                if (endDate.value && endDate.value < this.value) {
+                    endDate.value = this.value;
+                }
+                if (typeof validateDuration === 'function') {
+                    validateDuration();
+                }
+            });
+        }
+    }
+}
+
+// Set up date validation for general forms (10-day limit)
 function setupDateValidation(form) {
     const startDate = form.querySelector('[name="reservation_date_start"]');
     const endDate = form.querySelector('[name="reservation_date_end"]');
@@ -135,19 +210,25 @@ function setupDateValidation(form) {
     }
 }
 
-// Validate reservation duration (max 10 days)
-function validateReservationDuration(startDate, endDate) {
+// Validate reservation duration with type-specific limits
+function validateReservationDuration(startDate, endDate, serviceTypes = []) {
     if (!startDate) return false;
     
     const start = new Date(startDate);
     const end = new Date(endDate || startDate);
-    
-    // Calculate duration in days (inclusive of both start and end dates)
     const durationDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
     
+    // Check if this is a vehicle reservation
+    const vehicleServiceTypes = [2, 5, 6]; // Patrol Car, Van, Motorcycle
+    const isVehicleReservation = serviceTypes.some(type => vehicleServiceTypes.includes(parseInt(type)));
+    
+    const maxDays = isVehicleReservation ? 2 : 10;
+    
     return {
-        isValid: durationDays <= 10,
-        days: durationDays
+        isValid: durationDays <= maxDays,
+        days: durationDays,
+        maxDays: maxDays,
+        isVehicle: isVehicleReservation
     };
 }
 
@@ -205,25 +286,26 @@ function submitReservation(form, messageElementId, serviceTypeName) {
         return;
     }
     
+    // Get service types for validation
+    const serviceTypes = formData.getAll('service_types[]');
+    
     // Validate duration before submission
     const startDate = formData.get('reservation_date_start');
     const endDate = formData.get('reservation_date_end') || startDate;
-    const durationValidation = validateReservationDuration(startDate, endDate);
+    const durationValidation = validateReservationDuration(startDate, endDate, serviceTypes);
     
     if (!durationValidation.isValid) {
-        showMessage(messageElement, `Reservation duration cannot exceed 10 days. You selected ${durationValidation.days} days. Please adjust your dates.`, 'danger');
+        const serviceType = durationValidation.isVehicle ? 'Vehicle' : 'Service';
+        showMessage(messageElement, `${serviceType} reservations cannot exceed ${durationValidation.maxDays} days. You selected ${durationValidation.days} days. Please adjust your dates.`, 'danger');
         resetSubmitButton(submitBtn, originalBtnText);
         return;
     }
     
-    // Check if at least one service is selected (for tent reservations)
-    if (form.id === 'tentReservationForm') {
-        const selectedServices = formData.getAll('service_types[]');
-        if (selectedServices.length === 0) {
-            showMessage(messageElement, 'Please select at least one service.', 'danger');
-            resetSubmitButton(submitBtn, originalBtnText);
-            return;
-        }
+    // Check if at least one service is selected
+    if (serviceTypes.length === 0) {
+        showMessage(messageElement, 'Please select at least one service.', 'danger');
+        resetSubmitButton(submitBtn, originalBtnText);
+        return;
     }
     
     // Combine names for resident_name field
@@ -341,19 +423,23 @@ function resetForm(form) {
         // Reset vehicle form specific fields
         const fieldsToReset = [
             'reservation_date_start', 'reservation_date_end',
-            'start_time', 'end_time', 'purpose'
+            'start_time', 'end_time', 'purpose', 'vehicleType'
         ];
         
         fieldsToReset.forEach(fieldName => {
             const field = form.querySelector(`[name="${fieldName}"]`);
             if (field) {
-                field.value = '';
+                if (fieldName === 'vehicleType') {
+                    field.value = '2'; // Default to Patrol Car
+                } else {
+                    field.value = '';
+                }
             }
         });
     }
     
     // Hide duration message
-    const durationMessage = form.querySelector('#durationMessage');
+    const durationMessage = form.querySelector('#durationMessage, #vehicleDurationMessage');
     if (durationMessage) {
         durationMessage.classList.add('d-none');
     }
@@ -379,37 +465,6 @@ function showMessage(element, message, type) {
     }
 }
 
-// Calculate and display duration when dates change
-function calculateDuration(startDateId, endDateId, displayElementId) {
-    const startDate = document.getElementById(startDateId);
-    const endDate = document.getElementById(endDateId);
-    const displayElement = document.getElementById(displayElementId);
-    
-    if (!startDate || !endDate || !displayElement) return;
-    
-    const updateDuration = () => {
-        if (startDate.value && endDate.value) {
-            const start = new Date(startDate.value);
-            const end = new Date(endDate.value);
-            const durationDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
-            
-            displayElement.textContent = `${durationDays} day(s)`;
-            
-            if (durationDays > 10) {
-                displayElement.className = 'text-danger';
-            } else {
-                displayElement.className = 'text-success';
-            }
-        } else {
-            displayElement.textContent = '0 day(s)';
-        }
-    };
-    
-    startDate.addEventListener('change', updateDuration);
-    endDate.addEventListener('change', updateDuration);
-}
-
 // Global function to make changeQuantity available to onclick handlers
 window.changeQuantity = changeQuantity;
-window.calculateDuration = calculateDuration;
 window.validateReservationDuration = validateReservationDuration;

@@ -97,9 +97,24 @@ function handleCreate() {
 
     $duration_days = $start_date->diff($end_date)->days + 1;
 
-    // NEW VALIDATION: Check if duration exceeds 10 days
+    // NEW VALIDATION: Check if duration exceeds 10 days for general services
     if ($duration_days > 10) {
         throw new Exception('Reservation duration cannot exceed 10 days. Please adjust your dates.');
+    }
+
+    // NEW VALIDATION: Check if vehicle reservation exceeds 2 days
+    $is_vehicle_reservation = false;
+    $vehicle_service_types = [2, 5, 6]; // Patrol Car, Van, Motorcycle
+    
+    foreach ($service_types as $service_type_id) {
+        if (in_array(intval($service_type_id), $vehicle_service_types)) {
+            $is_vehicle_reservation = true;
+            break;
+        }
+    }
+    
+    if ($is_vehicle_reservation && $duration_days > 2) {
+        throw new Exception('Vehicle reservations cannot exceed 2 days. Please adjust your dates.');
     }
 
     // Validate service types and quantities
@@ -110,13 +125,17 @@ function handleCreate() {
         }
         
         // Check if service type exists and is active
-        $check_sql = "SELECT id FROM service_types WHERE id = ? AND is_active = 1";
+        $check_sql = "SELECT id, service_name FROM service_types WHERE id = ? AND is_active = 1";
         $check_stmt = $conn->prepare($check_sql);
         $check_stmt->bind_param("i", $service_type_id);
         $check_stmt->execute();
-        if ($check_stmt->get_result()->num_rows === 0) {
+        $service_result = $check_stmt->get_result();
+        
+        if ($service_result->num_rows === 0) {
             throw new Exception('Selected service type is not available');
         }
+        
+        $service_info = $service_result->fetch_assoc();
         $check_stmt->close();
         
         // Validate quantities for specific service types
@@ -126,9 +145,11 @@ function handleCreate() {
                     throw new Exception('Tent quantity must be between 1 and 10');
                 }
                 break;
-            case 2: // Vehicle
-                if ($vehicle_qty < 1 || $vehicle_qty > 3) {
-                    throw new Exception('Vehicle quantity must be between 1 and 3');
+            case 2: // Patrol Car
+            case 5: // Van
+            case 6: // Motorcycle
+                if ($vehicle_qty != 1) {
+                    throw new Exception('Only 1 vehicle can be reserved per reservation');
                 }
                 break;
             case 3: // Sound System
@@ -192,8 +213,10 @@ function handleCreate() {
                 case 1: // Tent
                     $quantity = $tent_qty;
                     break;
-                case 2: // Vehicle
-                    $quantity = $vehicle_qty;
+                case 2: // Patrol Car
+                case 5: // Van
+                case 6: // Motorcycle
+                    $quantity = 1; // Always 1 for vehicles
                     break;
                 case 3: // Sound System
                     $quantity = $sound_system_qty;

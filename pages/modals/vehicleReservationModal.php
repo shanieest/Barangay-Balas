@@ -1,23 +1,3 @@
-<?php
-// Get resident data if logged in
-$resident_data = null;
-if (isset($_SESSION['user_id'])) {
-    $resident_sql = "SELECT r.*, ra.email as account_email 
-                    FROM residents r 
-                    LEFT JOIN resident_accounts ra ON r.id = ra.resident_id 
-                    WHERE r.id = ?";
-    $resident_stmt = $conn->prepare($resident_sql);
-    $resident_stmt->bind_param("i", $_SESSION['user_id']);
-    $resident_stmt->execute();
-    $resident_result = $resident_stmt->get_result();
-    
-    if ($resident_result->num_rows > 0) {
-        $resident_data = $resident_result->fetch_assoc();
-    }
-    $resident_stmt->close();
-}
-?>
-
 <div class="modal fade" id="vehicleReservationModal" tabindex="-1" aria-labelledby="vehicleReservationLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -64,6 +44,20 @@ if (isset($_SESSION['user_id'])) {
             </div>
           </div>
 
+          <!-- Vehicle Type Selection -->
+          <div class="row mb-3">
+            <div class="col-12">
+              <label class="form-label">Vehicle Type <span class="text-danger">*</span></label>
+              <select name="vehicleType" id="vehicleType" class="form-select" required>
+                <option value="">Select Vehicle Type</option>
+                <option value="2">Patrol Car</option>
+                <option value="5">Van</option>
+                <option value="6">Motorcycle</option>
+              </select>
+              <div class="form-text">Only 1 vehicle can be reserved per request. Maximum reservation duration is 2 days.</div>
+            </div>
+          </div>
+
           <!-- Reservation Details -->
           <div class="row">
             <div class="col-md-6 mb-3">
@@ -73,7 +67,7 @@ if (isset($_SESSION['user_id'])) {
             <div class="col-md-6 mb-3">
               <label class="form-label">End Date</label>
               <input type="date" name="reservation_date_end" class="form-control">
-              <div class="form-text">Leave empty for single day reservation</div>
+              <div class="form-text">Leave empty for single day reservation (max 2 days)</div>
             </div>
           </div>
 
@@ -95,9 +89,9 @@ if (isset($_SESSION['user_id'])) {
                       placeholder="Please describe the purpose for using the vehicle..." required></textarea>
           </div>
 
-          <!-- Hidden inputs for resident data -->
+          <!-- Hidden inputs for resident data and service type -->
           <input type="hidden" name="action" value="create_reservation">
-          <input type="hidden" name="service_types[]" value="2"> <!-- Vehicle service type ID -->
+          <input type="hidden" name="service_types[]" id="vehicleServiceInput" value="2">
           <input type="hidden" name="resident_id" value="<?= $resident_data['id'] ?>">
           <input type="hidden" name="first_name" value="<?= htmlspecialchars($resident_data['first_name']) ?>">
           <input type="hidden" name="last_name" value="<?= htmlspecialchars($resident_data['last_name']) ?>">
@@ -121,102 +115,3 @@ if (isset($_SESSION['user_id'])) {
     </div>
   </div>
 </div>
-
-<script>
-// Initialize date validation when modal loads
-document.addEventListener('DOMContentLoaded', function() {
-  // Set minimum date to tomorrow
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowString = tomorrow.toISOString().split('T')[0];
-  
-  const startDateInput = document.querySelector('#vehicleReservationModal input[name="reservation_date_start"]');
-  const endDateInput = document.querySelector('#vehicleReservationModal input[name="reservation_date_end"]');
-  
-  if (startDateInput) {
-    startDateInput.setAttribute('min', tomorrowString);
-  }
-  if (endDateInput) {
-    endDateInput.setAttribute('min', tomorrowString);
-    
-    // Date validation
-    startDateInput.addEventListener('change', function() {
-      endDateInput.min = this.value;
-      if (endDateInput.value && endDateInput.value < this.value) {
-        endDateInput.value = this.value;
-      }
-    });
-  }
-});
-
-// Form submission - only if resident is logged in
-<?php if ($resident_data): ?>
-document.getElementById('vehicleReservationForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  
-  const formData = new FormData(this);
-  const submitButton = document.getElementById('submitVehicleReservation');
-  const messageDiv = document.getElementById('vehicleReservationMessage');
-  
-  submitButton.disabled = true;
-  submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Submitting...';
-  
-  // Clear previous messages
-  messageDiv.classList.add('d-none');
-  
-  // Create notes from start/end time for vehicle reservations
-  const startTime = formData.get('start_time');
-  const endTime = formData.get('end_time');
-  let notes = '';
-  if (startTime) notes += `Start Time: ${startTime}\n`;
-  if (endTime) notes += `End Time: ${endTime}\n`;
-  
-  if (notes) {
-    formData.append('notes', notes);
-  }
-  
-  fetch('pages/residents/reservation-backend.php', {
-    method: 'POST',
-    body: formData
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      messageDiv.className = 'alert alert-success';
-      messageDiv.textContent = data.message;
-      messageDiv.classList.remove('d-none');
-      
-      // Reset form after successful submission
-      setTimeout(() => {
-        const form = document.getElementById('vehicleReservationForm');
-        
-        // Reset non-hidden fields but keep contact info
-        form.querySelector('[name="contact_number"]').value = '<?= htmlspecialchars($resident_data['contact_number']) ?>';
-        form.querySelector('[name="email"]').value = '<?= htmlspecialchars($resident_data['account_email'] ?: $resident_data['email'] ?: '') ?>';
-        form.querySelector('[name="reservation_date_start"]').value = '';
-        form.querySelector('[name="reservation_date_end"]').value = '';
-        form.querySelector('[name="start_time"]').value = '';
-        form.querySelector('[name="end_time"]').value = '';
-        form.querySelector('[name="purpose"]').value = '';
-        
-        document.getElementById('vehicleReservationModal').querySelector('[data-bs-dismiss="modal"]').click();
-      }, 2000);
-    } else {
-      messageDiv.className = 'alert alert-danger';
-      messageDiv.textContent = data.message || 'An error occurred while submitting your reservation.';
-      messageDiv.classList.remove('d-none');
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    messageDiv.className = 'alert alert-danger';
-    messageDiv.textContent = 'Network error. Please try again.';
-    messageDiv.classList.remove('d-none');
-  })
-  .finally(() => {
-    submitButton.disabled = false;
-    submitButton.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Submit Reservation';
-  });
-});
-<?php endif; ?>
-</script>

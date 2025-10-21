@@ -1115,3 +1115,26 @@ Stack trace:
 [18-Oct-2025 20:38:01 Asia/Manila] Email sent successfully to 2022307283@pampangastateu.edu.ph
 [18-Oct-2025 20:38:01 Asia/Manila] === PROCESS REQUEST DEBUG END ===
 [18-Oct-2025 20:38:01 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":70}}
+[19-Oct-2025 15:03:23 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[19-Oct-2025 15:03:23 Asia/Manila] POST data: Array
+(
+    [id] => 71
+    [action] => approve
+    [note] => Testing
+)
+
+[19-Oct-2025 15:03:23 Asia/Manila] Parsed values - ID: 71, Action: approve, Note: Testing
+[19-Oct-2025 15:03:23 Asia/Manila] Processing: user_id=22, status=Approved
+[19-Oct-2025 15:03:23 Asia/Manila] Found account to update: Array
+(
+    [id] => 71
+    [resident_id] => 75
+    [account_status] => Pending
+)
+
+[19-Oct-2025 15:03:23 Asia/Manila] Update executed. Affected rows: 1
+[19-Oct-2025 15:03:23 Asia/Manila] VERIFICATION: Account ID 71 now has status: Approved
+[19-Oct-2025 15:03:23 Asia/Manila] Transaction committed successfully
+[19-Oct-2025 15:03:27 Asia/Manila] Email sent successfully to jarshanethesecond@gmail.com
+[19-Oct-2025 15:03:27 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[19-Oct-2025 15:03:27 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":71}}

@@ -69,6 +69,8 @@ function formatOfficialName($firstName, $lastName) {
       transition: all 0.3s ease;
       padding: 20px;
       text-align: center;
+      margin-bottom: 20px;
+      width: 200px;
     }
 
     .official-card:hover {
@@ -91,57 +93,83 @@ function formatOfficialName($firstName, $lastName) {
       color: #0033cc;
       font-weight: bold;
       margin-bottom: 5px;
+      font-size: 1rem;
     }
 
     .official-position {
       color: #0033cc;
       font-weight: 600;
       margin-bottom: 5px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
     .official-committee {
       color: #666;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-style: italic;
     }
 
-    /* --- Organizational Chart Lines --- */
-    .chart-line-down {
-      width: 2px;
-      height: 50px;
-      background-color: #0033cc;
-      margin: 0 auto;
-      border-radius: 50px;
+    /* Organizational Chart Styles */
+    .org-chart {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
     }
 
     .org-level {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin: 20px 0;
       position: relative;
-      margin-top: 30px;
+      width: 100%;
     }
 
-    .org-level::before {
-      content: '';
-      position: absolute;
-      top: -40px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 70%;
-      height: 2px;
-      background-color: #0033cc;
-      border-radius: 50px;
-    }
-
-    .org-level .col-md-3::before {
-      content: '';
-      position: absolute;
-      top: -40px;
-      left: 50%;
+    .vertical-connector {
       width: 2px;
       height: 40px;
       background-color: #0033cc;
+      margin: 0 auto;
+    }
+
+    .horizontal-connector {
+      position: absolute;
+      top: -20px;
+      left: 50%;
       transform: translateX(-50%);
-      border-radius: 50px;
+      width: 80%;
+      height: 2px;
+      background-color: #0033cc;
+    }
+
+    .node-connector {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      width: 2px;
+      height: 20px;
+      background-color: #0033cc;
+      transform: translateX(-50%);
+    }
+
+    /* Captain specific styling */
+    .captain-card {
+      width: 220px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .org-level {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .horizontal-connector {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -154,32 +182,36 @@ function formatOfficialName($firstName, $lastName) {
 </div>
 
 <div class="container py-5">
+  <div class="org-chart">
 
-  <!-- Barangay Captain -->
-  <?php if ($officials['captain']): ?>
-  <div class="text-center mb-5 position-relative" data-aos="fade-up">
-    <div class="official-card d-inline-block">
-      <img src="<?= $officials['captain']['photo_path'] ? '../admin/'.$officials['captain']['photo_path'] : '../assets/images/default-avatar.jpg' ?>" alt="">
-      <div class="official-info">
-        <h5 class="official-name"><?= formatOfficialName($officials['captain']['first_name'], $officials['captain']['last_name']) ?></h5>
-        <p class="official-position">Barangay Captain</p>
-        <p class="official-committee"><?= $officials['captain']['committee_position'] ?></p>
+    <!-- Barangay Captain - Level 1 -->
+    <?php if ($officials['captain']): ?>
+    <div class="org-level" data-aos="fade-up">
+      <div class="official-card captain-card">
+        <img src="<?= $officials['captain']['photo_path'] ? '../admin/'.$officials['captain']['photo_path'] : '../assets/images/default-avatar.jpg' ?>" alt="">
+        <div class="official-info">
+          <h5 class="official-name"><?= formatOfficialName($officials['captain']['first_name'], $officials['captain']['last_name']) ?></h5>
+          <p class="official-position">Barangay Captain</p>
+          <p class="official-committee"><?= $officials['captain']['committee_position'] ?></p>
+        </div>
       </div>
     </div>
-    <div class="chart-line-down"></div>
-  </div>
-  <?php endif; ?>
+    <div class="vertical-connector"></div>
+    <?php endif; ?>
 
-  <!-- Secretary & Treasurer -->
-  <div class="row justify-content-center mb-5" data-aos="fade-up">
-    <?php 
-      $secretary = !empty($officials['secretary']) ? $officials['secretary'][0] : null;
-      $treasurer = !empty($officials['treasurer']) ? $officials['treasurer'][0] : null;
-    ?>
+    <!-- Secretary, Treasurer & Kagawads - Level 2 -->
+    <div class="org-level position-relative" data-aos="fade-up">
+      <div class="horizontal-connector"></div>
+      
+      <?php 
+        $secretary = !empty($officials['secretary']) ? $officials['secretary'][0] : null;
+        $treasurer = !empty($officials['treasurer']) ? $officials['treasurer'][0] : null;
+      ?>
 
-    <?php if ($secretary): ?>
-      <div class="col-md-4 text-center">
-        <div class="official-card">
+      <!-- Secretary -->
+      <?php if ($secretary): ?>
+        <div class="official-card position-relative">
+          <div class="node-connector"></div>
           <img src="<?= $secretary['photo_path'] ? '../admin/'.$secretary['photo_path'] : '../assets/images/default-avatar.jpg' ?>" alt="">
           <div class="official-info">
             <h5 class="official-name"><?= formatOfficialName($secretary['first_name'], $secretary['last_name']) ?></h5>
@@ -187,12 +219,12 @@ function formatOfficialName($firstName, $lastName) {
             <p class="official-committee"><?= $secretary['committee_position'] ?></p>
           </div>
         </div>
-      </div>
-    <?php endif; ?>
+      <?php endif; ?>
 
-    <?php if ($treasurer): ?>
-      <div class="col-md-4 text-center">
-        <div class="official-card">
+      <!-- Treasurer -->
+      <?php if ($treasurer): ?>
+        <div class="official-card position-relative">
+          <div class="node-connector"></div>
           <img src="<?= $treasurer['photo_path'] ? '../admin/'.$treasurer['photo_path'] : '../assets/images/default-avatar.jpg' ?>" alt="">
           <div class="official-info">
             <h5 class="official-name"><?= formatOfficialName($treasurer['first_name'], $treasurer['last_name']) ?></h5>
@@ -200,50 +232,48 @@ function formatOfficialName($firstName, $lastName) {
             <p class="official-committee"><?= $treasurer['committee_position'] ?></p>
           </div>
         </div>
-      </div>
-    <?php endif; ?>
-  </div>
+      <?php endif; ?>
 
-  <div class="chart-line-down"></div>
-
-  <!-- Kagawads -->
-  <?php if (!empty($officials['kagawad'])): ?>
-  <div class="org-level row g-4 justify-content-center" data-aos="fade-up">
-    <?php foreach ($officials['kagawad'] as $official): ?>
-      <div class="col-md-3 col-sm-6 text-center position-relative" data-aos="zoom-in">
-        <div class="official-card">
-          <img src="<?= $official['photo_path'] ? '../admin/'.$official['photo_path'] : '../assets/images/default-avatar.jpg' ?>" alt="">
-          <div class="official-info">
-            <h6 class="official-name"><?= formatOfficialName($official['first_name'], $official['last_name']) ?></h6>
-            <p class="official-position">Barangay Kagawad</p>
-            <p class="official-committee"><?= $official['committee_position'] ?></p>
+      <!-- Kagawads -->
+      <?php if (!empty($officials['kagawad'])): ?>
+        <?php foreach ($officials['kagawad'] as $official): ?>
+          <div class="official-card position-relative" data-aos="zoom-in">
+            <div class="node-connector"></div>
+            <img src="<?= $official['photo_path'] ? '../admin/'.$official['photo_path'] : '../assets/images/default-avatar.jpg' ?>" alt="">
+            <div class="official-info">
+              <h6 class="official-name"><?= formatOfficialName($official['first_name'], $official['last_name']) ?></h6>
+              <p class="official-position">Barangay Kagawad</p>
+              <p class="official-committee"><?= $official['committee_position'] ?></p>
+            </div>
           </div>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+
+    <div class="vertical-connector"></div>
+
+    <!-- SK Chairman - Level 3 -->
+    <?php if (!empty($officials['sk'])): ?>
+    <div class="org-level" data-aos="fade-up">
+      <?php $sk = $officials['sk'][0]; ?>
+      <div class="official-card">
+        <img src="<?= $sk['photo_path'] ? '../admin/'.$sk['photo_path'] : '../assets/images/default-avatar.jpg' ?>" alt="">
+        <div class="official-info">
+          <h5 class="official-name"><?= formatOfficialName($sk['first_name'], $sk['last_name']) ?></h5>
+          <p class="official-position">SK Chairman</p>
+          <p class="official-committee"><?= $sk['committee_position'] ?></p>
         </div>
       </div>
-    <?php endforeach; ?>
-  </div>
-  <div class="chart-line-down mt-5"></div>
-  <?php endif; ?>
-
-  <!-- SK Chairman -->
-  <?php if (!empty($officials['sk'])): ?>
-  <div class="text-center mt-5 position-relative" data-aos="fade-up">
-    <?php $sk = $officials['sk'][0]; ?>
-    <div class="official-card d-inline-block">
-      <img src="<?= $sk['photo_path'] ? '../admin/'.$sk['photo_path'] : '../assets/images/default-avatar.jpg' ?>" alt="">
-      <div class="official-info">
-        <h5 class="official-name"><?= formatOfficialName($sk['first_name'], $sk['last_name']) ?></h5>
-        <p class="official-position">SK Chairman</p>
-        <p class="official-committee"><?= $sk['committee_position'] ?></p>
-      </div>
     </div>
-  </div>
-  <?php endif; ?>
+    <?php endif; ?>
 
+  </div>
 </div>
 
 <?php include '../includes/foot.php'; ?>
 <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-<script>AOS.init();</script>
+<script>
+  AOS.init();
+</script>
 </body>
 </html>
