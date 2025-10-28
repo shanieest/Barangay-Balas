@@ -1,3 +1,23 @@
+<?php
+// Get resident data if logged in
+$resident_data = null;
+if (isset($_SESSION['user_id'])) {
+    $resident_sql = "SELECT r.*, ra.email as account_email 
+                    FROM residents r 
+                    LEFT JOIN resident_accounts ra ON r.id = ra.resident_id 
+                    WHERE r.id = ?";
+    $resident_stmt = $conn->prepare($resident_sql);
+    $resident_stmt->bind_param("i", $_SESSION['user_id']);
+    $resident_stmt->execute();
+    $resident_result = $resident_stmt->get_result();
+    
+    if ($resident_result->num_rows > 0) {
+        $resident_data = $resident_result->fetch_assoc();
+    }
+    $resident_stmt->close();
+}
+?>
+
 <div class="modal fade" id="vehicleReservationModal" tabindex="-1" aria-labelledby="vehicleReservationLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -16,7 +36,7 @@
           <div class="alert alert-info">
             <i class="fas fa-user me-2"></i>
             <strong>Reserving as:</strong> <?= htmlspecialchars($resident_data['first_name'] . ' ' . $resident_data['last_name']) ?>
-            <br><small>Your contact information below can be updated if needed for this reservation.</small>
+            <br><small>Your information is pre-filled from your account and cannot be modified.</small>
           </div>
           <?php else: ?>
           <div class="alert alert-warning">
@@ -33,14 +53,14 @@
               <input type="text" name="contact_number" class="form-control" 
                      pattern="[0-9]{11}" 
                      value="<?= htmlspecialchars($resident_data['contact_number']) ?>"
-                     required>
-              <div class="form-text">You can update your contact number if needed</div>
+                     readonly>
+              <div class="form-text">Contact number from your account.</div>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Email Address</label>
               <input type="email" name="email" class="form-control" 
-                     value="<?= htmlspecialchars($resident_data['account_email'] ?: $resident_data['email'] ?: '') ?>">
-              <div class="form-text">You can update your email if needed for reservation updates</div>
+                     value="<?= htmlspecialchars($resident_data['account_email'] ?: $resident_data['email'] ?: '') ?>" readonly>
+              <div class="form-text">Email address from your account</div>
             </div>
           </div>
 

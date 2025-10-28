@@ -36,7 +36,7 @@ if (isset($_SESSION['user_id'])) {
           <div class="alert alert-info">
             <i class="fas fa-user me-2"></i>
             <strong>Reserving as:</strong> <?= htmlspecialchars($resident_data['first_name'] . ' ' . $resident_data['last_name']) ?>
-            <br><small>Your contact information below can be updated if needed for this reservation.</small>
+            <br><small>Your information is pre-filled from your account and cannot be modified.</small>
           </div>
           <?php else: ?>
           <div class="alert alert-warning">
@@ -53,14 +53,14 @@ if (isset($_SESSION['user_id'])) {
               <input type="text" name="contact_number" class="form-control" 
                      pattern="[0-9]{11}" 
                      value="<?= htmlspecialchars($resident_data['contact_number']) ?>"
-                     required>
-              <div class="form-text">You can update your contact number if needed.</div>
+                     readonly>
+              <div class="form-text">Contact number from your account.</div>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Email Address</label>
               <input type="email" name="email" class="form-control"
-                     value="<?= htmlspecialchars($resident_data['account_email'] ?: $resident_data['email'] ?: '') ?>">
-              <div class="form-text">You can update your email if needed for reservation updates.</div>
+                     value="<?= htmlspecialchars($resident_data['account_email'] ?: $resident_data['email'] ?: '') ?>" readonly>
+              <div class="form-text">Email address from your account.</div>
             </div>
           </div>
 
@@ -168,8 +168,7 @@ if (isset($_SESSION['user_id'])) {
             <label class="form-label">Event Location</label>
             <input type="text" name="event_location" class="form-control" 
                    placeholder="Where will the services be used?"
-                   value="House <?= htmlspecialchars($resident_data['house_number']) ?>, Purok <?= htmlspecialchars($resident_data['purok']) ?>, Balas, Mexico, Pampanga">
-            <div class="form-text">Pre-filled with your registered address. You can modify if the event is elsewhere.</div>
+                   value="House <?= htmlspecialchars($resident_data['house_number']) ?>, Purok <?= htmlspecialchars($resident_data['purok']) ?>, Balas, Mexico, Pampanga" readonly>
           </div>
 
           <div class="mb-3">

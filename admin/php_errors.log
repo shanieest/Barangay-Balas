@@ -1138,3 +1138,51 @@ Stack trace:
 [19-Oct-2025 15:03:27 Asia/Manila] Email sent successfully to jarshanethesecond@gmail.com
 [19-Oct-2025 15:03:27 Asia/Manila] === PROCESS REQUEST DEBUG END ===
 [19-Oct-2025 15:03:27 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":71}}
+[21-Oct-2025 19:36:36 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[21-Oct-2025 19:36:36 Asia/Manila] POST data: Array
+(
+    [id] => 72
+    [action] => approve
+    [note] => eme mo
+
+)
+
+[21-Oct-2025 19:36:36 Asia/Manila] Parsed values - ID: 72, Action: approve, Note: eme mo
+
+[21-Oct-2025 19:36:36 Asia/Manila] Processing: user_id=22, status=Approved
+[21-Oct-2025 19:36:36 Asia/Manila] Found account to update: Array
+(
+    [id] => 72
+    [resident_id] => 76
+    [account_status] => Pending
+)
+
+[21-Oct-2025 19:36:36 Asia/Manila] Update executed. Affected rows: 1
+[21-Oct-2025 19:36:36 Asia/Manila] VERIFICATION: Account ID 72 now has status: Approved
+[21-Oct-2025 19:36:36 Asia/Manila] Transaction committed successfully
+[21-Oct-2025 19:36:40 Asia/Manila] Email sent successfully to quintojohnkyle@gmail.com
+[21-Oct-2025 19:36:40 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[21-Oct-2025 19:36:40 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":72}}
+[22-Oct-2025 16:14:01 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[22-Oct-2025 16:14:01 Asia/Manila] POST data: Array
+(
+    [id] => 73
+    [action] => approve
+    [note] => approved
+)
+
+[22-Oct-2025 16:14:01 Asia/Manila] Parsed values - ID: 73, Action: approve, Note: approved
+[22-Oct-2025 16:14:01 Asia/Manila] Processing: user_id=22, status=Approved
+[22-Oct-2025 16:14:01 Asia/Manila] Found account to update: Array
+(
+    [id] => 73
+    [resident_id] => 77
+    [account_status] => Pending
+)
+
+[22-Oct-2025 16:14:01 Asia/Manila] Update executed. Affected rows: 1
+[22-Oct-2025 16:14:01 Asia/Manila] VERIFICATION: Account ID 73 now has status: Approved
+[22-Oct-2025 16:14:01 Asia/Manila] Transaction committed successfully
+[22-Oct-2025 16:14:05 Asia/Manila] Email sent successfully to punzalanj640@gmail.com
+[22-Oct-2025 16:14:05 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[22-Oct-2025 16:14:05 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":73}}

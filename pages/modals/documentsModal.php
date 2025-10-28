@@ -41,7 +41,7 @@ if (isset($_SESSION['user_id'])) {
           <div class="alert alert-info">
             <i class="fas fa-user me-2"></i>
             <strong>Requesting as:</strong> <?= htmlspecialchars($resident_data['first_name'] . ' ' . $resident_data['last_name']) ?>
-            <br><small>Your information below is pre-filled from your account. You can update if needed for this request.</small>
+            <br><small>Your information is pre-filled from your account and cannot be modified.</small>
           </div>
           <?php else: ?>
           <div class="alert alert-warning">
@@ -62,22 +62,23 @@ if (isset($_SESSION['user_id'])) {
             </select>
           </div>
 
-          <!-- Requester Info -->
+          <!-- Requester Info-->
           <div class="row">
             <div class="col-md-4 mb-3">
               <label class="form-label">First Name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" name="first_name" 
-                     value="<?= htmlspecialchars($resident_data['first_name']) ?>" required>
+                     value="<?= htmlspecialchars($resident_data['first_name']) ?>" readonly>
+              <div class="form-text">Your account name - cannot be modified</div>
             </div>
             <div class="col-md-4 mb-3">
               <label class="form-label">Middle Name</label>
               <input type="text" class="form-control" name="middle_name"
-                     value="<?= htmlspecialchars($resident_data['middle_name']) ?>">
+                     value="<?= htmlspecialchars($resident_data['middle_name']) ?>" readonly>
             </div>
             <div class="col-md-4 mb-3">
               <label class="form-label">Last Name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" name="last_name"
-                     value="<?= htmlspecialchars($resident_data['last_name']) ?>" required>
+                     value="<?= htmlspecialchars($resident_data['last_name']) ?>" readonly>
             </div>
           </div>
 
@@ -85,62 +86,66 @@ if (isset($_SESSION['user_id'])) {
             <div class="col-md-4 mb-3">
               <label class="form-label">House No. <span class="text-danger">*</span></label>
               <input type="text" class="form-control" name="houseno"
-                     value="<?= htmlspecialchars($resident_data['house_number']) ?>" required>
+                     value="<?= htmlspecialchars($resident_data['house_number']) ?>" readonly>
             </div>
             <div class="col-md-4 mb-3">
               <label class="form-label">Purok <span class="text-danger">*</span></label>
               <input type="text" class="form-control" name="purok"
-                     value="<?= htmlspecialchars($resident_data['purok']) ?>" required>
+                     value="<?= htmlspecialchars($resident_data['purok']) ?>" readonly>
             </div>
             <div class="col-md-4 mb-3">
               <label class="form-label">Civil Status <span class="text-danger">*</span></label>
-              <select class="form-select" name="civil_status" required>
-                <option value="">-- Select --</option>
-                <option value="Single" <?= $resident_data['civil_status'] == 'Single' ? 'selected' : '' ?>>Single</option>
-                <option value="Married" <?= $resident_data['civil_status'] == 'Married' ? 'selected' : '' ?>>Married</option>
-                <option value="Widowed" <?= $resident_data['civil_status'] == 'Widowed' ? 'selected' : '' ?>>Widowed</option>
-                <option value="Separated" <?= $resident_data['civil_status'] == 'Separated' ? 'selected' : '' ?>>Separated</option>
-              </select>
+              <input type="text" class="form-control" name="civil_status"
+                     value="<?= htmlspecialchars($resident_data['civil_status']) ?>" readonly>
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Sex <span class="text-danger">*</span></label>
-              <select class="form-select" name="sex" required>
-                <option value="">-- Select --</option>
-                <option value="male" <?= $resident_data['sex'] == 'male' ? 'selected' : '' ?>>Male</option>
-                <option value="female" <?= $resident_data['sex'] == 'female' ? 'selected' : '' ?>>Female</option>
-              </select>
+              <input type="text" class="form-control" name="sex"
+                     value="<?= htmlspecialchars(ucfirst($resident_data['sex'])) ?>" readonly>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Birthdate <span class="text-danger">*</span></label>
-              <input type="date" class="form-control" name="birthdate" id="birthdate"
-                     value="<?= $resident_data['birthdate'] ?>" required>
+              <input type="text" class="form-control" name="birthdate"
+                     value="<?= date('F j, Y', strtotime($resident_data['birthdate'])) ?>" readonly>
             </div>
           </div>
           
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Age</label>
-              <input type="number" class="form-control" name="age" id="age" readonly
-                     value="<?= $resident_data['age'] ?>" required>
+              <input type="number" class="form-control" name="age"
+                     value="<?= $resident_data['age'] ?>" readonly>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Contact Number</label>
               <input type="text" class="form-control" name="contact_number"
-                     value="<?= htmlspecialchars($resident_data['contact_number']) ?>">
-              <div class="form-text">You can update your contact number if needed.</div>
+                     value="<?= htmlspecialchars($resident_data['contact_number']) ?>" readonly>
+              <div class="form-text">Contact number from your account</div>
             </div>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Purpose <span class="text-danger">*</span></label>
             <textarea class="form-control" name="purpose" rows="2" placeholder="Please specify the purpose of this document request..." required></textarea>
+            <div class="form-text">This is the only field you can edit for this request</div>
           </div>
 
           <!-- Hidden inputs for resident data -->
           <input type="hidden" name="resident_id" value="<?= $resident_data['id'] ?>">
+          <!-- Hidden inputs for form processing -->
+          <input type="hidden" name="first_name" value="<?= htmlspecialchars($resident_data['first_name']) ?>">
+          <input type="hidden" name="middle_name" value="<?= htmlspecialchars($resident_data['middle_name']) ?>">
+          <input type="hidden" name="last_name" value="<?= htmlspecialchars($resident_data['last_name']) ?>">
+          <input type="hidden" name="houseno" value="<?= htmlspecialchars($resident_data['house_number']) ?>">
+          <input type="hidden" name="purok" value="<?= htmlspecialchars($resident_data['purok']) ?>">
+          <input type="hidden" name="civil_status" value="<?= htmlspecialchars($resident_data['civil_status']) ?>">
+          <input type="hidden" name="sex" value="<?= htmlspecialchars($resident_data['sex']) ?>">
+          <input type="hidden" name="birthdate" value="<?= $resident_data['birthdate'] ?>">
+          <input type="hidden" name="age" value="<?= $resident_data['age'] ?>">
+          <input type="hidden" name="contact_number" value="<?= htmlspecialchars($resident_data['contact_number']) ?>">
           <?php endif; ?>
         </div>
         <div class="modal-footer">
@@ -162,30 +167,8 @@ if (isset($_SESSION['user_id'])) {
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const birthdateInput = document.getElementById("birthdate");
-  const ageInput = document.getElementById("age");
   const documentRequestForm = document.getElementById("documentRequestForm");
   const messageDiv = document.getElementById("documentRequestMessage");
-
-  function calculateAge() {
-    const birthdate = new Date(birthdateInput.value);
-    if (!isNaN(birthdate)) {
-      const today = new Date();
-      let age = today.getFullYear() - birthdate.getFullYear();
-      const monthDiff = today.getMonth() - birthdate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
-        age--;
-      }
-      ageInput.value = age >= 0 ? age : "";
-    } else {
-      ageInput.value = "";
-    }
-  }
-
-  // Calculate on change
-  if (birthdateInput) {
-    birthdateInput.addEventListener("change", calculateAge);
-  }
 
   // Handle form submission with AJAX (only if resident is logged in)
   <?php if ($resident_data): ?>
@@ -220,9 +203,6 @@ document.addEventListener("DOMContentLoaded", function () {
         // Reset form after a short delay to let user see the success message
         setTimeout(() => {
           documentRequestForm.reset();
-          // Reset age field as well
-          if (ageInput) ageInput.value = '<?= $resident_data['age'] ?>';
-          
           // Close modal after showing success
           setTimeout(() => {
             const modal = bootstrap.Modal.getInstance(document.getElementById('documentRequestModal'));
