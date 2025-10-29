@@ -1,0 +1,57 @@
+    .status-badge {
+        cursor: pointer;
+    }
+    .filter-form {
+        max-width: 300px;
+    }
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .stats-card i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    .stats-card .number {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-card .label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .export-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border-left: 4px solid #0d6efd;
+    }
+    .export-btn {
+        background: linear-gradient(135deg, #198754 0%, #157347 100%);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+    }
+    .filter-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 25px;
+    }

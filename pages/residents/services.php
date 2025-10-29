@@ -29,8 +29,25 @@ require_once '../../config/db.php';
                 <h2 class="mb-4">Barangay Services</h2>
                 <div class="card-body">
                     <div class="row">
+                        <!-- Barangay ID Card -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-id-card fa-3x text-info mb-3"></i>
+                                    <h5>Barangay ID</h5>
+                                    <p class="text-muted">Apply for barangay identification card</p>
+                                    <button class="btn btn-info btn-sm request-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#barangayIdModal" 
+                                            data-document="Barangay ID">
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Request Documents Card -->
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-3 mb-4">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-handshake fa-3x text-primary mb-3"></i>
@@ -47,7 +64,7 @@ require_once '../../config/db.php';
                         </div>
 
                         <!-- Reservation of Service Vehicle -->
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-3 mb-4">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-bus fa-3x text-success mb-3"></i>
@@ -63,7 +80,7 @@ require_once '../../config/db.php';
                         </div>
 
                         <!-- Reservation Others -->
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-3 mb-4">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-campground fa-3x text-warning mb-3"></i>
@@ -88,7 +105,14 @@ require_once '../../config/db.php';
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <h6><i class="fas fa-id-card text-info me-2"></i>Barangay ID</h6>
+                                    <ul class="list-unstyled ms-3">
+                                        <li>• Valid identification for residents</li>
+                                        <li>• Required for local transactions</li>    
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
                                     <h6><i class="fas fa-bus text-success me-2"></i>Service Vehicle</h6>
                                     <ul class="list-unstyled ms-3">
                                         <li>• Available for medical emergencies</li>
@@ -97,7 +121,7 @@ require_once '../../config/db.php';
                                         <li>• Request at least 1 day in advance</li>
                                     </ul>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <h6><i class="fas fa-campground text-warning me-2"></i>Other Barangay Services</h6>
                                     <ul class="list-unstyled ms-3">
                                         <li>• Perfect for outdoor events</li>
@@ -121,11 +145,12 @@ require_once '../../config/db.php';
         </div>
     </div>
 
+    <?php include '../../pages/modals/barangayIdModal.php'; ?>
     <?php include '../../pages/modals/documentsModal.php'; ?>
     <?php include '../../pages/modals/vehicleReservationModal.php'; ?>
     <?php include '../../pages/modals/tentReservationModal.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/services.js"></script>
+    <script src="../../assets/js/services.js"></script>
 </body>
 </html>

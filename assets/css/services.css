@@ -151,3 +151,22 @@
                 font-size: 1.2rem;
             }
         }
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-info {
+    color: #fff;
+}
+
+/* Ensure consistent card heights */
+.card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}

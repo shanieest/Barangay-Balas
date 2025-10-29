@@ -96,7 +96,7 @@ if (isset($_SESSION['user_id'])) {
             <div class="col-md-4 mb-3">
               <label class="form-label">Civil Status <span class="text-danger">*</span></label>
               <input type="text" class="form-control" name="civil_status"
-                     value="<?= htmlspecialchars($resident_data['civil_status']) ?>" readonly>
+                     value="<?= htmlspecialchars($resident_data['civil_status']) ?>" require readonly>
             </div>
           </div>
 

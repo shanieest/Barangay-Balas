@@ -58,6 +58,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                                 <i class="fas fa-file-alt me-2"></i>
                                 Document Requests
                             </a>
+                            <a class="nav-link <?= $currentPage == 'barangay_id_records.php' ? 'active' : '' ?>" href="barangay_id_records.php">
+                                <i class="fas fa-id-card me-2"></i>
+                                Barangay ID
+                            </a>
                         </nav>
                     </div>
                 </div>

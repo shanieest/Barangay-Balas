@@ -101,7 +101,7 @@ if (isset($_SESSION['login_error'])) {
                                 </div>
                                  <div class="form-group col-md-6">
                                     <label for="suffix">Suffix</label>
-                                    <input type="text" class="form-control" id="suffix" name="suffix" placeholder="Suffix">
+                                    <input type="text" class="form-control" id="suffix" name="suffix" placeholder="Ex. Jr., Sr., III">
                                 </div>
                             </div>
                             
