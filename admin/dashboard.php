@@ -1,7 +1,13 @@
 <?php 
 require_once __DIR__ . '/includes/auth.php';
-requireAuth();
 require_once __DIR__ . '/includes/db.php';
+requireAuth();
+
+// Check if user is Social Worker and redirect to appropriate dashboard
+if (isSocialWorker()) {
+    header('Location: social_worker_dashboard.php');
+    exit();
+}
 
 // Get filter parameters
 $selected_month = isset($_GET['month']) ? (int)$_GET['month'] : date('m');
@@ -21,23 +27,45 @@ $current_year = date('Y');
 $last_month = date('m', strtotime('-1 month'));
 $last_year = date('Y', strtotime('-1 month'));
 
-// Function to get counts with optional date filtering
+// Improved function to get counts with better error handling
 function getCount($conn, $query, $params = []) {
-    $stmt = $conn->prepare($query);
-    if ($params) {
-        $types = str_repeat('s', count($params));
-        $stmt->bind_param($types, ...$params);
+    try {
+        $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            error_log("SQL Prepare failed: " . $conn->error);
+            return 0;
+        }
+        
+        if ($params) {
+            $types = str_repeat('s', count($params));
+            $stmt->bind_param($types, ...$params);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            // Check if 'total' key exists, otherwise try to get first column
+            if (isset($row['total'])) {
+                return (int)$row['total'];
+            } else {
+                // Get the first column value if 'total' doesn't exist
+                $values = array_values($row);
+                return isset($values[0]) ? (int)$values[0] : 0;
+            }
+        }
+        return 0;
+    } catch (Exception $e) {
+        error_log("Error in getCount: " . $e->getMessage());
+        return 0;
     }
-    $stmt->execute();
-    $result = $stmt->get_result();
-    return ($result && $row = $result->fetch_assoc()) ? (int)$row['total'] : 0;
 }
 
 // Build date condition for filters
 $date_condition = "MONTH(date_requested) = ? AND YEAR(date_requested) = ?";
-$current_month_condition = "MONTH(date_requested) = ? AND YEAR(date_requested) = ?";
 
-// Main statistics with filters
+// Main statistics with improved error handling
 $residents_count  = getCount($conn, "SELECT COUNT(*) AS total FROM resident_accounts WHERE account_status = 'approved'");
 $pending_requests = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Pending'");
 $approved_today   = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Approved' AND DATE(date_processed) = CURDATE()");
@@ -91,33 +119,49 @@ $reqQuery = $conn->prepare("
     WHERE MONTH(dr.date_requested) = ? AND YEAR(dr.date_requested) = ?
     GROUP BY dt.document_type
 ");
-$reqQuery->bind_param("ii", $selected_month, $selected_year);
-$reqQuery->execute();
-$reqResult = $reqQuery->get_result();
 
-if ($reqResult) {
-    while ($row = $reqResult->fetch_assoc()) {
-        $labels[] = $row['document_type'];
-        $requestsData[] = $row['total'];
+if ($reqQuery) {
+    $reqQuery->bind_param("ii", $selected_month, $selected_year);
+    $reqQuery->execute();
+    $reqResult = $reqQuery->get_result();
+
+    if ($reqResult) {
+        while ($row = $reqResult->fetch_assoc()) {
+            $labels[] = $row['document_type'];
+            $requestsData[] = $row['total'];
+        }
     }
+} else {
+    // Fallback if query fails
+    $labels = ['No Data'];
+    $requestsData = [0];
 }
 
-// Resident status distribution
 $residentLabels = ['Approved', 'Pending', 'Disapproved'];
 $residentData = [0, 0, 0];
+
 $resQuery = $conn->query("
-    SELECT ra.account_status, COUNT(*) as total
+    SELECT LOWER(ra.account_status) AS account_status, COUNT(*) as total
     FROM resident_accounts ra
-    JOIN residents r ON ra.resident_id = r.id
-    GROUP BY ra.account_status
+    GROUP BY LOWER(ra.account_status)
 ");
+
 if ($resQuery) {
     while ($row = $resQuery->fetch_assoc()) {
-        if ($row['account_status'] === 'Approved') $residentData[0] = $row['total'];
-        if ($row['account_status'] === 'Pending')  $residentData[1] = $row['total'];
-        if ($row['account_status'] === 'Disapproved') $residentData[2] = $row['total'];
+        switch ($row['account_status']) {
+            case 'approved':
+                $residentData[0] = (int)$row['total'];
+                break;
+            case 'pending':
+                $residentData[1] = (int)$row['total'];
+                break;
+            case 'disapproved':
+                $residentData[2] = (int)$row['total'];
+                break;
+        }
     }
 }
+
 
 // Service statistics for selected month
 $serviceStats = [];
@@ -129,24 +173,34 @@ $serviceQuery = $conn->prepare("
     WHERE sr.status = 'Completed' AND MONTH(sr.date_requested) = ? AND YEAR(sr.date_requested) = ?
     GROUP BY st.service_name
 ");
-$serviceQuery->bind_param("ii", $selected_month, $selected_year);
-$serviceQuery->execute();
-$serviceResult = $serviceQuery->get_result();
 
-if ($serviceResult) {
-    while ($row = $serviceResult->fetch_assoc()) {
-        $serviceStats[] = $row;
+if ($serviceQuery) {
+    $serviceQuery->bind_param("ii", $selected_month, $selected_year);
+    $serviceQuery->execute();
+    $serviceResult = $serviceQuery->get_result();
+
+    if ($serviceResult) {
+        while ($row = $serviceResult->fetch_assoc()) {
+            $serviceStats[] = $row;
+        }
     }
 }
 
 // Performance metrics
 $approval_rate = $total_requests > 0 ? round(($completed_requests / $total_requests) * 100, 1) : 0;
-$response_time = getCount($conn, "
+
+// Improved response time calculation
+$response_time = 0;
+$responseQuery = $conn->query("
     SELECT AVG(TIMESTAMPDIFF(HOUR, date_requested, date_processed)) as avg_hours
     FROM document_requests 
     WHERE status = 'Approved' AND date_processed IS NOT NULL
 ");
-$response_time = $response_time ? round($response_time, 1) : 0;
+
+if ($responseQuery && $responseQuery->num_rows > 0) {
+    $row = $responseQuery->fetch_assoc();
+    $response_time = isset($row['avg_hours']) ? round($row['avg_hours'], 1) : 0;
+}
 
 // Generate month options
 $months = [];
@@ -194,6 +248,24 @@ rsort($years); // Show most recent first
                                     <button class="btn btn-outline-light me-2 mb-2"><i class="fas fa-calendar me-1"></i> <?= date('F j, Y') ?></button>
                                     <button class="btn btn-outline-light mb-2" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Badge -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="role-badge">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-user-shield me-1"></i>
+                                    <?= htmlspecialchars($_SESSION['role'] ?? 'User') ?>
+                                </span>
+                                <?php if (isAdmin()): ?>
+                                    <span class="badge bg-success ms-2">
+                                        <i class="fas fa-crown me-1"></i>
+                                        Full Access
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -586,7 +658,7 @@ rsort($years); // Show most recent first
                 labels: <?= json_encode($residentLabels) ?>,
                 datasets: [{
                     data: <?= json_encode($residentData) ?>,
-                    backgroundColor: ['#29ac55ff','#FFD166','#E63946'],
+                    backgroundColor: ['#1a6c35ff','#fcca56ff','#e60f21ff'],
                     hoverBackgroundColor: ['#29ac55ff','#C1121F']
                 }]
             },

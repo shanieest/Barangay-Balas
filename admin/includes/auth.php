@@ -1,4 +1,5 @@
 <?php
+// admin/includes/auth.php
 
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_path', '/');
@@ -34,12 +35,27 @@ function isOfficial() {
     return strcasecmp(getUserRole() ?? '', 'Official') === 0;
 }
 
+function isSocialWorker() {
+    return strcasecmp(getUserRole() ?? '', 'Social Worker') === 0;
+}
+
 function canModify() {
     return isAdmin();
 }
 
 function requireCanModify() {
     if (!canModify()) {
+        header('Location: unauthorized.php');
+        exit();
+    }
+}
+
+function canAccessDaycare() {
+    return isAdmin() || isSocialWorker();
+}
+
+function requireDaycareAccess() {
+    if (!canAccessDaycare()) {
         header('Location: unauthorized.php');
         exit();
     }
@@ -72,7 +88,14 @@ function login($username, $password) {
 
         if (password_verify($password, $user['password'])) {
             // Normalize role
-            $role = (strcasecmp(trim($user['role']), 'Admin') === 0) ? 'Admin' : 'Official';
+            $roleMap = [
+                'admin' => 'Admin',
+                'official' => 'Official',
+                'social worker' => 'Social Worker'
+            ];
+            
+            $roleLower = strtolower(trim($user['role']));
+            $role = $roleMap[$roleLower] ?? 'Official';
 
             // Set session
             $_SESSION['admin_id']  = $user['id'];

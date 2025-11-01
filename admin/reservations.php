@@ -86,11 +86,11 @@ while ($row = $service_result->fetch_assoc()) {
             }
             
             $badge_class = match($service_name) {
-                'Tent' => 'bg-primary',
-                'Vehicle' => 'bg-info', 
-                'Sound System' => 'bg-warning text-dark',
-                'Tables and Chairs' => 'bg-success',
-                default => 'bg-secondary'
+                'Tent' => 'badge-tent',
+                'Vehicle' => 'badge-vehicle', 
+                'Sound System' => 'badge-sound',
+                'Tables and Chairs' => 'badge-tables',
+                default => 'badge-default'
             };
             
             $service_badges .= '<span class="badge ' . $badge_class . ' me-1 mb-1">' . 
@@ -112,7 +112,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
     
     if ($total_pages <= 1) return $links;
     
-    $links .= '<nav aria-label="Page navigation"><ul class="pagination pagination-sm justify-content-center mb-0">';
+    $links .= '<nav aria-label="Page navigation"><ul class="pagination justify-content-center mb-0">';
     
     $prev_disabled = $current_page <= 1 ? 'disabled' : '';
     $prev_page = max(1, $current_page - 1);
@@ -163,23 +163,8 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
-  <style>
-/* TEMPORARY FIX - Add this to your page */
-.calendar-grid {
-    display: grid !important;
-    grid-template-columns: repeat(7, 1fr) !important;
-    gap: 8px !important;
-    width: 100% !important;
-}
+  <link rel="stylesheet" href="./assets/css/servicesAdmin.css">
 
-.calendar-day {
-    width: 100% !important;
-    height: 40px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-</style>
 </head>
 <body class="sb-nav-fixed">
 <?php include 'includes/navbar.php'; ?>
@@ -187,29 +172,49 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
   <?php include 'includes/sidebar.php'; ?>
   <div id="layoutSidenav_content">
     <main>
-      <div class="container-fluid px-4">
-        <h1 class="mt-4">Service Reservations</h1>
-        <ol class="breadcrumb mb-4">
-          <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
-          <li class="breadcrumb-item active">Service Reservations</li>
-        </ol>
+      <div>
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="header-icon">
+                        <i class="fas fa-concierge-bell fa-2x"></i>
+                    </div>
+                    <h1 class="mb-2">Service Reservations</h1>
+                    <p class="mb-0 opacity-75">Manage and track barangay service reservations</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                        <button class="btn btn-outline-light" onclick="location.reload()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="dashboard.php"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+                <li class="breadcrumb-item active"><i class="fas fa-concierge-bell me-1"></i>Service Reservations</li>
+            </ol>
+        </nav>
 
         <!-- Reports Section -->
-        <div class="card mt-4">
+        <div class="card">
             <div class="card-header">
-                <i class="fas fa-chart-bar me-1"></i> Service Reservation Reports
+                <i class="fas fa-chart-bar me-2"></i> Service Reservation Reports
             </div>
             <div class="card-body">
                 <div class="row mb-3">
                     <div class="col-md-3">
-                        <label for="report-type" class="form-label">Report Type</label>
+                        <label for="report-type" class="form-label fw-semibold">Report Type</label>
                         <select class="form-select" id="report-type">
                             <option value="monthly">Monthly Report</option>
                             <option value="yearly">Yearly Report</option>
                         </select>
                     </div>
                     <div class="col-md-3" id="month-selection">
-                        <label for="report-month" class="form-label">Month</label>
+                        <label for="report-month" class="form-label fw-semibold">Month</label>
                         <select class="form-select" id="report-month">
                             <?php
                             $months = [
@@ -226,7 +231,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label for="report-year" class="form-label">Year</label>
+                        <label for="report-year" class="form-label fw-semibold">Year</label>
                         <select class="form-select" id="report-year">
                             <?php
                             $current_year = date('Y');
@@ -272,7 +277,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         <div class="col-md-6 mb-4">
                             <div class="card">
                                 <div class="card-header">
-                                    <i class="fas fa-chart-pie me-1"></i> Status Distribution
+                                    <i class="fas fa-chart-pie me-2"></i> Status Distribution
                                 </div>
                                 <div class="card-body">
                                     <canvas id="statusChart" width="400" height="300"></canvas>
@@ -282,7 +287,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         <div class="col-md-6 mb-4">
                             <div class="card">
                                 <div class="card-header">
-                                    <i class="fas fa-chart-bar me-1"></i> Service Type Breakdown
+                                    <i class="fas fa-chart-bar me-2"></i> Service Type Breakdown
                                 </div>
                                 <div class="card-body">
                                     <div id="service-breakdown-table">
@@ -298,7 +303,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <i class="fas fa-table me-1"></i> Detailed Breakdown
+                                    <i class="fas fa-table me-2"></i> Detailed Breakdown
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -328,44 +333,43 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
         </div>
 
         <!-- Calendar Availability Section -->
-        <div class="card mb-4">
+        <div class="card">
             <div class="card-header">
-                <i class="fas fa-calendar-alt me-1"></i> Reservation Calendar - Date Availability
+                <i class="fas fa-calendar-alt me-2"></i> Reservation Calendar - Date Availability
             </div>
             <div class="card-body p-3">
                 <div id="availability-calendar"></div>
-                
             </div>
         </div>
 
-        <div class="card mb-4">
+        <div class="card">
           <div class="card-header">
-            <i class="fas fa-concierge-bell me-1"></i> Manage Service Reservations
+            <i class="fas fa-list-alt me-2"></i> Manage Service Reservations
           </div>
           <div class="card-body">
             <ul class="nav nav-tabs mb-3" id="servicesTab" role="tablist">
               <li class="nav-item">
                 <a class="nav-link <?= $tab === 'pending' ? 'active' : '' ?>" 
                    href="?tab=pending&page=1">
-                  Pending <span class="badge bg-warning ms-1"><?= $service_counts['Pending'] ?></span>
+                  <i class="fas fa-clock me-1"></i> Pending <span class="badge bg-warning ms-1"><?= $service_counts['Pending'] ?></span>
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link <?= $tab === 'approved' ? 'active' : '' ?>" 
                    href="?tab=approved&page=1">
-                  Approved <span class="badge bg-success ms-1"><?= $service_counts['Approved'] ?></span>
+                  <i class="fas fa-check-circle me-1"></i> Approved <span class="badge bg-success ms-1"><?= $service_counts['Approved'] ?></span>
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link <?= $tab === 'completed' ? 'active' : '' ?>" 
                    href="?tab=completed&page=1">
-                  Completed <span class="badge bg-info ms-1"><?= $service_counts['Completed'] ?></span>
+                  <i class="fas fa-check-double me-1"></i> Completed <span class="badge bg-info ms-1"><?= $service_counts['Completed'] ?></span>
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link <?= $tab === 'cancelled' ? 'active' : '' ?>" 
                    href="?tab=cancelled&page=1">
-                  Cancelled <span class="badge bg-danger ms-1"><?= $service_counts['Cancelled'] ?></span>
+                  <i class="fas fa-times-circle me-1"></i> Cancelled <span class="badge bg-danger ms-1"><?= $service_counts['Cancelled'] ?></span>
                 </a>
               </li>
             </ul>
@@ -379,8 +383,8 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
               </div>
             <?php endif; ?>
 
-            <div class="table-responsive">
-              <table class="table table-striped table-bordered">
+            <div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
+              <table class="table table-striped" style="width:100%; min-width: 800px;">
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -404,7 +408,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                   <?php if (count($services) > 0): ?>
                     <?php foreach ($services as $row): ?>
                       <tr>
-                        <td>SR-<?= str_pad($row['id'], 3, '0', STR_PAD_LEFT) ?></td>
+                        <td><strong>SR-<?= str_pad($row['id'], 3, '0', STR_PAD_LEFT) ?></strong></td>
                         <td><?= htmlspecialchars($row['resident_name']) ?></td>
                         <td><?= $row['service_badges'] ?></td>
                         <td><?= htmlspecialchars($row['reservation_date']) ?></td>
@@ -459,7 +463,7 @@ function generatePaginationLinks($current_page, $total_pages, $base_url, $additi
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
-                    <tr><td colspan="7" class="text-center">No <?= $tab ?> service reservations</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">No <?= $tab ?> service reservations</td></tr>
                   <?php endif; ?>
                 </tbody>
               </table>

@@ -45,6 +45,7 @@ function handleGetOfficials() {
     $query = "SELECT id, username, first_name, last_name, middle_name, email, 
               contact_number, position, committee_position, status, role, created_at, last_login
               FROM admin_users 
+              WHERE role IN ('Admin', 'Official')
               ORDER BY 
               CASE role
                 WHEN 'Admin' THEN 1
@@ -83,7 +84,7 @@ function handleGetOfficial() {
         throw new Exception("Valid official ID is required");
     }
     
-    $stmt = $conn->prepare("SELECT * FROM admin_users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT * FROM admin_users WHERE id = ? AND role IN ('Admin', 'Official')");
     if (!$stmt) {
         throw new Exception("Prepare failed: " . $conn->error);
     }
@@ -142,7 +143,7 @@ function handleAddOfficial() {
         throw new Exception("Contact number must be exactly 11 digits");
     }
     
-    // Validate role
+    // Validate role - Only allow Admin and Official
     if (!in_array($data['role'], ['Admin', 'Official'])) {
         throw new Exception("Invalid role selected. Must be Admin or Official");
     }
@@ -247,13 +248,13 @@ function handleUpdateOfficial() {
         throw new Exception("Contact number must be exactly 11 digits");
     }
 
-    // Validate role
+    // Validate role - Only allow Admin and Official
     if (!in_array($data['role'], ['Admin', 'Official'])) {
         throw new Exception("Invalid role selected. Must be Admin or Official");
     }
 
     // Check duplicate email
-    $stmt = $conn->prepare("SELECT id FROM admin_users WHERE email = ? AND id != ?");
+    $stmt = $conn->prepare("SELECT id FROM admin_users WHERE email = ? AND id != ? AND role IN ('Admin', 'Official')");
     $stmt->bind_param("si", $data['email'], $data['id']);
     $stmt->execute();
     if ($stmt->get_result()->num_rows > 0) {
@@ -261,7 +262,7 @@ function handleUpdateOfficial() {
     }
 
     // Get current official data
-    $stmt = $conn->prepare("SELECT * FROM admin_users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT * FROM admin_users WHERE id = ? AND role IN ('Admin', 'Official')");
     $stmt->bind_param("i", $data['id']);
     $stmt->execute();
     $current = $stmt->get_result()->fetch_assoc();
@@ -271,7 +272,7 @@ function handleUpdateOfficial() {
 
     // Check Barangay Captain constraint
     if ($data['position'] === 'Barangay Captain' && $current['position'] !== 'Barangay Captain') {
-        $stmt = $conn->prepare("SELECT id FROM admin_users WHERE position = 'Barangay Captain' AND status = 'Active' AND id != ?");
+        $stmt = $conn->prepare("SELECT id FROM admin_users WHERE position = 'Barangay Captain' AND status = 'Active' AND id != ? AND role IN ('Admin', 'Official')");
         $stmt->bind_param("i", $data['id']);
         $stmt->execute();
         if ($stmt->get_result()->num_rows > 0) {
@@ -307,7 +308,7 @@ function handleUpdateOfficial() {
         $params[] = $hashed_password;
     }
 
-    $sql .= " WHERE id = ?";
+    $sql .= " WHERE id = ? AND role IN ('Admin', 'Official')";
     $types .= "i";
     $params[] = (int)$data['id'];
 
@@ -337,7 +338,7 @@ function handleDeleteOfficial() {
     }
     
     // Get official data
-    $stmt = $conn->prepare("SELECT * FROM admin_users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT * FROM admin_users WHERE id = ? AND role IN ('Admin', 'Official')");
     if (!$stmt) {
         throw new Exception("Prepare failed: " . $conn->error);
     }
@@ -358,7 +359,7 @@ function handleDeleteOfficial() {
     }
     
     // Delete the official
-    $stmt = $conn->prepare("DELETE FROM admin_users WHERE id = ?");
+    $stmt = $conn->prepare("DELETE FROM admin_users WHERE id = ? AND role IN ('Admin', 'Official')");
     if (!$stmt) {
         throw new Exception("Prepare failed: " . $conn->error);
     }

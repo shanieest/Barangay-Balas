@@ -2,6 +2,7 @@
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --danger-gradient: linear-gradient(135deg, #851317ff 0%, #901b1bff 100%);
             --card-shadow: 0 8px 30px rgba(0,0,0,0.08);
             --hover-shadow: 0 15px 35px rgba(0,0,0,0.1);
         }
@@ -108,182 +109,189 @@
             border: none;
         }
         
-        .export-card {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 25px;
-            border: 2px dashed #e9ecef;
-            transition: all 0.3s ease;
-        }
-        
-        .export-card:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: var(--hover-shadow);
-        }
-        
-        .export-btn {
-            background: var(--success-gradient);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 28px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .export-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
-        }
-        
-        .filter-card {
-            background: white;
-            border-radius: 18px;
-            padding: 25px;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 25px;
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 8px;
-        }
-        
-        .form-select, .form-control {
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 12px 18px;
-            transition: all 0.3s ease;
-        }
-        
-        .form-select:focus, .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .household-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
+        .table {
+            margin-bottom: 0;
+            border-radius: 0 0 18px 18px;
             overflow: hidden;
         }
         
-        .household-card:hover {
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+            padding: 18px 15px;
+            color: #495057;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody td {
+            padding: 16px 15px;
+            vertical-align: middle;
+            border-color: #f8f9fa;
+        }
+        
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9ff;
+            transform: scale(1.002);
+        }
+        
+        .badge {
+            font-size: 0.8rem;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        .badge-admin {
+            background: var(--secondary-gradient);
+            color: white;
+        }
+        
+        .badge-official {
+            background: var(--success-gradient);
+            color: white;
+        }
+        
+        .badge-active {
+            background: linear-gradient(135deg, #51cf66 0%, #2b8a3e 100%);
+            color: white;
+        }
+        
+        .badge-inactive {
+            background: linear-gradient(135deg, #868e96 0%, #495057 100%);
+            color: white;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .btn-action:hover {
+            transform: scale(1.1);
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .official-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+        }
+        
+        .stats-card:hover {
             transform: translateY(-3px);
             box-shadow: var(--hover-shadow);
         }
         
-        .household-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 20px 25px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .household-title {
+        .stats-number {
+            font-size: 2.5rem;
             font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 1.3rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
         }
         
-        .household-meta {
+        .stats-label {
             color: #6c757d;
+            font-weight: 500;
             font-size: 0.9rem;
         }
         
-        .household-body {
-            padding: 25px;
-        }
-        
-        .resident-badge {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            color: #2d3748;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin: 5px;
-            display: inline-block;
-        }
-        
-        .alert {
-            border-radius: 12px;
-            border: none;
-            box-shadow: var(--card-shadow);
-        }
-        
-        .alert-info {
-            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            backdrop-filter: blur(5px);
-        }
-        
-        .loading-content {
+        .search-box {
             background: white;
-            padding: 40px;
-            border-radius: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .filter-btn {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .empty-state {
+            padding: 60px 20px;
             text-align: center;
-            box-shadow: var(--hover-shadow);
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
         }
         
         .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .pagination-container {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: var(--card-shadow);
-        }
-        
-        .page-link {
-            border: none;
-            border-radius: 8px;
-            margin: 0 5px;
+            padding: 40px 20px;
+            text-align: center;
             color: #667eea;
-            font-weight: 500;
         }
         
-        .page-link:hover {
-            background: #667eea;
-            color: white;
-        }
-        
-        .page-item.active .page-link {
-            background: var(--primary-gradient);
-            border: none;
+        .loading-spinner i {
+            font-size: 2rem;
         }
         
         @media (max-width: 768px) {
@@ -300,7 +308,16 @@
                 font-size: 1.8rem;
             }
             
-            .export-card {
-                padding: 20px;
+            .table-responsive {
+                border-radius: 12px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn-action {
+                width: 100%;
+                margin: 2px 0;
             }
         }

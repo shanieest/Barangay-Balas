@@ -66,22 +66,40 @@ $stats = mysqli_fetch_assoc($stats_result);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/barangayId.css">
+     <link rel="stylesheet" href="./assets/css/barangayId.css">
 </head>
-<body>
+<body class="sb-nav-fixed">
     <?php include 'includes/navbar.php'; ?>
     <div id="layoutSidenav">
         <?php include 'includes/sidebar.php'; ?>
         <div id="layoutSidenav_content">
-            <div class="container-fluid px-4 py-4">
-                <main class="container-fluid px-4">
-                    <h1 class="mt-4">
-                        Barangay ID Applications
-                    </h1>
-                    <ol class="breadcrumb mb-4">
-                        <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
-                        <li class="breadcrumb-item active">ID Applications</li>
-                    </ol>
+            <main>
+                <div class="main-container">
+                    <div class="page-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="header-icon">
+                                    <i class="fas fa-id-card fa-2x"></i>
+                                </div>
+                                <h1 class="mb-2">Barangay ID Applications</h1>
+                                <p class="mb-0 opacity-75">Manage and process barangay ID applications</p>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                                    <button class="btn btn-outline-light" onclick="location.reload()">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="dashboard.php"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+                            <li class="breadcrumb-item active"><i class="fas fa-id-card me-1"></i>ID Applications</li>
+                        </ol>
+                    </nav>
 
                     <!-- Success/Error Messages -->
                     <?php if (isset($_GET['success']) && $_GET['success'] == 'approved'): ?>
@@ -136,11 +154,11 @@ $stats = mysqli_fetch_assoc($stats_result);
                         <div class="row align-items-center">
                             <div class="col-md-7">
                                 <h3 class="mb-2">
-                                    <i class="fas fa-file-excel me-2"></i>Export Applications
+                                    <i class="fas fa-file-excel me-2 text-success"></i>Export Applications
                                 </h3>
-                                <p class="mb-0 opacity-75">Download application records for viewing and analysis.</p>
+                                <p class="mb-0 text-muted">Download application records for viewing and analysis.</p>
                             </div>
-                            <div class="col-md-5 text-end">
+                            <div class="col-md-5 text-md-end mt-3 mt-md-0">
                                 <button class="btn export-btn" data-bs-toggle="modal" data-bs-target="#exportModal">
                                     <i class="fas fa-download me-2"></i>Export to Excel
                                 </button>
@@ -151,28 +169,28 @@ $stats = mysqli_fetch_assoc($stats_result);
                     <!-- Statistics Cards -->
                     <div class="row">
                         <div class="col-xl-3 col-md-6 col-sm-6 mb-3">
-                            <div class="stats-card">
+                            <div class="stats-card" style="border-left-color: #667eea;">
                                 <i class="fas fa-file-alt text-primary"></i>
                                 <div class="number text-primary"><?= number_format($stats['total_applications']) ?></div>
                                 <div class="label">Total Applications</div>
                             </div>
                         </div>
                         <div class="col-xl-3 col-md-6 col-sm-6 mb-3">
-                            <div class="stats-card">
+                            <div class="stats-card" style="border-left-color: #ffc107;">
                                 <i class="fas fa-clock text-warning"></i>
                                 <div class="number text-warning"><?= number_format($stats['pending_count']) ?></div>
                                 <div class="label">Pending Review</div>
                             </div>
                         </div>
                         <div class="col-xl-3 col-md-6 col-sm-6 mb-3">
-                            <div class="stats-card">
+                            <div class="stats-card" style="border-left-color: #28a745;">
                                 <i class="fas fa-check-circle text-success"></i>
                                 <div class="number text-success"><?= number_format($stats['approved_count']) ?></div>
                                 <div class="label">Approved IDs</div>
                             </div>
                         </div>
                         <div class="col-xl-3 col-md-6 col-sm-6 mb-3">
-                            <div class="stats-card">
+                            <div class="stats-card" style="border-left-color: #dc3545;">
                                 <i class="fas fa-times-circle text-danger"></i>
                                 <div class="number text-danger"><?= number_format($stats['rejected_count']) ?></div>
                                 <div class="label">Rejected Applications</div>
@@ -187,7 +205,7 @@ $stats = mysqli_fetch_assoc($stats_result);
                                 <label class="form-label fw-semibold">
                                     <i class="fas fa-filter me-1"></i>Filter by Status
                                 </label>
-                                <form method="GET" class="filter-form">
+                                <form method="GET">
                                     <div class="input-group">
                                         <select class="form-select" id="statusFilter" name="status" onchange="this.form.submit()">
                                             <option value="all" <?= $status_filter === 'all' ? 'selected' : '' ?>>
@@ -215,12 +233,11 @@ $stats = mysqli_fetch_assoc($stats_result);
                     </div>
 
                     <!-- Applications Table -->
-                    <div class="card shadow-sm">
+                    <div class="card">
                         <div class="card-body">
                             <?php if ($result->num_rows > 0): ?>
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-hover">
-                                        <thead class="table-dark">
+                                <div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
+                                <table class="table table-striped" style="width:100%; min-width: 800px;">
                                             <tr>
                                                 <th>ID Number</th>
                                                 <th>Resident Name</th>
@@ -229,7 +246,9 @@ $stats = mysqli_fetch_assoc($stats_result);
                                                 <th>Application Date</th>
                                                 <th>Valid Until</th>
                                                 <th>Notes</th>
+                                                <?php if (canModify()) { ?>
                                                 <th>Actions</th>
+                                                <?php } ?>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -256,7 +275,7 @@ $stats = mysqli_fetch_assoc($stats_result);
                                                 <td><?= $row['valid_until'] ? date('M d, Y', strtotime($row['valid_until'])) : '-' ?></td>
                                                 <td>
                                                     <?php if ($row['notes']): ?>
-                                                        <button class="btn btn-sm btn-outline-info" onclick="viewNotes('<?= htmlspecialchars($row['notes']) ?>')">
+                                                        <button class="btn btn-sm btn-outline-info" onclick="viewNotes('<?= htmlspecialchars($row['notes'], ENT_QUOTES) ?>')">
                                                             <i class="fas fa-sticky-note"></i> View
                                                         </button>
                                                     <?php else: ?>
@@ -277,6 +296,7 @@ $stats = mysqli_fetch_assoc($stats_result);
                                                             </button>
                                                         </div>
                                                     <?php } elseif ($row['status'] === 'Approved' && $row['digital_id_path']) { ?>
+                                                        <?php if (canModify()) { ?>
                                                         <div class="btn-group btn-group-sm">
                                                             <button class="btn btn-info view-id" data-path="../<?= $row['digital_id_path'] ?>" title="View Digital ID">
                                                                 <i class="fas fa-eye"></i> View ID
@@ -285,6 +305,7 @@ $stats = mysqli_fetch_assoc($stats_result);
                                                                 <i class="fas fa-download"></i> Download
                                                             </a>
                                                         </div>
+                                                        <?php } ?>
                                                     <?php } elseif ($row['status'] === 'Rejected') { ?>
                                                         <button class="btn btn-secondary btn-sm" onclick="viewRejectionDetails(<?= $row['id'] ?>)" title="View Rejection Details">
                                                             <i class="fas fa-info-circle"></i> Details
@@ -297,10 +318,10 @@ $stats = mysqli_fetch_assoc($stats_result);
                                     </table>
                                 </div>
                             <?php else: ?>
-                                <div class="text-center py-5">
-                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                                    <h4 class="text-muted">No Applications Found</h4>
-                                    <p class="text-muted">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox fa-3x"></i>
+                                    <h4>No Applications Found</h4>
+                                    <p>
                                         <?php if ($status_filter !== 'all'): ?>
                                             No <?= strtolower($status_filter) ?> applications found.
                                         <?php else: ?>
@@ -316,8 +337,9 @@ $stats = mysqli_fetch_assoc($stats_result);
                             <?php endif; ?>
                         </div>
                     </div>
-                </main>
-            </div>
+                </div>
+            </main>
+            <?php include 'includes/footer.php'; ?>
         </div>
     </div>
 
@@ -325,10 +347,8 @@ $stats = mysqli_fetch_assoc($stats_result);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <script src="assets/js/barangayId.js"></script>
-        <script src="assets/js/script.js"></script>
-
+    <script src="assets/js/script.js"></script>
 
 </body>
 </html>

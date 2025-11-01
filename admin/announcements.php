@@ -24,110 +24,131 @@ if (!$announcements) {
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/announcements.css">
 </head>
 <body class="sb-nav-fixed">
 <?php include 'includes/navbar.php'; ?>
 <div id="layoutSidenav">
 <?php include 'includes/sidebar.php'; ?>
 <div id="layoutSidenav_content">
-<main class="container-fluid px-4">
-    <h1 class="mt-4">Announcements</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">Announcements</li>
-    </ol>
+<main>
+    <div>
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="header-icon">
+                        <i class="fas fa-bullhorn fa-2x"></i>
+                    </div>
+                    <h1 class="mb-2">Announcements</h1>
+                    <p class="mb-0 opacity-75">Keep the community informed with important updates and news</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                        <button class="btn btn-outline-light">
+                            <i class="fas fa-calendar me-1"></i> <?= date('F j, Y') ?>
+                        </button>
+                        <button class="btn btn-outline-light" onclick="location.reload()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <?php if (isset($_SESSION['success'])): ?>
-        <div class="alert alert-success alert-dismissible fade show">
-            <?= $_SESSION['success']; unset($_SESSION['success']); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show">
-            <?= $_SESSION['error']; unset($_SESSION['error']); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($error)): ?>
-        <div class="alert alert-danger alert-dismissible fade show">
-            <?= $error ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="dashboard.php"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+                <li class="breadcrumb-item active"><i class="fas fa-bullhorn me-1"></i>Announcements</li>
+            </ol>
+        </nav>
 
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div><i class="fas fa-bullhorn me-1"></i>Manage Announcements</div>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
-                <i class="fas fa-plus me-1"></i>Add Announcement
-            </button>
-        </div>
-        <div class="card-body">
-            <?php if (is_object($announcements) && $announcements->num_rows > 0): ?>
-                <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table table-striped table-hover table-dark">
-                        <tr class="table table-striped table-hover table-dark">
-                            <th>#</th><th>Title</th><th>Content</th><th>Image</th>
-                            <th>Date Posted</th><th>Posted By</th><th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php $i=1; while($row=$announcements->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= $i++ ?></td>
-                            <td><strong><?= htmlspecialchars($row['title']) ?></strong></td>
-                            <td><?= strlen($row['content'])>100 ?
-                                    htmlspecialchars(substr($row['content'],0,100)).'...' :
-                                    htmlspecialchars($row['content']); ?></td>
-                            <td>
-                                <?php
-                                if ($row['image_paths']) {
-                                    $images = explode(',', $row['image_paths']);
-                                    foreach ($images as $img) {
-                                        $img = trim($img);
-                                        if ($img) {
-                                            echo '<img src="'.htmlspecialchars($img).'" width="50" height="50" class="img-thumbnail rounded me-1 mb-1" style="object-fit:cover;cursor:pointer;" onclick="showImageModal(\''.htmlspecialchars($img).'\')" data-bs-toggle="tooltip" title="Click to view full image">';
-                                        }
-                                    }
-                                } else {
-                                    echo '<span class="text-muted">No image</span>';
-                                }
-                                ?>
-                            </td>
-                            <td>
-                                <small class="text-muted">
-                                    <?= timeAgo($row['created_at']) ?>
-                                </small>
-                                <br>
-                                <small class="text-muted">
-                                    <?= date('M d, Y', strtotime($row['date_posted'])) ?>
-                                </small>
-                            </td>
-                            <td><?= htmlspecialchars($row['first_name']." ".$row['last_name']) ?></td>
-                            <td>
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-warning"
-                                        onclick='editAnnouncement(<?= json_encode($row) ?>)'
-                                        title="Edit"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger"
-                                        onclick="deleteAnnouncement(<?= $row['id'] ?>,'<?= htmlspecialchars($row['title']) ?>','<?= $row['date_posted'] ?>')"
-                                        title="Delete"><i class="fas fa-trash"></i></button>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list-alt me-2"></i>Manage Announcements</span>
+                <button class="btn btn-light btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
+                    <i class="fas fa-plus me-1"></i> Add Announcement
+                </button>
+            </div>
+            <div class="card-body">
+                <?php if (is_object($announcements) && $announcements->num_rows > 0): ?>
+                    <div class="row">
+                        <?php $i=1; while($row=$announcements->fetch_assoc()): ?>
+                            <div class="col-lg-6 col-xl-4 mb-4">
+                                <div class="announcement-card">
+                                    <div class="announcement-header">
+                                        <div class="announcement-title">
+                                            <?= htmlspecialchars($row['title']) ?>
+                                        </div>
+                                        <div class="announcement-meta">
+                                            <i class="fas fa-user me-1"></i>
+                                            <?= htmlspecialchars($row['first_name']." ".$row['last_name']) ?>
+                                            <br>
+                                            <i class="fas fa-clock me-1"></i>
+                                            <?= timeAgo($row['created_at']) ?>
+                                            <small class="text-muted ms-1">
+                                                (<?= date('M d, Y', strtotime($row['date_posted'])) ?>)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="announcement-body">
+                                        <div class="announcement-content">
+                                            <?= strlen($row['content'])>150 ?
+                                                htmlspecialchars(substr($row['content'],0,150)).'...' :
+                                                htmlspecialchars($row['content']); ?>
+                                        </div>
+                                        
+                                        <?php if ($row['image_paths']): ?>
+                                            <div class="image-gallery">
+                                                <?php
+                                                $images = explode(',', $row['image_paths']);
+                                                foreach (array_slice($images, 0, 4) as $img):
+                                                    $img = trim($img);
+                                                    if ($img):
+                                                ?>
+                                                    <img src="<?= htmlspecialchars($img) ?>" 
+                                                         class="gallery-image" 
+                                                         onclick="showImageModal('<?= htmlspecialchars($img) ?>')"
+                                                         data-bs-toggle="tooltip" 
+                                                         title="Click to view full image">
+                                                <?php 
+                                                    endif;
+                                                endforeach; 
+                                                if (count($images) > 4): ?>
+                                                    <div class="gallery-image d-flex align-items-center justify-content-center bg-light text-muted fw-bold">
+                                                        +<?= count($images) - 4 ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                        
+                                        <div class="action-buttons">
+                                            <button class="btn btn-warning btn-action"
+                                                onclick='editAnnouncement(<?= json_encode($row) ?>)'
+                                                data-bs-toggle="tooltip" title="Edit Announcement">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <button class="btn btn-danger btn-action"
+                                                onclick="deleteAnnouncement(<?= $row['id'] ?>,'<?= htmlspecialchars($row['title']) ?>','<?= $row['date_posted'] ?>')"
+                                                data-bs-toggle="tooltip" title="Delete Announcement">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                    </tbody>
-                </table>
-                </div>
-            <?php else: ?>
-                <div class="text-center py-4 text-muted">
-                    <i class="fas fa-bullhorn fa-3x mb-3"></i>
-                    <h5>No announcements yet</h5>
-                    <p>Click "Add Announcement" to create your first announcement.</p>
-                </div>
-            <?php endif; ?>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fas fa-bullhorn"></i>
+                        <h4 class="mt-3 mb-2">No Announcements Yet</h4>
+                        <p class="text-muted mb-0">Get started by creating your first announcement to keep the community informed.</p>
+                        <button class="btn btn-primary mt-3 rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
+                            <i class="fas fa-plus me-1"></i> Create Announcement
+                        </button>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </main>
@@ -140,5 +161,10 @@ if (!$announcements) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/announcement.js"></script>
 <script src="assets/js/script.js"></script>
+<script>
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+</script>
 </body>
 </html>

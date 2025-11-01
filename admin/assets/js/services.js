@@ -1,4 +1,3 @@
-// Admin Panel JavaScript - Complete functionality
 document.addEventListener('DOMContentLoaded', function() {
     initializeAdminPanel();
 });

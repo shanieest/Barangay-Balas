@@ -123,6 +123,9 @@
         <li class="nav-item">
           <a class="nav-link" href="/barangay-balas/public/announcements.php">News & Events</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/barangay-balas/public/childdevelopment.php">Child Development</a>
+        </li>
       </ul>
     </div>
 

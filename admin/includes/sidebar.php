@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db.php';
+require_once 'includes/auth.php';
 
 // Default admin name
 $adminName = "Admin";
@@ -24,6 +25,21 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
         <div class="sb-sidenav-menu">
             <div class="nav">
+                
+                <?php if (isSocialWorker()): ?>
+                <!-- SOCIAL WORKER SIDEBAR -->
+                <a class="nav-link <?= $currentPage == 'social_worker_dashboard.php' ? 'active' : '' ?>" href="social_worker_dashboard.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                    <span class="nav-text">Daycare Dashboard</span>
+                </a>
+
+                <a class="nav-link <?= $currentPage == 'daycare.php' ? 'active' : '' ?>" href="daycare.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-child"></i></div>
+                    <span class="nav-text">Enrollments</span>
+                </a>
+
+                <?php else: ?>
+                <!-- ADMIN/OFFICIAL SIDEBAR -->
                 <a class="nav-link <?= $currentPage == 'dashboard.php' ? 'active' : '' ?>" href="dashboard.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
                     <span class="nav-text">Dashboard</span>
@@ -99,6 +115,41 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     </div>
                 </div>
 
+                <!-- Officials Menu with Dropdown -->
+                <div class="nav-item">
+                    <a class="nav-link collapsed <?= (in_array($currentPage, ['barangay-officials.php', 'social_worker.php'])) ? 'active' : '' ?>" 
+                       href="#" 
+                       data-bs-toggle="collapse" 
+                       data-bs-target="#collapseOfficials" 
+                       aria-expanded="<?= (in_array($currentPage, ['barangay-officials.php', 'social_worker.php'])) ? 'true' : 'false' ?>" 
+                       aria-controls="collapseOfficials">
+                        <div class="sb-nav-link-icon d-flex align-items-center">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <span class="nav-text">Officials</span>
+                        <div class="sb-sidenav-collapse-arrow d-flex align-items-center">
+                            <i class="fas fa-angle-down"></i>
+                        </div>
+                    </a>
+                    <div class="collapse <?= (in_array($currentPage, ['barangay-officials.php', 'social_worker.php'])) ? 'show' : '' ?>" 
+                         id="collapseOfficials" 
+                         aria-labelledby="headingOfficials" 
+                         data-bs-parent="#sidenavAccordion">
+                        <nav class="sb-sidenav-menu-nested nav">
+                            <a class="nav-link <?= $currentPage == 'barangay-officials.php' ? 'active' : '' ?>" href="barangay-officials.php">
+                                <i class="fas fa-users-cog me-2"></i>
+                                All Officials
+                            </a>
+                            <?php if (isAdmin()): ?>
+                            <a class="nav-link <?= $currentPage == 'social_worker.php' ? 'active' : '' ?>" href="social_worker.php">
+                                <i class="fas fa-hands-helping me-2"></i>
+                                Social Worker
+                            </a>
+                            <?php endif; ?>
+                        </nav>
+                    </div>
+                </div>
+
                 <a class="nav-link <?= $currentPage == 'announcements.php' ? 'active' : '' ?>" href="announcements.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-bullhorn"></i></div>
                     <span class="nav-text">Announcements</span>
@@ -109,16 +160,33 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <span class="nav-text">Census Data</span>
                 </a>
 
-                <a class="nav-link <?= $currentPage == 'barangay-officials.php' ? 'active' : '' ?>" href="barangay-officials.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-user-tie"></i></div>
-                    <span class="nav-text">Barangay Officials</span>
+                <!-- Additional Admin-only Menu Items -->
+                <?php if (isAdmin()): ?>
+                <!--
+                <a class="nav-link <?= $currentPage == 'reports.php' ? 'active' : '' ?>" href="reports.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-file-alt"></i></div>
+                    <span class="nav-text">Reports</span>
                 </a>
+                
+                <a class="nav-link <?= $currentPage == 'settings.php' ? 'active' : '' ?>" href="settings.php">
+                    <div class="sb-nav-link-icon"><i class="fas fa-cog"></i></div>
+                    <span class="nav-text">Settings</span>
+                </a>
+                -->
+                <?php endif; ?>
+
+                <?php endif; ?>
+                <!-- END ROLE-BASED SIDEBAR -->
+
             </div>
         </div>
         <div class="sb-sidenav-footer">
             <div class="small">Logged in as:</div>
             <div class="admin-name"><?= htmlspecialchars($adminName) ?></div>
+            <div class="small text-muted mt-1">
+                <i class="fas fa-user-shield me-1"></i>
+                <?= htmlspecialchars($_SESSION['role'] ?? 'User') ?>
+            </div>
         </div>
     </nav>
 </div>
-
