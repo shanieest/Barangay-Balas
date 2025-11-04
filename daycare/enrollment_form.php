@@ -269,13 +269,13 @@ document.getElementById('enrollmentForm').addEventListener('submit', function(e)
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert(' ' + data.message);
+      alert('✅ ' + data.message);
       document.getElementById('enrollmentForm').reset();
     } else {
       alert(' ' + data.message);
     }
   })
-  .catch(error => alert(' An error occurred: ' + error));
+  .catch(error => alert('⚠️ An error occurred: ' + error));
 });
 </script>
 
