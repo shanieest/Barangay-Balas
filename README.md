@@ -35,6 +35,9 @@ Document Requests
 - Portal registration approval (Approve / Disapprove)  
 - Export data by document type and date range
 
+User & Role Management
+Assign different access levels (Admin, Official, Social Worker).
+
  Announcements
 - Admin and Official can post and manage barangay announcements  
 - Residents can view announcements on the portal
@@ -44,6 +47,21 @@ Resident Portal
 - One account per approved resident  
 - Upload valid ID for approval
 - Track document request status online
+
+Barangay ID Management
+- Generate and issue digital barangay IDs in PDF format.
+- Store and manage uploaded digital ID files (uploads/digital_ids/).
+- Preview IDs in modals with embedded iframe viewers
+
+Medicine Assistance Module
+- Manage medicine inventory and distribution.
+- Track resident medicine requests and update their statuses.
+- Email notifications for request approval or disapproval.
+
+Daycare Management
+- Teachers can view enrolled children.
+- Admin and social workers can add or approve daycare applications.
+- Track attendance and enrollment data.
 
  Document Generation
 - Auto-generate DOCX to PDF documents using PHPWord and LibreOffice
@@ -79,11 +97,11 @@ Make sure you have installed:
 composer require phpoffice/phpword
 composer require chillerlan/php-qrcode
 composer require phpoffice/phpspreadsheet
+composer require setasign/fpdf
+composer require tecnickcom/tcpdf
+composer require dompdf/dompdf
 
 -MySQL  server
-
-
-
 
 
 
@@ -91,8 +109,8 @@ DEVELOPER NOTES
 
 Default admin credentials:
 
-Username: administrator
-Password: 12345678
+Username: mpangilinan
+Password: 11111111
 
 Database name: Balas
 

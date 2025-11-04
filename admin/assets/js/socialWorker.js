@@ -1,4 +1,3 @@
-// admin/assets/js/socialWorker.js
 
 function editSocialWorker(data) {
     document.getElementById('edit_id').value = data.id;

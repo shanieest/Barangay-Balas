@@ -2,8 +2,8 @@ class ReservationCalendar {
     constructor() {
         this.currentDate = new Date();
         this.unavailableDates = new Set();
-        this.serviceReservations = new Map(); // Map of date -> services booked
-        this.availableServices = []; // All available services
+        this.serviceReservations = new Map();
+        this.availableServices = []; 
         this.init();
     }
 
@@ -18,7 +18,7 @@ class ReservationCalendar {
             const year = this.currentDate.getFullYear();
             const month = this.currentDate.getMonth() + 1;
             
-            const response = await fetch(`reservation-backend.php?action=get_calendar_data&year=${year}&month=${String(month).padStart(2, '0')}`);
+            const response = await fetch(`../backend/reservation-backend.php?action=get_calendar_data&year=${year}&month=${String(month).padStart(2, '0')}`);
             const data = await response.json();
             
             if (data.success) {
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
         console.error('Failed to initialize Reservation Calendar:', error);
         
-        // Fallback: Show error message in calendar container
+        // Fallback to Show error message in calendar container
         const calendarEl = document.getElementById('availability-calendar');
         if (calendarEl) {
             calendarEl.innerHTML = `

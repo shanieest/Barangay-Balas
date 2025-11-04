@@ -1,6 +1,5 @@
 
 <?php
-// Alternative: Generate PDF directly from HTML template
 function generateBarangayIDHTML($data, $idNumber, $photoPath, $signaturePath, $year) {
     $fullName = trim($data['first_name'] . ' ' . 
                    ($data['middle_name'] ? $data['middle_name'] . ' ' : '') . 

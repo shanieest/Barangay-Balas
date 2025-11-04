@@ -43,7 +43,6 @@ try {
     // Serve the file
     servePdfFile($full_path, $file);
 
-    // Clean up temporary watermarked file if it was created
     if (!$is_admin_download && isset($watermarked_pdf) && file_exists($watermarked_pdf) && $watermarked_pdf !== $full_path) {
         @unlink($watermarked_pdf);
     }

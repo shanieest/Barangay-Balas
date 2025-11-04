@@ -168,7 +168,7 @@ function setupFormSubmissions() {
 function submitAddForm() {
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'announcements-backend.php';
+    form.action = './../backend/announcements-backend.php';
     form.enctype = 'multipart/form-data';
     
     const title = document.getElementById('announcementTitle').value;
@@ -199,7 +199,7 @@ function submitAddForm() {
 function submitEditForm() {
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'announcements-backend.php';
+    form.action = '../backend/announcements-backend.php';
     form.enctype = 'multipart/form-data';
     
     const id = window.currentEditId;
@@ -234,7 +234,7 @@ function submitEditForm() {
 function submitDeleteForm() {
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'announcements-backend.php';
+    form.action = './../backend/announcements-backend.php';
     
     const id = window.currentDeleteId;
     

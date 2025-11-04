@@ -68,7 +68,7 @@ function initializeDocumentRequests() {
 function loadRequestDetails(requestId) {
     showLoading('viewRequestModal');
     
-    fetch(`get-request-details.php?id=${requestId}`)
+    fetch(`../backend/get-request-details.php?id=${requestId}`)
         .then(res => res.json())
         .then(data => {
             console.log('Request Details:', data);
@@ -136,7 +136,7 @@ function approveDocumentRequest() {
     
     showLoading('approveRequestModal');
     
-    fetch('process_request.php', { 
+    fetch('../backend/process_request.php', { 
         method: 'POST', 
         body: formData 
     })
@@ -174,7 +174,7 @@ function disapproveDocumentRequest() {
     
     showLoading('disapproveRequestModal');
     
-    fetch('process_request.php', { 
+    fetch('../backend/process_request.php', { 
         method: 'POST', 
         body: formData 
     })
@@ -223,11 +223,12 @@ function initializeServiceReservations() {
 function loadServiceReservationDetails(reservationId) {
     showLoading('viewServiceModal');
     
-    fetch(`get-service-details.php?id=${reservationId}`)
+    fetch(`../backend/get-service-details.php?id=${reservationId}`)
         .then(res => res.json())
         .then(data => {
-            // Populate service reservation details
-            // ... existing service details code ...
+            console.log('Service Details:', data);
+            
+            // Populate modal with data
             
             hideLoading('viewServiceModal');
         })
@@ -248,7 +249,7 @@ function updateServiceStatus(reservationId, newStatus) {
     formData.append('status', newStatus);
     formData.append('action', 'update_service_status');
 
-    fetch('process_request.php', { 
+    fetch('../backend/process_request.php', { 
         method: 'POST', 
         body: formData 
     })
@@ -312,7 +313,7 @@ function generateReport(reportType) {
     button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating Report...';
     button.disabled = true;
     
-    fetch('process_request.php', {
+    fetch('../backend/process_request.php', {
         method: 'POST',
         body: formData
     })
@@ -504,7 +505,7 @@ function performBulkAction(requestIds, action) {
     formData.append('action', 'bulk_' + action);
     formData.append('request_ids', JSON.stringify(requestIds));
     
-    fetch('process_request.php', {
+    fetch('../backend/process_request.php', {
         method: 'POST',
         body: formData
     })
@@ -626,19 +627,19 @@ function quickApprove(requestId) {
         formData.append('notes', 'Quick approval');
         formData.append('auto_download', '0');
         
-        fetch('process_request.php', { method: 'POST', body: formData })
+        fetch('../backend/process_request.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                showAlert('✅ Request approved successfully', 'success');
+                showAlert('Request approved successfully', 'success');
                 location.reload();
             } else {
-                showAlert('❌ Error: ' + data.message, 'danger');
+                showAlert('Error: ' + data.message, 'danger');
             }
         })
         .catch(err => {
             console.error('Quick approve error:', err);
-            showAlert('❌ Something went wrong while approving', 'danger');
+            showAlert('Something went wrong while approving', 'danger');
         });
     }
 }
@@ -650,19 +651,19 @@ function quickDisapprove(requestId) {
         formData.append('action', 'disapprove');
         formData.append('notes', 'Quick disapproval');
         
-        fetch('process_request.php', { method: 'POST', body: formData })
+        fetch('../backend/process_request.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                showAlert('✅ Request disapproved successfully', 'success');
+                showAlert('Request disapproved successfully', 'success');
                 location.reload();
             } else {
-                showAlert('❌ Error: ' + data.message, 'danger');
+                showAlert('Error: ' + data.message, 'danger');
             }
         })
         .catch(err => {
             console.error('Quick disapprove error:', err);
-            showAlert('❌ Something went wrong while disapproving', 'danger');
+            showAlert('Something went wrong while disapproving', 'danger');
         });
     }
 }
@@ -671,7 +672,7 @@ function quickDisapprove(requestId) {
 function printRequestDetails(requestId) {
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     
-    fetch(`get-request-details.php?id=${requestId}`)
+    fetch(`../backend/get-request-details.php?id=${requestId}`)
         .then(res => res.json())
         .then(data => {
             printWindow.document.write(`
@@ -762,5 +763,4 @@ function exportTableData(tableId, filename = 'export') {
     document.body.removeChild(downloadLink);
 }
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeAdminPanel);

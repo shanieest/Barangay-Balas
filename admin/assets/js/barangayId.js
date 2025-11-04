@@ -1,11 +1,9 @@
-// barangayId.js - Fixed photo and signature paths for admin directory
 let currentApplicationId = null;
 
 // View application details with preview
 function viewApplicationDetails(id) {
     currentApplicationId = id;
     
-    // Show loading state
     document.getElementById('applicationDetailsContent').innerHTML = `
         <div class="text-center py-4">
             <div class="spinner-border text-primary" role="status">
@@ -15,8 +13,7 @@ function viewApplicationDetails(id) {
         </div>
     `;
     
-    // Load application details via AJAX
-    fetch(`get_application_details.php?id=${id}`)
+    fetch(`../backend/get_application_details.php?id=${id}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -28,19 +25,15 @@ function viewApplicationDetails(id) {
                 const resident = data.resident;
                 const application = data.application;
                 
-                // Construct correct image paths
-                // Database: uploads/id_photos/photo_65_1761717269.JPG
-                // File location: barangay-balas/pages/uploads/id_photos/photo_65_1761717269.JPG
-                // Current JS runs from: barangay-balas/admin/
-                // Required path: ../pages/uploads/id_photos/photo_65_1761717269.JPG
+                const getCorrectImagePath = (dbPath) => {
+                    if (!dbPath) return '';
+                    let cleanPath = dbPath.replace(/^uploads\//, '');
+                    const correctPath = `../../pages/uploads/${cleanPath}`;
+                    return correctPath;
+                };
                 
-                const photoPath = application.photo_path ? `../pages/${application.photo_path}` : '';
-                const signaturePath = application.signature_path ? `../pages/${application.signature_path}` : '';
-                
-                console.log('Photo DB path:', application.photo_path);
-                console.log('Photo full path:', photoPath);
-                console.log('Signature DB path:', application.signature_path);
-                console.log('Signature full path:', signaturePath);
+                const photoPath = getCorrectImagePath(application.photo_path);
+                const signaturePath = getCorrectImagePath(application.signature_path);
                 
                 document.getElementById('applicationDetailsContent').innerHTML = `
                     <div class="row">
@@ -59,7 +52,7 @@ function viewApplicationDetails(id) {
                                                          alt="ID Photo" 
                                                          class="img-thumbnail mb-2" 
                                                          style="max-width: 150px; max-height: 150px; object-fit: cover;"
-                                                         onerror="console.error('Photo load failed:', this.src); this.parentElement.innerHTML='<div class=\\'alert alert-warning\\'>Photo not found<br><small>${photoPath}</small></div>';">
+                                                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlBob3RvIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';">
                                                     <p class="small text-muted">ID Photo</p>
                                                 </div>
                                             ` : '<p class="text-muted">No photo uploaded</p>'}
@@ -77,7 +70,7 @@ function viewApplicationDetails(id) {
                                                          alt="Signature" 
                                                          class="img-thumbnail mb-2" 
                                                          style="max-width: 150px; max-height: 75px; background: white; object-fit: contain;"
-                                                         onerror="console.error('Signature load failed:', this.src); this.parentElement.innerHTML='<div class=\\'alert alert-warning\\'>Signature not found<br><small>${signaturePath}</small></div>';">
+                                                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9Ijc1IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmZmYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+U2lnbmF0dXJlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';">
                                                     <p class="small text-muted">Signature</p>
                                                 </div>
                                             ` : '<p class="text-muted">No signature</p>'}
@@ -115,7 +108,6 @@ function viewApplicationDetails(id) {
                     ` : ''}
                 `;
                 
-                // Set up approve button in modal
                 const approveBtn = document.getElementById('approveFromModal');
                 if (approveBtn) {
                     approveBtn.onclick = function() {
@@ -124,7 +116,6 @@ function viewApplicationDetails(id) {
                         approveApplication(id);
                     };
                     
-                    // Show/hide approve button based on status
                     if (application.status !== 'Pending') {
                         approveBtn.style.display = 'none';
                     } else {
@@ -148,9 +139,128 @@ function viewApplicationDetails(id) {
             `;
         });
     
-    // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('applicationDetailsModal'));
     modal.show();
+}
+
+// PDF Path Construction
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.view-id')) {
+            const btn = e.target.closest('.view-id');
+            const dbPath = btn.dataset.path;
+            
+            console.log('=== PDF VIEWER - CRITICAL FIX ===');
+            console.log('Database path:', dbPath);
+            
+            if (!dbPath) {
+                showToast('Error: PDF path not found in database', 'error');
+                return;
+            }
+            
+            const getCorrectPDFPath = (dbPath) => {
+                let cleanPath = dbPath.replace(/^\.\.\//, '').replace(/^\.\//, '').replace(/^\//, '');
+                
+                const correctPath = `../../${cleanPath}`;
+                
+                console.log('Clean path:', cleanPath);
+                console.log('Corrected path:', correctPath);
+                return correctPath;
+            };
+            
+            const pdfPath = getCorrectPDFPath(dbPath);
+            
+            console.log('Final PDF path:', pdfPath);
+            console.log('================================');
+            
+            // Show modal with working PDF embed
+            const modalContent = `
+                <div class="pdf-viewer-container">
+                    <div class="text-center mb-3">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-primary" onclick="openPDFInNewTab('${pdfPath}')">
+                                <i class="fas fa-external-link-alt me-2"></i>Open in New Tab
+                            </button>
+                            <a href="${pdfPath}" download class="btn btn-success">
+                                <i class="fas fa-download me-2"></i>Download PDF
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- PDF Embed with fallback -->
+                    <div class="pdf-embed-wrapper" style="height: 600px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
+                        <iframe 
+                            src="${pdfPath}#toolbar=1&navpanes=0&scrollbar=1" 
+                            width="100%" 
+                            height="100%" 
+                            style="border: none;"
+                            onload="console.log('PDF loaded successfully')"
+                            onerror="handlePDFLoadError('${pdfPath}')">
+                        </iframe>
+                    </div>
+                
+                </div>
+            `;
+            
+            document.getElementById('pdfViewerContent').innerHTML = modalContent;
+            
+            const modal = new bootstrap.Modal(document.getElementById('viewIdModal'));
+            modal.show();
+        }
+    });
+});
+
+// Handle PDF load errors
+function handlePDFLoadError(pdfPath) {
+    console.error('PDF failed to load:', pdfPath);
+    
+    document.getElementById('pdfViewerContent').innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-file-pdf text-danger" style="font-size: 4rem;"></i>
+            <h4 class="mt-3 mb-3">Unable to Display PDF</h4>
+            <p class="text-muted mb-4">The PDF viewer couldn't load the file. Try these options:</p>
+            
+            <div class="row g-3 justify-content-center">
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100 p-3" onclick="openPDFInNewTab('${pdfPath}')">
+                        <i class="fas fa-external-link-alt fa-2x mb-2"></i><br>
+                        <strong>Open in New Tab</strong>
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <a href="${pdfPath}" download class="btn btn-success w-100 p-3">
+                        <i class="fas fa-download fa-2x mb-2"></i><br>
+                        <strong>Download PDF</strong>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-light rounded">
+                <small class="text-muted">
+                    <strong>Troubleshooting:</strong><br>
+                    1. Check if the file exists at: ${pdfPath}<br>
+                    2. Try downloading the file instead<br>
+                    3. Open in a new tab for better compatibility
+                </small>
+            </div>
+        </div>
+    `;
+}
+
+// Open PDF in new tab
+function openPDFInNewTab(pdfPath) {
+    console.log('Opening PDF in new tab:', pdfPath);
+    window.open(pdfPath, '_blank', 'noopener,noreferrer');
+}
+
+// Download current PDF
+function downloadCurrentPDF() {
+    const downloadLink = document.querySelector('#pdfViewerContent a[download]');
+    if (downloadLink) {
+        downloadLink.click();
+    } else {
+        showToast('No download link available', 'error');
+    }
 }
 
 // Get badge class based on status
@@ -163,45 +273,6 @@ function getStatusBadgeClass(status) {
     }
 }
 
-// View digital ID
-document.addEventListener('DOMContentLoaded', function() {
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.view-id')) {
-            const btn = e.target.closest('.view-id');
-            const path = btn.dataset.path;
-            
-            document.getElementById('digitalIdFrame').src = '';
-            document.getElementById('digitalIdFrame').src = path + '?t=' + new Date().getTime() + '#toolbar=0';
-            
-            const modal = new bootstrap.Modal(document.getElementById('viewIdModal'));
-            modal.show();
-            
-            const iframe = document.getElementById('digitalIdFrame');
-            iframe.onload = function() {
-                console.log('PDF loaded successfully');
-            };
-            
-            iframe.onerror = function() {
-                console.error('Failed to load PDF');
-                document.getElementById('digitalIdFrame').srcdoc = `
-                    <html>
-                        <body style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f8f9fa;">
-                            <div style="text-align: center; color: #6c757d;">
-                                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                                <h4>PDF Not Available</h4>
-                                <p>The digital ID file could not be loaded.</p>
-                                <a href="${path}" download class="btn btn-primary mt-2">
-                                    <i class="fas fa-download me-2"></i>Download File
-                                </a>
-                            </div>
-                        </body>
-                    </html>
-                `;
-            };
-        }
-    });
-});
-
 // Approve application
 function approveApplication(id) {
     if (!id) {
@@ -212,7 +283,7 @@ function approveApplication(id) {
 
     if (confirm('Are you sure you want to approve this application and generate Barangay ID?\n\nThis action cannot be undone.')) {
         showLoadingOverlay('Generating Barangay ID...', 'Please wait while we create the digital ID');
-        window.location.href = 'generate_barangay_id.php?id=' + id;
+        window.location.href = '../backend/generate_barangay_id.php?id=' + id;
     }
 }
 
@@ -267,7 +338,7 @@ function rejectApplication() {
     formData.append('application_id', appId);
     formData.append('reject_reason', reason);
     
-    fetch('reject_barangay_id.php', {
+    fetch('../backend/reject_barangay_id.php', {
         method: 'POST',
         body: formData
     })
@@ -283,7 +354,7 @@ function rejectApplication() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('rejectModal'));
             modal.hide();
             setTimeout(() => {
-                window.location.href = 'barangay_id_records.php?success=rejected';
+                window.location.href = '../backend/barangay_id_records.php?success=rejected';
             }, 1000);
         } else {
             throw new Error(data.message || 'Unknown error occurred');
@@ -310,7 +381,7 @@ function viewRejectionDetails(id) {
         return;
     }
     
-    fetch(`get_application_details.php?id=${id}`)
+    fetch(`../backend/get_application_details.php?id=${id}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.application.reject_reason) {
@@ -351,7 +422,7 @@ function performExport() {
         loadingOverlay.style.display = 'flex';
     }
     
-    const exportUrl = `generate_barangay_id.php?action=export_excel&status=${exportType}&t=${new Date().getTime()}`;
+    const exportUrl = `../backend/generate_barangay_id.php?action=export_excel&status=${exportType}&t=${new Date().getTime()}`;
     
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
@@ -373,53 +444,6 @@ function performExport() {
         }
         document.body.removeChild(iframe);
         showToast('Export failed. Please try again.', 'error');
-    };
-    
-    document.body.appendChild(iframe);
-    
-    const exportModal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
-    if (exportModal) {
-        exportModal.hide();
-    }
-}
-
-// Yearly export function
-function performYearlyExport() {
-    const year = document.getElementById('exportYear').value;
-    const reportType = document.getElementById('reportType').value;
-    
-    if (!year) {
-        showToast('Please select a year', 'error');
-        return;
-    }
-    
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    if (loadingOverlay) {
-        loadingOverlay.style.display = 'flex';
-    }
-    
-    const exportUrl = `generate_barangay_id.php?action=yearly_report&year=${year}&report_type=${reportType}&t=${new Date().getTime()}`;
-    
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = exportUrl;
-    
-    iframe.onload = function() {
-        setTimeout(() => {
-            if (loadingOverlay) {
-                loadingOverlay.style.display = 'none';
-            }
-            document.body.removeChild(iframe);
-            showToast('Report generated successfully!', 'success');
-        }, 1000);
-    };
-    
-    iframe.onerror = function() {
-        if (loadingOverlay) {
-            loadingOverlay.style.display = 'none';
-        }
-        document.body.removeChild(iframe);
-        showToast('Report generation failed. Please try again.', 'error');
     };
     
     document.body.appendChild(iframe);
@@ -521,5 +545,5 @@ function createToastContainer() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Barangay ID Management System initialized');
+    console.log('Barangay ID initialized.');
 });

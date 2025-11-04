@@ -9,7 +9,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = $_SESSION['user_id'];
 
-// Fetch resident's approved digital ID
 $query = "
     SELECT digital_id_path, valid_until
     FROM barangay_id_applications

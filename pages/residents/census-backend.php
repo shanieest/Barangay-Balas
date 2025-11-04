@@ -31,7 +31,6 @@ function exportHouseholdData() {
     
     $resident_id = $_SESSION['user_id'];
     
-    // Get current resident's house info
     $resident_query = "SELECT house_number, purok FROM residents WHERE id = ?";
     $stmt = mysqli_prepare($conn, $resident_query);
     mysqli_stmt_bind_param($stmt, "i", $resident_id);

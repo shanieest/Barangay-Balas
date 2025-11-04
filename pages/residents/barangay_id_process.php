@@ -1,5 +1,5 @@
 <?php
-// barangay_id_process.php - Updated resident application processing
+
 require '../../config/db.php';
 session_start();
 header('Content-Type: application/json');
@@ -13,10 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $resident_id = $_SESSION['user_id'];
     $notes = $_POST['additionalNotes'] ?? '';
     
-    // Handle signature upload
     $signature_path = null;
     if (isset($_POST['signatureData']) && !empty($_POST['signatureData'])) {
-        // Save drawn signature as PNG with transparent background
         $signature_data = $_POST['signatureData'];
         $signature_data = str_replace('data:image/png;base64,', '', $signature_data);
         $signature_data = str_replace(' ', '+', $signature_data);

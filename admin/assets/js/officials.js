@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function loadOfficials() {
     showLoadingSpinner(true);
     
-    fetch('barangay-officials-backend.php?action=get_officials')
+    fetch('../backend/barangay-officials-backend.php?action=get_officials')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -151,7 +151,7 @@ function loadOfficialData(id) {
         return;
     }
     
-    fetch(`barangay-officials-backend.php?action=get_official&id=${encodeURIComponent(id)}`)
+    fetch(`../backend/barangay-officials-backend.php?action=get_official&id=${encodeURIComponent(id)}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -232,7 +232,7 @@ function addOfficial(e) {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
     
-    fetch('barangay-officials-backend.php?action=add_official', {
+    fetch('../backend/barangay-officials-backend.php?action=add_official', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -296,7 +296,7 @@ function updateOfficial(e) {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
-    fetch('barangay-officials-backend.php?action=update_official', {
+    fetch('../backend/barangay-officials-backend.php?action=update_official', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -341,7 +341,7 @@ function deleteOfficial() {
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
     
-    fetch(`barangay-officials-backend.php?action=delete_official&id=${encodeURIComponent(id)}`, {
+    fetch(`../backend/barangay-officials-backend.php?action=delete_official&id=${encodeURIComponent(id)}`, {
         method: 'GET' 
     })
     .then(response => {

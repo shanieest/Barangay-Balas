@@ -31,7 +31,7 @@ function loadHouseholds(page = 1) {
         search: search
     });
     
-    fetch(`census-backend.php?${params.toString()}`)
+    fetch(`../backend/census-backend.php?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
             if (data.error) throw new Error(data.error);
@@ -215,7 +215,7 @@ function viewHouseholdDetails(householdId) {
         allowOutsideClick: false
     });
     
-    fetch(`census-backend.php?action=get_household_details&id=${householdId}`)
+    fetch(`../backend/census-backend.php?action=get_household_details&id=${householdId}`)
         .then(response => response.json())
         .then(data => {
             if (data.error) throw new Error(data.error);
@@ -275,7 +275,7 @@ function viewHouseholdDetails(householdId) {
 }
 
 function loadStatistics() {
-    fetch('census-backend.php?action=get_statistics')
+    fetch('../backend/census-backend.php?action=get_statistics')
         .then(response => response.json())
         .then(data => {
             updateStatistic('totalHouseholds', parseInt(data.total_households));
@@ -341,7 +341,7 @@ function exportToExcel(type) {
     
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'census-backend.php';
+    form.action = '../backend/census-backend.php';
     form.style.display = 'none';
     
     const actionInput = document.createElement('input');

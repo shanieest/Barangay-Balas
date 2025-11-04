@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#view-reservation-id, #view-resident-name, #view-service-type, #view-reservation-date, #view-duration, #view-status, #view-purpose, #view-contact, #view-email, #view-date-requested, #view-notes, #view-setup-time, #view-duration-type, #view-event-location').text('Loading...');
         
         $.ajax({
-            url: 'reservation-backend.php?action=get&id=' + reservationId,
+            url: '../backend/reservation-backend.php?action=get&id=' + reservationId,
             type: 'GET',
             dataType: 'json',
             success: function(data) {
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var formData = $(this).serialize() + '&action=approve';
         
         $.ajax({
-            url: 'reservation-backend.php',
+            url: '../backend/reservation-backend.php',
             type: 'POST',
             data: formData,
             dataType: 'json',
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var formData = $(this).serialize() + '&action=reject';
         
         $.ajax({
-            url: 'reservation-backend.php',
+            url: '../backend/reservation-backend.php',
             type: 'POST',
             data: formData,
             dataType: 'json',
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var formData = $(this).serialize() + '&action=update_status';
         
         $.ajax({
-            url: 'reservation-backend.php',
+            url: '../backend/reservation-backend.php',
             type: 'POST',
             data: formData,
             dataType: 'json',
@@ -286,7 +286,7 @@ function initializeReports() {
         generateReportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
         
         $.ajax({
-            url: 'reservation-backend.php?action=generate_service_report',
+            url: '../backend/reservation-backend.php?action=generate_service_report',
             type: 'GET',
             data: {
                 report_type: reportTypeVal,
@@ -333,7 +333,7 @@ function initializeReports() {
         const month = document.getElementById('report-month').value;
         const year = document.getElementById('report-year').value;
         
-        const url = `reservation-backend.php?action=export_service_report&report_type=${reportTypeVal}&month=${month}&year=${year}&format=${format}`;
+        const url = `../backend/reservation-backend.php?action=export_service_report&report_type=${reportTypeVal}&month=${month}&year=${year}&format=${format}`;
         window.open(url, '_blank');
     }
     
@@ -558,7 +558,7 @@ function initializeReports() {
         generateReportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
         
         $.ajax({
-            url: 'reservation-backend.php?action=generate_service_report',
+            url: '../backend/reservation-backend.php?action=generate_service_report',
             type: 'GET',
             data: {
                 report_type: reportTypeVal,
@@ -605,7 +605,7 @@ function initializeReports() {
         const month = document.getElementById('report-month').value;
         const year = document.getElementById('report-year').value;
         
-        const url = `reservation-backend.php?action=export_service_report&report_type=${reportTypeVal}&month=${month}&year=${year}&format=${format}`;
+        const url = `../backend/reservation-backend.php?action=export_service_report&report_type=${reportTypeVal}&month=${month}&year=${year}&format=${format}`;
         window.open(url, '_blank');
     }
     

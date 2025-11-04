@@ -85,6 +85,135 @@ document.querySelectorAll('.view-reservation').forEach(button => {
     });
 });
 
+// View Barangay ID modal
+document.querySelectorAll('.view-barangay-id').forEach(button => {
+    button.addEventListener('click', function() {
+        const idNumber = this.getAttribute('data-id-number');
+        const status = this.getAttribute('data-status');
+        const date = this.getAttribute('data-date');
+        const validUntil = this.getAttribute('data-valid-until');
+        const progress = getProgressBar(status);
+
+        const modalContent = `
+            <div class="text-center">
+                <i class="fas fa-id-card fa-3x text-info mb-3"></i>
+                <h5>Barangay ID Application</h5>
+                <div class="text-start mt-3">
+                    <p><strong>ID Number:</strong> ${idNumber}</p>
+                    <p><strong>Application Date:</strong> ${date}</p>
+                    <p><strong>Valid Until:</strong> ${validUntil}</p>
+                </div>
+                <p class="mt-3">${progress.message}</p>
+                <div class="mt-3">
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated ${progress.class}" 
+                             style="width: ${progress.width}; line-height: 25px;">
+                            ${progress.text}
+                        </div>
+                    </div>
+                </div>
+                ${status === 'Approved' ? `
+                <div class="alert alert-success mt-3">
+                    <small>
+                        <i class="fas fa-check-circle me-1"></i>
+                        Your Barangay ID has been approved! You can download it using the button above.
+                    </small>
+                </div>
+                ` : ''}
+            </div>
+        `;
+
+        // Check if modal exists, if not create it
+        let modal = document.getElementById('viewBarangayIdModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.id = 'viewBarangayIdModal';
+            modal.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Barangay ID Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="barangayIdDetails"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        document.getElementById('barangayIdDetails').innerHTML = modalContent;
+        new bootstrap.Modal(modal).show();
+    });
+});
+
+// View Medicine Request modal
+document.querySelectorAll('.view-medicine').forEach(button => {
+    button.addEventListener('click', function() {
+        const requestNumber = this.getAttribute('data-request-number');
+        const medicine = this.getAttribute('data-medicine');
+        const condition = this.getAttribute('data-condition');
+        const urgency = this.getAttribute('data-urgency');
+        const status = this.getAttribute('data-status');
+        const date = this.getAttribute('data-date');
+        const notes = this.getAttribute('data-notes');
+        const reason = this.getAttribute('data-reason');
+        const progress = getProgressBar(status);
+
+        const urgencyBadge = urgency === 'emergency' || urgency === 'high' ? 'danger' : 
+                           urgency === 'medium' ? 'warning' : 'secondary';
+
+        const modalContent = `
+            <div class="text-center">
+                <i class="fas fa-pills fa-3x text-info mb-3"></i>
+                <h5>Medicine Request Details</h5>
+                <div class="text-start mt-3">
+                    <p><strong>Request Number:</strong> ${requestNumber}</p>
+                    <p><strong>Medicine:</strong> ${medicine}</p>
+                    <p><strong>Medical Condition:</strong> ${condition}</p>
+                    <p><strong>Urgency Level:</strong> <span class="badge bg-${urgencyBadge}">${urgency.toUpperCase()}</span></p>
+                    <p><strong>Request Date:</strong> ${date}</p>
+                    ${notes ? `<p><strong>Admin Notes:</strong> ${notes}</p>` : ''}
+                    ${reason ? `<p><strong>Disapproval Reason:</strong> <span class="text-danger">${reason}</span></p>` : ''}
+                </div>
+                <p class="mt-3">${progress.message}</p>
+                <div class="mt-3">
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated ${progress.class}" 
+                             style="width: ${progress.width}; line-height: 25px;">
+                            ${progress.text}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Check if modal exists, if not create it
+        let modal = document.getElementById('viewMedicineModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.id = 'viewMedicineModal';
+            modal.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Medicine Request Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="medicineDetails"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        document.getElementById('medicineDetails').innerHTML = modalContent;
+        new bootstrap.Modal(modal).show();
+    });
+});
+
 // Cancel request/reservation
 document.querySelectorAll('.cancel-request, .cancel-reservation').forEach(button => {
     button.addEventListener('click', function() {
@@ -97,7 +226,7 @@ document.querySelectorAll('.cancel-request, .cancel-reservation').forEach(button
 });
 
 // Confirm cancellation
-document.getElementById('confirmCancel').addEventListener('click', function() {
+document.getElementById('confirmCancel')?.addEventListener('click', function() {
     const requestId = document.getElementById('cancelRequestId').value;
     const type = document.getElementById('cancelRequestType').value;
 
@@ -125,7 +254,7 @@ document.getElementById('confirmCancel').addEventListener('click', function() {
 });
 
 // Status filtering
-document.getElementById('documentStatusFilter').addEventListener('change', function() {
+document.getElementById('documentStatusFilter')?.addEventListener('change', function() {
     const status = this.value.toLowerCase();
     const rows = document.querySelectorAll('#documents tbody tr');
     
@@ -139,9 +268,37 @@ document.getElementById('documentStatusFilter').addEventListener('change', funct
     });
 });
 
-document.getElementById('serviceStatusFilter').addEventListener('change', function() {
+document.getElementById('serviceStatusFilter')?.addEventListener('change', function() {
     const status = this.value.toLowerCase();
     const rows = document.querySelectorAll('#reservations tbody tr');
+    
+    rows.forEach(row => {
+        const rowStatus = row.getAttribute('data-status');
+        if (status === 'all' || rowStatus === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+document.getElementById('barangayIdStatusFilter')?.addEventListener('change', function() {
+    const status = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#barangay-id tbody tr');
+    
+    rows.forEach(row => {
+        const rowStatus = row.getAttribute('data-status');
+        if (status === 'all' || rowStatus === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+document.getElementById('medicineStatusFilter')?.addEventListener('change', function() {
+    const status = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#medicine tbody tr');
     
     rows.forEach(row => {
         const rowStatus = row.getAttribute('data-status');
@@ -160,25 +317,31 @@ document.addEventListener('click', function(e) {
         e.preventDefault();
         const downloadUrl = link.href;
 
-        // Set the download URL for the proceed button
-        const proceedBtn = document.getElementById('proceedDownload');
-        proceedBtn.href = downloadUrl;
+        // Check if modal exists
+        let modal = document.getElementById('downloadNoticeModal');
+        if (modal) {
+            // Set the download URL for the proceed button
+            const proceedBtn = document.getElementById('proceedDownload');
+            proceedBtn.href = downloadUrl;
 
-        // Show the notice modal
-        const modal = new bootstrap.Modal(document.getElementById('downloadNoticeModal'));
-        modal.show();
+            // Show the notice modal
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
 
-        // Ensure clicking proceed closes modal before navigation
-        proceedBtn.onclick = function(ev) {
-            ev.preventDefault();
-            modal.hide();
-            setTimeout(() => {
-                window.location.href = downloadUrl;
-            }, 400); // small delay for modal close animation
-        };
+            // Ensure clicking proceed closes modal before navigation
+            proceedBtn.onclick = function(ev) {
+                ev.preventDefault();
+                bsModal.hide();
+                setTimeout(() => {
+                    window.location.href = downloadUrl;
+                }, 400);
+            };
+        } else {
+            // If no modal, just navigate
+            window.location.href = downloadUrl;
+        }
     }
 });
-
 
 // Tab persistence
 document.addEventListener('DOMContentLoaded', function() {

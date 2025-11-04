@@ -19,17 +19,14 @@ function handleCreate() {
         throw new Exception('Invalid request method');
     }
 
-    // Get resident data from hidden inputs (automatically filled if logged in)
     $resident_id = !empty($_POST['resident_id']) ? intval($_POST['resident_id']) : null;
     $first_name = trim($_POST['first_name'] ?? '');
     $last_name = trim($_POST['last_name'] ?? '');
     
-    // Validate that user is logged in
     if (!$resident_id || empty($first_name) || empty($last_name)) {
         throw new Exception('You must be logged in to make a reservation.');
     }
     
-    // Verify that the resident exists and is active
     $resident_check_sql = "SELECT id, first_name, last_name FROM residents WHERE id = ? AND resident_status = 'Active'";
     $resident_check_stmt = $conn->prepare($resident_check_sql);
     $resident_check_stmt->bind_param("i", $resident_id);
@@ -43,7 +40,6 @@ function handleCreate() {
     $resident_info = $resident_check_result->fetch_assoc();
     $resident_check_stmt->close();
     
-    // Verify the names match (security check)
     if (trim($resident_info['first_name']) !== $first_name || trim($resident_info['last_name']) !== $last_name) {
         throw new Exception('Resident information mismatch. Please log out and log back in.');
     }

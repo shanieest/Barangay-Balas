@@ -7,7 +7,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addAnnouncementForm" action="announcements-backend.php" method="POST" enctype="multipart/form-data">
+                <form id="addAnnouncementForm" action="backend/announcements-backend.php" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="announcementTitle" class="form-label">Title <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="announcementTitle" name="title" required>

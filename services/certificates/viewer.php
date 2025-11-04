@@ -197,7 +197,6 @@ if (!file_exists($pdfPath)) {
 </html>
 
 <?php
-// Clean up temporary file on session end (if any watermarked file was created)
 if (isset($watermarked_pdf) && file_exists($watermarked_pdf)) {
     register_shutdown_function(function() use ($watermarked_pdf) {
         @unlink($watermarked_pdf);

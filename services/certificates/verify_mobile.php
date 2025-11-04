@@ -44,7 +44,6 @@ $_SESSION['viewer_tokens'][$viewToken] = [
     'created_at' => time()
 ];
 
-// Redirect directly to PDF stream with QR verification
 header('Location: stream_pdf.php?token=' . urlencode($viewToken) . '&qr_verified=1');
 exit;
 ?>

@@ -66,7 +66,7 @@ switch($status) {
         $_SESSION['viewer_tokens'][$viewToken] = [
             'request_id' => $row['request_id'],
             'expires' => $expires,
-            'qr_verified' => true // Mark as QR verified for watermarking
+            'qr_verified' => true
         ];
 
         $viewerUrl = '/barangay-balas/services/certificates/viewer.php?token=' . $viewToken;

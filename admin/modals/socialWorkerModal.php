@@ -9,7 +9,7 @@
                     <h5 class="modal-title"><i class="bi bi-person-plus"></i> Add New Social Worker</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="social_worker-backend.php">
+                <form method="POST" action="../backend/social_worker-backend.php">
                     <div class="modal-body">
                         <input type="hidden" name="action" value="add">
                         
@@ -109,7 +109,7 @@
                     <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Social Worker</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="social_worker-backend.php">
+                <form method="POST" action="../backend/social_worker-backend.php">
                     <div class="modal-body">
                         <input type="hidden" name="action" value="update">
                         <input type="hidden" name="id" id="edit_id">
@@ -186,7 +186,7 @@
                     <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirm Delete</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="social_worker-backend.php">
+                <form method="POST" action="../backend/social_worker-backend.php">
                     <div class="modal-body">
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="id" id="delete_id">

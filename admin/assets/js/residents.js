@@ -51,7 +51,7 @@ function refreshResidentList(page = 1, search = '') {
     currentResidentPage = page;
     currentResidentSearch = search;
     
-    const url = `residents-backend.php?action=list&page=${page}&per_page=${perPage}&search=${encodeURIComponent(search)}`;
+    const url = `../backend/residents-backend.php?action=list&page=${page}&per_page=${perPage}&search=${encodeURIComponent(search)}`;
     
     fetch(url)
         .then(handleResponse)
@@ -182,7 +182,7 @@ function loadResidentHistory(residentId) {
 
 // Function to fetch resident history
 function getResidentHistory(residentId) {
-    return fetch(`residents-backend.php?action=get_resident_history&id=${residentId}`)
+    return fetch(`../backend/residents-backend.php?action=get_resident_history&id=${residentId}`)
         .then(handleResponse)
         .then(data => {
             if (data.success) {
@@ -348,7 +348,7 @@ function refreshAccountRequests(page = 1, status = 'all') {
     currentRequestPage = page;
     currentRequestFilter = status;
     
-    const url = `residents-backend.php?action=account_requests&page=${page}&per_page=${perPage}&status=${status}`;
+    const url = `../backend/residents-backend.php?action=account_requests&page=${page}&per_page=${perPage}&status=${status}`;
     
     fetch(url)
         .then(handleResponse)
@@ -531,7 +531,7 @@ function viewResident(id) {
     const modal = new bootstrap.Modal(viewModal);
     modal.show();
     
-    fetch(`residents-backend.php?action=list&id=${id}`)
+    fetch(`../backend/residents-backend.php?action=list&id=${id}`)
         .then(response => {
             console.log('Response status:', response.status);
             if (!response.ok) {
@@ -574,7 +574,7 @@ function editResident(id) {
 
     console.log('Editing resident with ID:', id);
     
-    fetch(`residents-backend.php?action=list&id=${id}`)
+    fetch(`../backend/residents-backend.php?action=list&id=${id}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -665,7 +665,7 @@ function displayResidentModal(resident) {
     // Handle photo path
     let photoPath = 'img/default-profile.jpg';
     if (resident.photo_path && resident.photo_path !== 'null' && resident.photo_path !== '') {
-        photoPath = `../auth/uploads/photos/${resident.photo_path}`;
+        photoPath = `../../auth/uploads/photos/${resident.photo_path}`;
     }
     updateModalImage(viewModal, '.resident-photo', photoPath);
 
@@ -757,31 +757,50 @@ function updateModalImage(modal, selector, src) {
 
     console.log(`Setting image source for ${selector}:`, src);
     
-    if (src && src !== 'img/default-profile.jpg' && src !== 'img/default-id.jpg') {
-        element.src = src;
-    } else {
-        element.src = selector.includes('id') ? 'img/default-id.jpg' : 'img/default-profile.jpg';
-    }
+    // Reset onerror handler first
+    element.onerror = null;
+    
+    // Set the source
+    element.src = src;
 
-    element.onerror = function () {
+    // Add comprehensive error handling
+    element.onerror = function() {
         console.error(`Failed to load image: ${this.src}`);
-        this.onerror = null;
-        this.src = selector.includes('id') ? 'img/default-id.jpg' : 'img/default-profile.jpg';
+        console.log('Trying fallback image...');
+        
+        // Try multiple fallback strategies
+        const fallbackSrc = selector.includes('id') ? 'img/default-id.jpg' : 'img/default-profile.jpg';
+        this.onerror = null; // Prevent infinite loop
+        this.src = fallbackSrc;
     };
     
     element.onload = function() {
         console.log(`Successfully loaded image: ${this.src}`);
     };
+    
+    // Add a timeout to check if image loaded
+    setTimeout(() => {
+        if (element.complete && element.naturalHeight === 0) {
+            console.warn(`Image might not have loaded properly: ${src}`);
+        }
+    }, 1000);
 }
 
 function displayIdPhotos(modal, idPath1, idPath2, idSelector1 = '.resident-valid-id', idSelector2 = '.resident-valid-id-2') {
+    console.log('Displaying ID photos:', { idPath1, idPath2 });
+    
     // Process and display first ID photo
     let cleanIdPath1 = 'img/default-id.jpg';
     if (idPath1 && idPath1 !== 'null' && idPath1 !== '') {
         let cleanPath = idPath1;
+        // Remove any prefix paths and get just the filename
         cleanPath = cleanPath.replace(/^uploads\/valid_ids\//, '');
         cleanPath = cleanPath.replace(/^auth\/uploads\/valid_ids\//, '');
-        cleanIdPath1 = `../auth/uploads/valid_ids/${cleanPath}`;
+        cleanPath = cleanPath.replace(/^\.\.\/\.\.\/auth\/uploads\/valid_ids\//, '');
+        
+        // Construct the correct path
+        cleanIdPath1 = `../../auth/uploads/valid_ids/${cleanPath}`;
+        console.log('First ID path:', cleanIdPath1);
     }
     updateModalImage(modal, idSelector1, cleanIdPath1);
 
@@ -789,9 +808,14 @@ function displayIdPhotos(modal, idPath1, idPath2, idSelector1 = '.resident-valid
     let cleanIdPath2 = 'img/default-id.jpg';
     if (idPath2 && idPath2 !== 'null' && idPath2 !== '') {
         let cleanPath = idPath2;
+        // Remove any prefix paths and get just the filename
         cleanPath = cleanPath.replace(/^uploads\/valid_ids\//, '');
         cleanPath = cleanPath.replace(/^auth\/uploads\/valid_ids\//, '');
-        cleanIdPath2 = `../auth/uploads/valid_ids/${cleanPath}`;
+        cleanPath = cleanPath.replace(/^\.\.\/\.\.\/auth\/uploads\/valid_ids\//, '');
+        
+        // Construct the correct path
+        cleanIdPath2 = `../../auth/uploads/valid_ids/${cleanPath}`;
+        console.log('Second ID path:', cleanIdPath2);
     }
     updateModalImage(modal, idSelector2, cleanIdPath2);
 
@@ -816,7 +840,7 @@ function viewRequest(id) {
     console.log('=== VIEW REQUEST DEBUG ===');
     console.log('Viewing request with ID:', id);
 
-    fetch(`residents-backend.php?action=account_requests&id=${id}`)
+    fetch(`../backend/residents-backend.php?action=account_requests&id=${id}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -1069,7 +1093,7 @@ function updateResident() {
         data[key] = value;
     }
 
-    fetch('residents-backend.php?action=edit', {
+    fetch('../backend/residents-backend.php?action=edit', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1099,7 +1123,7 @@ function updateResident() {
 
 // Show delete confirmation modal
 function showDeleteModal(id) {
-    fetch(`residents-backend.php?action=list&id=${id}`)
+    fetch(`../backend/residents-backend.php?action=list&id=${id}`)
         .then(handleResponse)
         .then(data => {
             if (data.success && data.data) {
@@ -1134,7 +1158,7 @@ function deleteResident(id) {
         confirmDeleteBtn.disabled = true;
     }
 
-    fetch('residents-backend.php?action=delete', {
+    fetch('../backend/residents-backend.php?action=delete', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -1234,7 +1258,7 @@ function processAccountRequest(id, action, note) {
     formData.append('action', action); // Changed from 'action' to avoid conflicts
     if (note) formData.append('note', note);
 
-    fetch('residents-backend.php?action=process_request', {
+    fetch('../backend/residents-backend.php?action=process_request', {
         method: 'POST',
         body: formData
     })
@@ -1291,7 +1315,7 @@ function processAccountRequest(id, action, note) {
 
 // Export to Excel function
 function exportResidents() {
-    window.location.href = 'residents-backend.php?action=export';
+    window.location.href = '../backend/residents-backend.php?action=export';
 }
 
 // Initialize when DOM is loaded
@@ -1494,7 +1518,6 @@ if (saveResidentBtn) {
         }
         console.log('========================');
 
-        /* ---------- Show loading state ---------- */
         const originalText = this.innerHTML;
         this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
         this.disabled = true;
@@ -1502,7 +1525,7 @@ if (saveResidentBtn) {
         try {
             console.log('Sending request to server...');
             
-            const response = await fetch('residents-backend.php?action=add', {
+            const response = await fetch('../backend/residents-backend.php?action=add', {
                 method: 'POST',
                 body: formData
             });

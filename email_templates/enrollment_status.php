@@ -1,6 +1,4 @@
 <?php
-// email_templates/enrollment_status.php
-
 function generateEnrollmentConfirmationEmail($guardianName, $childName, $schoolYear, $socialWorkerName, $socialWorkerPosition, $socialWorkerDepartment, $socialWorkerEmail) {
     $subject = "Daycare Enrollment Confirmed - $childName (S.Y. $schoolYear)";
 

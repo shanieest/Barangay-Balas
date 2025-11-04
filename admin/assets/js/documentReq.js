@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('month', month);
         formData.append('year', year);
 
-        fetch('process_request.php', {
+        fetch('../backend/process_request.php', {
             method: 'POST',
             body: formData
         })
@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('year', currentReportData.year);
         formData.append('export_type', exportType);
 
-        fetch('process_request.php', {
+        fetch('../backend/process_request.php', {
             method: 'POST',
             body: formData
         })

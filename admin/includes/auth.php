@@ -1,5 +1,4 @@
 <?php
-// admin/includes/auth.php
 
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_path', '/');
@@ -123,7 +122,7 @@ function logout() {
         session_unset();
         session_destroy();
     }
-    header("Location: login.php");
+    header("Location: index.php");
     exit();
 }
 

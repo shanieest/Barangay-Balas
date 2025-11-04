@@ -26,7 +26,7 @@
             const formData = $('#profileForm').serialize();
             
             $.ajax({
-                url: 'profile-backend.php?action=update_profile',
+                url: '../backend/profile-backend.php?action=update_profile',
                 type: 'POST',
                 data: formData,
                 dataType: 'json',
@@ -47,7 +47,7 @@
             const formData = $('#passwordForm').serialize();
             
             $.ajax({
-                url: 'profile-backend.php?action=update_password',
+                url: '../backend/profile-backend.php?action=update_password',
                 type: 'POST',
                 data: formData,
                 dataType: 'json',
@@ -69,7 +69,7 @@
             const formData = new FormData($('#photoUploadForm')[0]);
             
             $.ajax({
-                url: 'profile-backend.php?action=upload_photo',
+                url: '../backend/profile-backend.php?action=upload_photo',
                 type: 'POST',
                 data: formData,
                 dataType: 'json',
@@ -93,7 +93,7 @@
             const confirmation = $('#deleteConfirmation').val();
             
             $.ajax({
-                url: 'profile-backend.php?action=delete_account',
+                url: '../backend/profile-backend.php?action=delete_account',
                 type: 'POST',
                 data: { confirmation: confirmation },
                 dataType: 'json',

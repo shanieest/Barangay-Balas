@@ -19,14 +19,12 @@ function logActivity($conn, $userId, $activity) {
 }
 
 function validatePhoneNumber($phone) {
-    // Remove all non-digit characters
     $cleaned = preg_replace('/\D/', '', $phone);
     
-    // Check if it's a valid Philippine mobile number (09XXXXXXXXX) or landline
     if (preg_match('/^09\d{9}$/', $cleaned)) {
-        return true; // Mobile number
+        return true; 
     } elseif (preg_match('/^\d{7,10}$/', $cleaned)) {
-        return true; // Landline
+        return true; 
     }
     
     return false;
@@ -100,7 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $errors[] = "Invalid contact number format. Please use a valid Philippine mobile (09XXXXXXXXX) or landline number.";
             }
 
-            // Age validation (must be at least 1 year old)
             $birthdate_obj = DateTime::createFromFormat('Y-m-d', $birthdate);
             $today = new DateTime();
             $age = $birthdate_obj->diff($today)->y;
@@ -282,7 +279,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     exit;
 }
 
-// If someone tries to access this file directly without POST request
 header("Location: profile.php");
 exit;
 ?>

@@ -28,9 +28,10 @@ require_once '../../config/db.php';
                 <!-- Services Section -->
                 <h2 class="mb-4">Barangay Services</h2>
                 <div class="card-body">
-                    <div class="row">
+                    <!-- Top Row - 3 Cards -->
+                    <div class="row mb-4">
                         <!-- Barangay ID Card -->
-                        <div class="col-md-3 mb-4">
+                        <div class="col-md-4 mb-4">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-id-card fa-3x text-info mb-3"></i>
@@ -47,7 +48,7 @@ require_once '../../config/db.php';
                         </div>
 
                         <!-- Request Documents Card -->
-                        <div class="col-md-3 mb-4">
+                        <div class="col-md-4 mb-4">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-handshake fa-3x text-primary mb-3"></i>
@@ -63,8 +64,27 @@ require_once '../../config/db.php';
                             </div>
                         </div>
 
+                        <!-- Medicine Request Card -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-pills fa-3x text-danger mb-3"></i>
+                                    <h5>Medicine Request</h5>
+                                    <p class="text-muted">Request essential medicines</p>
+                                    <button class="btn btn-danger btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#medicineRequestModal">
+                                        Request
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row - 2 Cards -->
+                    <div class="row">
                         <!-- Reservation of Service Vehicle -->
-                        <div class="col-md-3 mb-4">
+                        <div class="col-md-6 mb-4">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-bus fa-3x text-success mb-3"></i>
@@ -80,7 +100,7 @@ require_once '../../config/db.php';
                         </div>
 
                         <!-- Reservation Others -->
-                        <div class="col-md-3 mb-4">
+                        <div class="col-md-6 mb-4">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-campground fa-3x text-warning mb-3"></i>
@@ -113,6 +133,15 @@ require_once '../../config/db.php';
                                     </ul>
                                 </div>
                                 <div class="col-md-4">
+                                    <h6><i class="fas fa-pills text-danger me-2"></i>Medicine Request</h6>
+                                    <ul class="list-unstyled ms-3">
+                                        <li>• Essential medicines available</li>
+                                        <li>• For emergency medical needs</li>
+                                        <li>• Senior citizen priority</li>
+                                        <li>• Prescription may be required</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
                                     <h6><i class="fas fa-bus text-success me-2"></i>Service Vehicle</h6>
                                     <ul class="list-unstyled ms-3">
                                         <li>• Available for medical emergencies</li>
@@ -121,6 +150,8 @@ require_once '../../config/db.php';
                                         <li>• Request at least 1 day in advance</li>
                                     </ul>
                                 </div>
+                            </div>
+                            <div class="row mt-3">
                                 <div class="col-md-4">
                                     <h6><i class="fas fa-campground text-warning me-2"></i>Other Barangay Services</h6>
                                     <ul class="list-unstyled ms-3">
@@ -147,6 +178,7 @@ require_once '../../config/db.php';
 
     <?php include '../../pages/modals/barangayIdModal.php'; ?>
     <?php include '../../pages/modals/documentsModal.php'; ?>
+    <?php include '../../pages/modals/medicineRequestModal.php'; ?>
     <?php include '../../pages/modals/vehicleReservationModal.php'; ?>
     <?php include '../../pages/modals/tentReservationModal.php'; ?>
 

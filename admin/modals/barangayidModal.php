@@ -1,4 +1,4 @@
-<!-- Application Details Modal admin side-->
+<!-- Application Details Modal -->
 <div class="modal fade" id="applicationDetailsModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -21,16 +21,24 @@
   </div>
 </div>
 
-<!-- Modal to preview digital ID -->
+<!-- Digital Barangay ID Preview Modal  -->
 <div class="modal fade" id="viewIdModal" tabindex="-1">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Digital Barangay ID Preview</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Digital Barangay ID</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <iframe id="digitalIdFrame" src="" width="100%" height="600px" style="border:none;"></iframe>
+        <div id="pdfViewerContent">
+          <!-- Content will be loaded dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="downloadCurrentPDF()">
+          <i class="fas fa-download me-2"></i>Download PDF
+        </button>
       </div>
     </div>
   </div>
@@ -94,12 +102,30 @@
 <div class="modal fade" id="viewNotesModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header bg-info text-white">
         <h5 class="modal-title"><i class="fas fa-sticky-note me-2"></i>Application Notes</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="notesContent"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Rejection Details Modal -->
+<div class="modal fade" id="rejectionDetailsModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="fas fa-ban me-2"></i>Rejection Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p id="notesContent" class="mb-0"></p>
+        <div id="rejectionDetailsContent"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -130,27 +156,6 @@
             ?>
           </select>
         </div>
-        <div class="mb-3">
-          <label for="reportType" class="form-label">Report Type</label>
-          <select class="form-select" id="reportType" name="report_type">
-            <option value="summary">Summary Report (Monthly Statistics)</option>
-            <option value="detailed">Detailed Report (All Applications)</option>
-          </select>
-          <div class="form-text">
-            <strong>Summary:</strong> Monthly counts and approval rates<br>
-            <strong>Detailed:</strong> Complete list of all applications
-          </div>
-        </div>
-        <div class="alert alert-info">
-          <i class="fas fa-info-circle me-2"></i>
-          <strong>Report includes:</strong> Application statistics, status breakdown, demographic data, and approval rates.
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-success" onclick="performYearlyExport()">
-          <i class="fas fa-file-excel me-2"></i>Generate Report
-        </button>
       </div>
     </div>
   </div>

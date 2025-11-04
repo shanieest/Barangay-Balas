@@ -1,8 +1,7 @@
 <?php
-require_once 'includes/db.php';
-require_once 'includes/auth.php';
+require_once 'db.php';
+require_once 'auth.php';
 
-// Default admin name
 $adminName = "Admin";
 
 if (isset($_SESSION['admin_id'])) {
@@ -28,59 +27,78 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 
                 <?php if (isSocialWorker()): ?>
                 <!-- SOCIAL WORKER SIDEBAR -->
-                <a class="nav-link <?= $currentPage == 'social_worker_dashboard.php' ? 'active' : '' ?>" href="social_worker_dashboard.php">
+                <a class="nav-link <?= $currentPage == '../social_worker_dashboard.php' ? 'active' : '' ?>" href="../social_worker_dashboard.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                     <span class="nav-text">Daycare Dashboard</span>
                 </a>
 
-                <a class="nav-link <?= $currentPage == 'daycare.php' ? 'active' : '' ?>" href="daycare.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-child"></i></div>
-                    <span class="nav-text">Enrollments</span>
-                </a>
-
                 <?php else: ?>
                 <!-- ADMIN/OFFICIAL SIDEBAR -->
-                <a class="nav-link <?= $currentPage == 'dashboard.php' ? 'active' : '' ?>" href="dashboard.php">
+                <a class="nav-link <?= $currentPage == 'dashboard.php' ? 'active' : '' ?>" href="./dashboard.php">
                     <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
                     <span class="nav-text">Dashboard</span>
                 </a>
+                <?php endif; ?>
 
-                <!-- Services Menu with Dropdown -->
-                <div class="nav-item">
-                    <a class="nav-link collapsed <?= (in_array($currentPage, ['servicesAdmin.php', 'reservations.php', 'document_requests.php'])) ? 'active' : '' ?>" 
-                       href="#" 
-                       data-bs-toggle="collapse" 
-                       data-bs-target="#collapseServices" 
-                       aria-expanded="<?= (in_array($currentPage, ['reservations.php', 'document_requests.php'])) ? 'true' : 'false' ?>" 
-                       aria-controls="collapseServices">
+                <!-- Services Menu - VISIBLE TO ALL ROLES BUT DIFFERENT STRUCTURE -->
+                <?php if (isSocialWorker()): ?>
+                    <!-- SOCIAL WORKER: Only Enrollments link, no dropdown -->
+                    <a class="nav-link <?= $currentPage == 'daycare.php' ? 'active' : '' ?>" href="../pages/daycare.php">
                         <div class="sb-nav-link-icon d-flex align-items-center">
-                            <i class="fas fa-briefcase"></i>
+                            <i class="fas fa-child"></i>
                         </div>
-                        <span class="nav-text">Services</span>
-                        <div class="sb-sidenav-collapse-arrow d-flex align-items-center">
-                            <i class="fas fa-angle-down"></i>
-                        </div>
+                        <span class="nav-text">Enrollments</span>
                     </a>
-                    <div class="collapse <?= (in_array($currentPage, [ 'reservations.php', 'document_requests.php'])) ? 'show' : '' ?>" 
-                         id="collapseServices" 
-                         aria-labelledby="headingServices" 
-                         data-bs-parent="#sidenavAccordion">
-                        <nav class="sb-sidenav-menu-nested nav">
-                            <a class="nav-link <?= $currentPage == 'reservations.php' ? 'active' : '' ?>" href="reservations.php">
-                                <i class="fas fa-calendar-check me-2"></i>
-                                Reservations
-                            </a>
-                            <a class="nav-link <?= $currentPage == 'document_requests.php' ? 'active' : '' ?>" href="document_requests.php">
-                                <i class="fas fa-file-alt me-2"></i>
-                                Document Requests
-                            </a>
-                            <a class="nav-link <?= $currentPage == 'barangay_id_records.php' ? 'active' : '' ?>" href="barangay_id_records.php">
-                                <i class="fas fa-id-card me-2"></i>
-                                Barangay ID
-                            </a>
-                        </nav>
+
+                <?php else: ?>
+                    <!-- ADMIN/OFFICIAL: Full Services Dropdown -->
+                    <div class="nav-item">
+                        <a class="nav-link collapsed <?= (in_array($currentPage, ['servicesAdmin.php', 'reservations.php', 'document_requests.php', 'medicineRequest.php', 'daycare.php'])) ? 'active' : '' ?>" 
+                        href="#" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#collapseServices" 
+                        aria-expanded="<?= (in_array($currentPage, ['reservations.php', 'document_requests.php', 'medicineRequest.php', 'daycare.php'])) ? 'true' : 'false' ?>" 
+                        aria-controls="collapseServices">
+                            <div class="sb-nav-link-icon d-flex align-items-center">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <span class="nav-text">Services</span>
+                            <div class="sb-sidenav-collapse-arrow d-flex align-items-center">
+                                <i class="fas fa-angle-down"></i>
+                            </div>
+                        </a>
+                        <div class="collapse <?= (in_array($currentPage, ['reservations.php', 'document_requests.php', 'medicineRequest.php', 'daycare.php'])) ? 'show' : '' ?>" 
+                            id="collapseServices" 
+                            aria-labelledby="headingServices" 
+                            data-bs-parent="#sidenavAccordion">
+                            <nav class="sb-sidenav-menu-nested nav">
+                                <a class="nav-link <?= $currentPage == 'daycare.php' ? 'active' : '' ?>" href="daycare.php">
+                                    <i class="fas fa-child me-2"></i>
+                                    Enrollments
+                                </a>
+                                <a class="nav-link <?= $currentPage == 'reservations.php' ? 'active' : '' ?>" href="reservations.php">
+                                    <i class="fas fa-calendar-check me-2"></i>
+                                    Reservations
+                                </a>
+                                <a class="nav-link <?= $currentPage == 'document_requests.php' ? 'active' : '' ?>" href="document_requests.php">
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    Document Requests
+                                </a>
+                                <a class="nav-link <?= $currentPage == 'barangay_id_records.php' ? 'active' : '' ?>" href="barangay_id_records.php">
+                                    <i class="fas fa-id-card me-2"></i>
+                                    Barangay ID
+                                </a>
+                                <a class="nav-link <?= $currentPage == 'medicineRequest.php' ? 'active' : '' ?>" href="medicineRequest.php">
+                                    <i class="fas fa-pills me-2"></i>
+                                    Medicine Requests
+                                </a>
+                            </nav>
+                        </div>
                     </div>
-                </div>
+                <?php endif; ?>
+
+                <?php if (!isSocialWorker()): ?>
+                <!-- ADMIN/OFFICIAL ONLY MENU ITEMS -->
 
                 <!-- Residents Menu with Dropdown -->
                 <div class="nav-item">
@@ -159,21 +177,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <div class="sb-nav-link-icon"><i class="fas fa-chart-bar"></i></div>
                     <span class="nav-text">Census Data</span>
                 </a>
-
-                <!-- Additional Admin-only Menu Items -->
-                <?php if (isAdmin()): ?>
-                <!--
-                <a class="nav-link <?= $currentPage == 'reports.php' ? 'active' : '' ?>" href="reports.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-file-alt"></i></div>
-                    <span class="nav-text">Reports</span>
-                </a>
-                
-                <a class="nav-link <?= $currentPage == 'settings.php' ? 'active' : '' ?>" href="settings.php">
-                    <div class="sb-nav-link-icon"><i class="fas fa-cog"></i></div>
-                    <span class="nav-text">Settings</span>
-                </a>
-                -->
-                <?php endif; ?>
 
                 <?php endif; ?>
                 <!-- END ROLE-BASED SIDEBAR -->
