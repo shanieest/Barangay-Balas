@@ -6,7 +6,7 @@ use PHPMailer\PHPMailer\Exception;
 require __DIR__ . '/../vendor/autoload.php';
 
 /**
- * Send an email using PHPMailer with optional custom sender.
+ * Send an email using PHPMailer
  *
  * @param string $to         Recipient email address
  * @param string $subject    Email subject
@@ -25,8 +25,8 @@ function sendEmail($to, $subject, $body, $toName = '', $fromEmail = 'jarshanetol
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'jarshanetolentino@gmail.com'; // Your Gmail account
-        $mail->Password = 'hkxe ezxm cxpo xlbt'; // Gmail App Password
+        $mail->Username = '@gmail.com'; // Your Gmail account
+        $mail->Password = ''; // Gmail App Password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
