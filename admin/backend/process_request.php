@@ -142,12 +142,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         if ($status === 'Approved') {
             $timestamp = time();
 
-            $outDir = __DIR__ . '/../public/uploads/generated_docs';
+            $outDir = $_SERVER['DOCUMENT_ROOT'] . '/barangay-balas/public/uploads/generated_docs';
             $qrDir = __DIR__ . '/../public/uploads/qr_codes';
             if (!is_dir($outDir)) mkdir($outDir, 0755, true);
             if (!is_dir($qrDir)) mkdir($qrDir, 0755, true);
 
-            $templatePath = __DIR__ . "/../services/certificates/templates/{$request['document_type']}.docx";
+            $templatePath = __DIR__ . "/../../services/certificates/templates/{$request['document_type']}.docx";
             if (!file_exists($templatePath)) {
                 throw new Exception("Template not found: {$request['document_type']}");
             }
@@ -505,7 +505,7 @@ function getReportDataInternal($conn, $report_type, $month, $year) {
 }
 
 function generateExcelReport($data, $filename) {
-    $filepath = __DIR__ . '/../temp/' . $filename;
+    $filepath = __DIR__ . '../../../temp/' . $filename;
     
 
     if (!is_dir(dirname($filepath))) {
@@ -607,7 +607,7 @@ function generateCSVReport($data, $filename) {
 
 function downloadReport() {
     $filename = basename($_GET['download_report']);
-    $filepath = __DIR__ . '/../temp/' . $filename;
+    $filepath = __DIR__ . '../../../temp/' . $filename;
     
     if (file_exists($filepath)) {
         if (pathinfo($filename, PATHINFO_EXTENSION) === 'xlsx') {

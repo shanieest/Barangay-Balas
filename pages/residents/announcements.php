@@ -15,12 +15,11 @@ $result = $conn->query($sql);
 function getImagePath($imagePath) {
     if (!$imagePath) return null;
     
-    if (file_exists('../../admin/' . $imagePath)) {
-        return '../../admin/' . $imagePath;
-    }
+    $fullPath = '../../admin/' . $imagePath;
     
-    if (file_exists($imagePath)) {
-        return $imagePath;
+    // Verify file exists
+    if (file_exists($fullPath)) {
+        return $fullPath;
     }
     
     return null;

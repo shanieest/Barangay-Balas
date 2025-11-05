@@ -36,11 +36,11 @@ if ($announcement['image_paths']) {
     foreach ($imagePaths as $path) {
         $path = trim($path);
         if ($path) {
-            // Check different possible paths
-            if (file_exists('../../admin/' . $path)) {
-                $images[] = '../../admin/' . $path;
-            } elseif (file_exists($path)) {
-                $images[] = $path;
+            $fullPath = '../../admin/' . $path;
+            
+            // Verify the file exists before adding
+            if (file_exists($fullPath)) {
+                $images[] = $fullPath;
             }
         }
     }

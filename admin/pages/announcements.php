@@ -14,6 +14,15 @@ $announcements = $conn->query(
 if (!$announcements) {
     $error = "Database error: " . $conn->error;
 }
+
+// FIXED: Helper function to get correct image path from admin directory
+function getAdminImagePath($dbPath) {
+    if (empty($dbPath)) return null;
+    
+    // From admin/pages directory: ../uploads/announcements/file.jpg
+    // Database stores: uploads/announcements/file.jpg
+    return '../' . $dbPath;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -101,16 +110,25 @@ if (!$announcements) {
                                             <div class="image-gallery">
                                                 <?php
                                                 $images = explode(',', $row['image_paths']);
-                                                foreach (array_slice($images, 0, 4) as $img):
+                                                $displayCount = 0;
+                                                foreach ($images as $img):
                                                     $img = trim($img);
                                                     if ($img):
+                                                        // FIXED: Get correct path from admin directory
+                                                        $fullPath = getAdminImagePath($img);
+                                                        if ($fullPath && file_exists('../' . $img)):
+                                                            if ($displayCount < 4):
                                                 ?>
-                                                    <img src="<?= htmlspecialchars($img) ?>" 
+                                                    <img src="<?= htmlspecialchars($fullPath) ?>" 
                                                          class="gallery-image" 
-                                                         onclick="showImageModal('<?= htmlspecialchars($img) ?>')"
+                                                         onclick="showImageModal('<?= htmlspecialchars($fullPath) ?>')"
                                                          data-bs-toggle="tooltip" 
-                                                         title="Click to view full image">
+                                                         title="Click to view full image"
+                                                         onerror="this.style.display='none'">
                                                 <?php 
+                                                            $displayCount++;
+                                                            endif;
+                                                        endif;
                                                     endif;
                                                 endforeach; 
                                                 if (count($images) > 4): ?>
@@ -158,6 +176,20 @@ if (!$announcements) {
 
 <?php include '../modals/announcementsModal.php'; ?>
 
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <img id="modalImage" src="" class="img-fluid w-100 rounded shadow" alt="Announcement Image">
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/announcement.js"></script>
 <script src="../assets/js/script.js"></script>
@@ -165,6 +197,12 @@ if (!$announcements) {
     // Initialize tooltips
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    
+    // Image modal function
+    function showImageModal(imageSrc) {
+        document.getElementById('modalImage').src = imageSrc;
+        new bootstrap.Modal(document.getElementById('imageModal')).show();
+    }
 </script>
 </body>
 </html>

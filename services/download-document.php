@@ -26,7 +26,7 @@ try {
     }
 
     $file = basename($request['document_file_path']);
-    $full_path = __DIR__ . "/../public/" . $request['document_file_path'];
+    $full_path = $_SERVER['DOCUMENT_ROOT'] . '/barangay-balas/public/' . $request['document_file_path'];
     
     if (!file_exists($full_path)) {
         http_response_code(404);

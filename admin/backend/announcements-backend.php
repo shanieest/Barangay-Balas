@@ -38,7 +38,7 @@ if (isset($_POST['addAnnouncement'])) {
             $announcementId = $stmt->insert_id;
             $stmt->close();
 
-            // Image Uploads
+            // Image Uploads - FIXED
             if (!empty($_FILES['images']['name'][0])) {
                 $targetDir = "../uploads/announcements/";
                 if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
@@ -51,9 +51,13 @@ if (isset($_POST['addAnnouncement'])) {
                         if (in_array($extension, $allowedTypes) && $_FILES['images']['size'][$key] <= 5000000) {
                             $filename = time() . "_" . uniqid() . "." . $extension;
                             $targetFile = $targetDir . $filename;
+                            
                             if (move_uploaded_file($_FILES['images']['tmp_name'][$key], $targetFile)) {
+                                // CRITICAL FIX: Store relative path without "../"
+                                $dbPath = "uploads/announcements/" . $filename;
+                                
                                 $imgStmt = $conn->prepare("INSERT INTO announcement_images (announcement_id, image_path) VALUES (?, ?)");
-                                $imgStmt->bind_param("is", $announcementId, $targetFile);
+                                $imgStmt->bind_param("is", $announcementId, $dbPath);
                                 $imgStmt->execute();
                                 $imgStmt->close();
                             }
@@ -62,6 +66,7 @@ if (isset($_POST['addAnnouncement'])) {
                 }
             }
 
+            // Send email notifications...
             $res = $conn->query("
                 SELECT CONCAT(r.first_name, ' ', r.last_name) AS full_name, r.email 
                 FROM resident_accounts ra
@@ -86,6 +91,7 @@ if (isset($_POST['addAnnouncement'])) {
     exit();
 }
 
+// EDIT ANNOUNCEMENT - Fixed image path storage
 if (isset($_POST['editAnnouncement'])) {
     $id = (int)$_POST['id'];
     $title = trim($_POST['title']);
@@ -101,12 +107,14 @@ if (isset($_POST['editAnnouncement'])) {
             $stmt->bind_param("ssssi", $title, $content, $date, $now, $id);
 
             if ($stmt->execute()) {
+                // Handle new image uploads - FIXED
                 if (!empty($_FILES['images']['name'][0])) {
                     $targetDir = "../uploads/announcements/";
                     if (!is_dir($targetDir)) {
                         mkdir($targetDir, 0755, true);
                     }
                     $allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                    
                     foreach ($_FILES['images']['name'] as $key => $name) {
                         if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
                             $fileInfo = pathinfo($name);
@@ -114,9 +122,13 @@ if (isset($_POST['editAnnouncement'])) {
                             if (in_array($extension, $allowedTypes) && $_FILES['images']['size'][$key] <= 5000000) {
                                 $filename = time() . "_" . uniqid() . "." . $extension;
                                 $targetFile = $targetDir . $filename;
+                                
                                 if (move_uploaded_file($_FILES['images']['tmp_name'][$key], $targetFile)) {
+                                    // CRITICAL FIX: Store relative path without "../"
+                                    $dbPath = "uploads/announcements/" . $filename;
+                                    
                                     $imgStmt = $conn->prepare("INSERT INTO announcement_images (announcement_id, image_path) VALUES (?, ?)");
-                                    $imgStmt->bind_param("is", $id, $targetFile);
+                                    $imgStmt->bind_param("is", $id, $dbPath);
                                     $imgStmt->execute();
                                     $imgStmt->close();
                                 }
@@ -132,37 +144,6 @@ if (isset($_POST['editAnnouncement'])) {
         }
     }
 
-    header("Location: ../pages/announcements.php");
-    exit();
-}
-
-if (isset($_POST['deleteAnnouncement'])) {
-    $id = (int)$_POST['id'];
-    if ($id <= 0) {
-        $_SESSION['error'] = "Invalid announcement ID.";
-    } else {
-        // Delete images
-        $imgStmt = $conn->prepare("SELECT image_path FROM announcement_images WHERE announcement_id = ?");
-        $imgStmt->bind_param("i", $id);
-        $imgStmt->execute();
-        $imgStmt->bind_result($imagePath);
-        while ($imgStmt->fetch()) {
-            if ($imagePath && file_exists($imagePath)) {
-                unlink($imagePath);
-            }
-        }
-        $imgStmt->close();
-
-        // Delete announcement
-        $delStmt = $conn->prepare("DELETE FROM announcements WHERE id = ?");
-        $delStmt->bind_param("i", $id);
-        if ($delStmt->execute()) {
-            $_SESSION['success'] = "Announcement deleted successfully.";
-        } else {
-            $_SESSION['error'] = "Error deleting announcement: " . $conn->error;
-        }
-        $delStmt->close();
-    }
     header("Location: ../pages/announcements.php");
     exit();
 }

@@ -480,7 +480,7 @@
       $hasAnnouncements = count($announcements) > 0;
 
      
-    function news_img($image_paths) {
+function news_img($image_paths) {
     if (!$image_paths || !trim($image_paths)) {
         return 'assets/img/news-placeholder.jpg';
     }
@@ -488,12 +488,10 @@
     $images = explode(',', $image_paths);
     $firstImage = trim($images[0]);
 
-    if (file_exists(__DIR__ . '/admin/' . $firstImage)) {
-        return 'admin/' . $firstImage;
-    }
-
-    if (file_exists(__DIR__ . '/' . $firstImage)) {
-        return $firstImage;
+    $imagePath = 'admin/' . $firstImage;
+    
+    if (file_exists(__DIR__ . '/' . $imagePath)) {
+        return $imagePath;
     }
 
     return 'assets/img/news-placeholder.jpg';

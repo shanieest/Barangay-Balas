@@ -48,12 +48,12 @@ function getAnnouncementImages($conn, $announcementId) {
         while ($row = $result->fetch_assoc()) {
             $imagePath = $row['image_path'];
             
-            if (file_exists($imagePath)) {
-                $images[] = $imagePath;
-            } else if (file_exists('../admin/' . $imagePath)) {
-                $images[] = '../admin/' . $imagePath;
-            } else if (file_exists('admin/' . $imagePath)) {
-                $images[] = 'admin/' . $imagePath;
+            // From public directory: ../admin/uploads/announcements/file.jpg
+            // Database stores: uploads/announcements/file.jpg
+            $fullPath = '../admin/' . $imagePath;
+            
+            if (file_exists($fullPath)) {
+                $images[] = $fullPath;
             }
         }
         
