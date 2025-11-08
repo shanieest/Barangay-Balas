@@ -141,10 +141,10 @@ class ReservationCalendar {
             if (isUnavailable) {
                 if (availableServices.length === 0) {
                     dayClass += ' fully-booked';
-                    statusText = '<span class="status-dot fully-booked-dot" title="Fully Booked">●</span>';
+                    statusText = '<span class="status-dot fully-booked-dot" title="Reserved">●</span>';
                 } else {
                     dayClass += ' partially-booked';
-                    statusText = '<span class="status-dot partially-booked-dot" title="Partially Booked">●</span>';
+                    statusText = '<span class="status-dot partially-booked-dot" title="Services in Used">●</span>';
                 }
             } else {
                 dayClass += ' available';
@@ -222,8 +222,8 @@ class ReservationCalendar {
                 content = `
                     <div class="availability-status text-center text-danger mb-3">
                         <i class="fas fa-times-circle fa-3x mb-2"></i>
-                        <h5 class="text-danger">Fully Booked</h5>
-                        <p class="mb-3">All services are booked on this date.</p>
+                        <h5 class="text-danger">Reserved</h5>
+                        <p class="mb-3">All services are reserved on this date.</p>
                     </div>
                 `;
             } else {
@@ -231,7 +231,7 @@ class ReservationCalendar {
                 content = `
                     <div class="availability-status text-center text-warning mb-3">
                         <i class="fas fa-exclamation-triangle fa-3x mb-2"></i>
-                        <h5 class="text-warning">Partially Booked</h5>
+                        <h5 class="text-warning">Services in Used</h5>
                         <p class="mb-3">Some services are unavailable on this date.</p>
                     </div>
                 `;
@@ -241,7 +241,7 @@ class ReservationCalendar {
             if (bookedServices.length > 0) {
                 content += `
                     <div class="booked-services mb-3">
-                        <h6 class="border-bottom pb-2">Booked Services:</h6>
+                        <h6 class="border-bottom pb-2">Reserved Services:</h6>
                         <div class="service-list">
                 `;
                 

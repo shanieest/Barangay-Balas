@@ -93,7 +93,6 @@ $stmt->close();
                         <div class="card document-request-card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <span>Document Requests</span>
-                                <span class="badge bg-primary"><?= $docRequestsCount ?> New</span>
                             </div>
                             <div class="card-body">
                                 <div class="list-group list-group-flush">
@@ -195,7 +194,6 @@ $stmt->close();
                             <div class="card-body d-grid gap-2">
                                 <a href="services.php" class="btn btn-primary"><i class="fas fa-file-alt me-2"></i> Request Document</a>
                                 <a href="announcements.php" class="btn btn-warning"><i class="fas fa-calendar-alt me-2"></i> View Events</a>
-                                <a href="services.php" class="btn btn-danger"><i class="fas fa-exclamation-triangle me-2"></i> Report Issue</a>
                                 <a href="profile.php" class="btn btn-outline-primary"><i class="fas fa-user-edit me-2"></i> Update Profile</a>
                             </div>
                         </div>

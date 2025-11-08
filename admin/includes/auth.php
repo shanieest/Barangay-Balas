@@ -1,8 +1,14 @@
 <?php
 
 if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.cookie_path', '/');
+    ini_set('session.gc_maxlifetime', 7200); // 2 hours
+    ini_set('session.cookie_lifetime', 0);
+    
     session_start();
+    
+    if (!isset($_SESSION['created'])) {
+        $_SESSION['created'] = time();
+    }
 }
 
 require_once __DIR__ . '/db.php';
@@ -13,7 +19,7 @@ function isLoggedIn() {
 
 function requireAuth() {
     if (!isLoggedIn()) {
-        header('Location: login.php');
+        header('Location: ../index.php');
         exit();
     }
 }

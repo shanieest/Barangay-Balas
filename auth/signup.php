@@ -93,7 +93,7 @@ if (isset($_SESSION['login_error'])) {
                                 </div>
                                  <div class="form-group col-md-6">
                                     <label for="middleName">Middle Name*</label>
-                                    <input type="text" class="form-control" id="middleName" name="middleName" placeholder="Middle name" required>
+                                    <input type="text" class="form-control" id="middleName" name="middleName" placeholder="Middle name">
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label for="lastName">Last Name*</label>

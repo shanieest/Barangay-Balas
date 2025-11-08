@@ -304,3 +304,183 @@
                 padding: 20px;
             }
         }
+
+        .household-toggle:hover {
+            background: linear-gradient(90deg, #0d6efd, #3b82f6);
+        }
+
+        .collapse-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapse {
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        .collapse.show {
+            display: block;
+        }
+
+        .household-card .collapse {
+            transition: all 0.3s ease;
+        }
+
+        .household-card .collapse:not(.show) {
+            display: none;
+        }
+
+        .household-card .collapse.show {
+            display: block;
+        }
+
+        /* Ensure the button styling is consistent */
+        .household-card .btn-light {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
+            transition: all 0.3s ease;
+        }
+
+        .household-card .btn-light:hover {
+            background: rgba(255, 255, 255, 0.3) !important;
+            transform: scale(1.05);
+        }
+
+        /* Add these styles to your existing CSS */
+
+.household-head-summary {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.member-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.member-row {
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.member-row:hover {
+    background-color: #f8f9fa !important;
+}
+
+.member-row.member-head {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+}
+
+.badge-relationship-head {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
+    color: #000;
+}
+
+.badge-relationship-spouse {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1976d2;
+}
+
+.badge-relationship-child {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+}
+
+.badge-relationship-other {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #388e3c;
+}
+
+.collapse-icon {
+    transition: transform 0.3s ease;
+}
+
+.collapse.show .collapse-icon {
+    transform: rotate(90deg);
+}
+
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+
+.bg-pink {
+    background-color: #e83e8c !important;
+}
+
+/* Ensure proper spacing for household cards */
+.household-card .card-header {
+    cursor: pointer;
+}
+
+.household-card .card-header:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #E63946 100%) !important;
+}
+
+.export-btn-excel {
+    background: linear-gradient(135deg, #21a366 0%, #138352 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.export-btn-pdf {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.export-btn-excel:hover, .export-btn-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.dropdown-menu {
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: none;
+    padding: 10px;
+}
+
+.dropdown-item {
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin: 2px 0;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .export-btn-excel, .export-btn-pdf {
+        width: 100%;
+        text-align: center;
+    }
+}

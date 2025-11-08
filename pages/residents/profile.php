@@ -209,13 +209,13 @@ if (empty($_SESSION['csrf_token'])) {
                                             <label class="form-label">Purok <span class="text-danger">*</span></label>
                                             <select class="form-select" name="purok" id="purokSelect" required readonly>
                                                 <option value="">Select Purok</option>
-                                                <option value="1" <?= ($profile['purok'] ?? '') == '1' ? 'selected' : '' ?>>Purok 1</option>
-                                                <option value="2" <?= ($profile['purok'] ?? '') == '2' ? 'selected' : '' ?>>Purok 2</option>
-                                                <option value="3" <?= ($profile['purok'] ?? '') == '3' ? 'selected' : '' ?>>Purok 3</option>
-                                                <option value="4" <?= ($profile['purok'] ?? '') == '4' ? 'selected' : '' ?>>Purok 4</option>
-                                                <option value="5" <?= ($profile['purok'] ?? '') == '5' ? 'selected' : '' ?>>Purok 5</option>
-                                                <option value="6" <?= ($profile['purok'] ?? '') == '6' ? 'selected' : '' ?>>Purok 6</option>
-                                                <option value="7" <?= ($profile['purok'] ?? '') == '7' ? 'selected' : '' ?>>Purok 7</option>
+                                                <option value="Purok 1" <?= ($profile['purok'] ?? '') == '1' ? 'selected' : '' ?>>Purok 1</option>
+                                                <option value="Purok 2" <?= ($profile['purok'] ?? '') == '2' ? 'selected' : '' ?>>Purok 2</option>
+                                                <option value="Purok 3" <?= ($profile['purok'] ?? '') == '3' ? 'selected' : '' ?>>Purok 3</option>
+                                                <option value="Purok 4" <?= ($profile['purok'] ?? '') == '4' ? 'selected' : '' ?>>Purok 4</option>
+                                                <option value="Purok 5" <?= ($profile['purok'] ?? '') == '5' ? 'selected' : '' ?>>Purok 5</option>
+                                                <option value="Purok 6" <?= ($profile['purok'] ?? '') == '6' ? 'selected' : '' ?>>Purok 6</option>
+                                                <option value="Purok 7" <?= ($profile['purok'] ?? '') == '7' ? 'selected' : '' ?>>Purok 7</option>
                                             </select>
                                         </div>
                                     </div>

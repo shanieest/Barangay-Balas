@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $required = [
         'firstName' => 'First name',
         'lastName' => 'Last name',
-        'middleName' => 'Middle name',
         'sex' => 'Sex',
         'birthdate' => 'Birthdate',
         'contactNumber' => 'Contact number',

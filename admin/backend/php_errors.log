@@ -1,0 +1,119 @@
+[07-Nov-2025 17:55:17 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[07-Nov-2025 17:55:17 Asia/Manila] POST data: Array
+(
+    [id] => 74
+    [action] => approve
+)
+
+[07-Nov-2025 17:55:17 Asia/Manila] Parsed values - ID: 74, Action: approve, Note: 
+[07-Nov-2025 17:55:17 Asia/Manila] Processing: user_id=22, status=Approved
+[07-Nov-2025 17:55:17 Asia/Manila] Found account to update: Array
+(
+    [id] => 74
+    [resident_id] => 78
+    [account_status] => Pending
+)
+
+[07-Nov-2025 17:55:17 Asia/Manila] Update executed. Affected rows: 1
+[07-Nov-2025 17:55:17 Asia/Manila] VERIFICATION: Account ID 74 now has status: Approved
+[07-Nov-2025 17:55:17 Asia/Manila] Transaction committed successfully
+[07-Nov-2025 17:55:17 Asia/Manila] PHP Warning:  require_once(C:\xampp\htdocs\Barangay-Balas\admin\backend/../config/emailer.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php on line 669
+[07-Nov-2025 17:55:17 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\xampp\htdocs\Barangay-Balas\admin\backend/../config/emailer.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php:669
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php(49): handleProcessRequest()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php on line 669
+[07-Nov-2025 18:15:29 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[07-Nov-2025 18:15:29 Asia/Manila] POST data: Array
+(
+    [id] => 75
+    [action] => approve
+)
+
+[07-Nov-2025 18:15:29 Asia/Manila] Parsed values - ID: 75, Action: approve, Note: 
+[07-Nov-2025 18:15:29 Asia/Manila] Processing: user_id=22, status=Approved
+[07-Nov-2025 18:15:29 Asia/Manila] Found account to update: Array
+(
+    [id] => 75
+    [resident_id] => 79
+    [account_status] => Pending
+)
+
+[07-Nov-2025 18:15:29 Asia/Manila] Update executed. Affected rows: 1
+[07-Nov-2025 18:15:29 Asia/Manila] VERIFICATION: Account ID 75 now has status: Approved
+[07-Nov-2025 18:15:29 Asia/Manila] Transaction committed successfully
+[07-Nov-2025 18:15:29 Asia/Manila] PHP Warning:  require_once(C:\xampp\htdocs\Barangay-Balas\admin\backend/../config/emailer.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php on line 669
+[07-Nov-2025 18:15:29 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\xampp\htdocs\Barangay-Balas\admin\backend/../config/emailer.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php:669
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php(49): handleProcessRequest()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php on line 669
+[07-Nov-2025 18:15:42 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[07-Nov-2025 18:15:42 Asia/Manila] POST data: Array
+(
+    [id] => 75
+    [action] => approve
+)
+
+[07-Nov-2025 18:15:42 Asia/Manila] Parsed values - ID: 75, Action: approve, Note: 
+[07-Nov-2025 18:15:42 Asia/Manila] Processing: user_id=22, status=Approved
+[07-Nov-2025 18:15:42 Asia/Manila] Found account to update: Array
+(
+    [id] => 75
+    [resident_id] => 79
+    [account_status] => Approved
+)
+
+[07-Nov-2025 18:15:42 Asia/Manila] Update executed. Affected rows: 1
+[07-Nov-2025 18:15:42 Asia/Manila] VERIFICATION: Account ID 75 now has status: Approved
+[07-Nov-2025 18:15:42 Asia/Manila] Transaction committed successfully
+[07-Nov-2025 18:15:42 Asia/Manila] PHP Warning:  require_once(C:\xampp\htdocs\Barangay-Balas\admin\backend/../config/emailer.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php on line 669
+[07-Nov-2025 18:15:42 Asia/Manila] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\xampp\htdocs\Barangay-Balas\admin\backend/../config/emailer.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php:669
+Stack trace:
+#0 C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php(49): handleProcessRequest()
+#1 {main}
+  thrown in C:\xampp\htdocs\Barangay-Balas\admin\backend\residents-backend.php on line 669
+[07-Nov-2025 18:18:15 Asia/Manila] === PROCESS REQUEST DEBUG START ===
+[07-Nov-2025 18:18:15 Asia/Manila] POST data: Array
+(
+    [id] => 75
+    [action] => approve
+)
+
+[07-Nov-2025 18:18:15 Asia/Manila] Parsed values - ID: 75, Action: approve, Note: 
+[07-Nov-2025 18:18:15 Asia/Manila] Processing: user_id=22, status=Approved
+[07-Nov-2025 18:18:15 Asia/Manila] Found account to update: Array
+(
+    [id] => 75
+    [resident_id] => 79
+    [account_status] => Pending
+)
+
+[07-Nov-2025 18:18:16 Asia/Manila] Update executed. Affected rows: 1
+[07-Nov-2025 18:18:16 Asia/Manila] VERIFICATION: Account ID 75 now has status: Approved
+[07-Nov-2025 18:18:16 Asia/Manila] Transaction committed successfully
+[07-Nov-2025 18:18:23 Asia/Manila] Email sent successfully to neptwix@gmail.com
+[07-Nov-2025 18:18:23 Asia/Manila] === PROCESS REQUEST DEBUG END ===
+[07-Nov-2025 18:18:23 Asia/Manila] Response: {"success":true,"message":"Account Approved successfully","debug":{"affected_rows":1,"new_status":"Approved","account_id":75}}
+[07-Nov-2025 18:37:33 Asia/Manila] Received POST data: Array
+(
+    [createAccount] => true
+    [firstName] => Jarshane
+    [lastName] => Garcia
+    [middleName] => 
+    [suffix] => 
+    [sex] => male
+    [contactNumber] => 09221984532
+    [email] => jarshanetolentino@gmail.com
+    [houseNumber] => 4009
+    [purok] => 3
+    [address] => House 4009, Purok 3, Balas, Mexico, Pampanga, Philippines
+    [birthdate] => 2003-11-21
+    [age] => 21
+    [password] => 11111111
+)
+
+[07-Nov-2025 18:37:33 Asia/Manila] Using provided age: 21
+[07-Nov-2025 18:37:33 Asia/Manila] Final values - birthdate: 2003-11-21, age: 21, createAccount: true
+[07-Nov-2025 18:37:33 Asia/Manila] Resident inserted with ID: 80
+[07-Nov-2025 18:37:33 Asia/Manila] Account created for resident ID: 80

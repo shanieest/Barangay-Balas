@@ -175,8 +175,8 @@
             </div>
             <div class="modal-footer">
                 <small class="text-muted me-auto">
-                    <i class="fas fa-circle text-danger me-1"></i>Fully Booked 
-                    <i class="fas fa-circle text-warning ms-2 me-1"></i>Partially Booked 
+                    <i class="fas fa-circle text-danger me-1"></i>Reserved Services 
+                    <i class="fas fa-circle text-warning ms-2 me-1"></i>Services in Used 
                     <i class="fas fa-circle text-success ms-2 me-1"></i>Available
                 </small>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

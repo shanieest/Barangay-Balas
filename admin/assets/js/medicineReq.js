@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function() {
     initializeMedicineModals();
     initializeRequestModals();
@@ -129,7 +128,18 @@ function populateViewRequestModal(request) {
             <div class="col-12">
                 <h6>Additional Information</h6>
                 <p><strong>Additional Notes:</strong> ${escapeHtml(request.additional_notes || 'None')}</p>
-                <p><strong>Prescription:</strong> ${request.prescription_path ? '<a href="../' + escapeHtml(request.prescription_path) + '" target="_blank">View Prescription</a>' : 'None'}</p>
+                
+                <p><strong>Prescription:</strong></p>
+                ${request.prescription_path 
+                    ? `<div class="text-center mt-2">
+                        <img src="../../${escapeHtml(request.prescription_path)}" 
+                             alt="Prescription Image" 
+                             class="img-fluid rounded shadow-sm border" 
+                             style="max-height: 350px; object-fit: contain;">
+                      </div>`
+                    : '<p>None</p>'
+                }
+
                 ${request.admin_notes ? `<p><strong>Admin Notes:</strong> ${escapeHtml(request.admin_notes)}</p>` : ''}
                 ${request.disapproval_reason ? `<p><strong>Disapproval Reason:</strong> ${escapeHtml(request.disapproval_reason)}</p>` : ''}
             </div>
@@ -145,6 +155,14 @@ function populateViewRequestModal(request) {
     `;
     
     modalBody.innerHTML = details;
+}
+
+
+function getPrescriptionFilename(fullPath) {
+    if (!fullPath) return '';
+    // Extract just the filename from the full path (handles both / and \ separators)
+    const filename = fullPath.split(/[\\/]/).pop();
+    return filename;
 }
 
 function initializeFormValidations() {

@@ -155,7 +155,7 @@ if (!isset($_SESSION['registration_success'])) {
     <div class="container">
         <div class="auth-container">
             <div class="auth-header">
-                <img src="barangay-balas/assets/img/balas-logo.png" alt="Barangay Balas Logo" class="auth-logo">
+                <img src="/barangay-balas/assets/img/balas-logo.png" alt="Barangay Balas Logo" class="auth-logo">
                 <h2>Registration Submitted</h2>
             </div>
             

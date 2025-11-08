@@ -1,4 +1,5 @@
 <?php
+// admin/backend/process_request.php
 require '../includes/db.php';
 require '../includes/auth.php';
 require '../../vendor/autoload.php';
@@ -7,8 +8,13 @@ require_once  '../../config/emailer.php';
 require_once  '../../email_templates/document_status.php';
 
 use PhpOffice\PhpWord\TemplateProcessor;
+use PhpOffice\PhpWord\Settings;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+// Set PDF rendering engine to DomPDF
+Settings::setPdfRendererName(Settings::PDF_RENDERER_DOMPDF);
+Settings::setPdfRendererPath('../../vendor/dompdf/dompdf');
 
 header('Content-Type: application/json');
 
@@ -26,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['download_report'])) {
     downloadReport();
     exit;
 }
+
 function formatIssuedDate($date = null) {
     if ($date === null) {
         $date = time();
@@ -110,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
 
         $status = ($action === 'approve') ? 'Approved' : 'Disapproved';
 
-       
         if ($current_admin_id !== null) {
             $stmt = $conn->prepare("
                 UPDATE document_requests 
@@ -120,7 +126,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $stmt->bind_param('ssii', $status, $notes, $current_admin_id, $request_id);
             error_log("→ Updating request {$request_id} with admin_id={$current_admin_id}");
         } else {
-
             $stmt = $conn->prepare("
                 UPDATE document_requests 
                 SET status = ?, notes = ?, date_processed = NOW() 
@@ -182,12 +187,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $currentDate = date('Y-m-d H:i:s');
             $issuedDateFormatted = formatIssuedDate($currentDate);
 
+            // Process template and generate PDF
             $templateProcessor = new TemplateProcessor($templatePath);
             $templateProcessor->setValue('first_name', htmlspecialchars($request['first_name']));
             $templateProcessor->setValue('middle_name', htmlspecialchars($request['middle_name'] ?? ''));
             $templateProcessor->setValue('last_name', htmlspecialchars($request['last_name']));
             $templateProcessor->setValue('date', date('F j, Y'));
-            $templateProcessor->setValue('issued_date', $issuedDateFormatted); // NEW: Add formatted issued date
+            $templateProcessor->setValue('issued_date', $issuedDateFormatted);
             $templateProcessor->setValue('sex', htmlspecialchars($request['sex'] ?? ''));
             $templateProcessor->setValue('birthdate', htmlspecialchars($request['birthdate'] ?? ''));
             $templateProcessor->setValue('age', htmlspecialchars($request['age'] ?? ''));
@@ -204,26 +210,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                 'ratio' => false
             ]);
 
-            // Save DOCX
+            // Save DOCX temporarily
             $docxPath = $outDir . "/request_{$request_id}_{$timestamp}.docx";
             $templateProcessor->saveAs($docxPath);
 
-            // Convert to PDF
+            // Convert DOCX to PDF using PhpWord's PDF renderer
             $pdfPath = $outDir . "/request_{$request_id}_{$timestamp}.pdf";
-            $libreOfficePath = '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"';
-            $cmd = "$libreOfficePath --headless --convert-to pdf --outdir " . escapeshellarg($outDir) . " " . escapeshellarg($docxPath) . " 2>&1";
-            exec($cmd, $output, $return_var);
-
-            $maxWait = 5;
-            $waited = 0;
-            while (!file_exists($pdfPath) && $waited < $maxWait) {
-                sleep(1);
-                $waited++;
+            
+            try {
+                // Load the Word document
+                $phpWord = \PhpOffice\PhpWord\IOFactory::load($docxPath);
+                
+                // Save as PDF
+                $pdfWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'PDF');
+                $pdfWriter->save($pdfPath);
+                
+                if (!file_exists($pdfPath)) {
+                    throw new Exception("PDF file was not created");
+                }
+                
+                error_log("✓ PDF generated successfully: " . $pdfPath);
+                
+            } catch (Exception $e) {
+                error_log("PDF generation failed: " . $e->getMessage());
+                
+                // Fallback: Use TCPDF if DomPDF fails
+                $pdfPath = convertDocxToPdfWithTCPDF($docxPath, $pdfPath, $qrPath);
             }
 
-            if ($return_var !== 0 || !file_exists($pdfPath)) {
-                error_log("LibreOffice failed: " . implode("\n", $output));
-                throw new Exception("PDF generation failed. Please ensure LibreOffice is installed.");
+            // Clean up temporary DOCX file
+            if (file_exists($docxPath)) {
+                @unlink($docxPath);
             }
 
             $relativePdfPath = "uploads/generated_docs/request_{$request_id}_{$timestamp}.pdf";
@@ -233,10 +250,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                 throw new Exception("Failed to update document file path: " . $stmt->error);
             }
             $stmt->close();
-
-            if (file_exists($docxPath)) {
-                @unlink($docxPath);
-            }
 
             $response['success'] = true;
             $response['message'] = 'Request approved and document generated successfully.';
@@ -313,7 +326,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
 
 echo json_encode($response);
 
-// Enhanced Report Generation Functions
+/**
+ * Fallback PDF conversion using TCPDF
+ */
+function convertDocxToPdfWithTCPDF($docxPath, $pdfPath, $qrPath) {
+    require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
+    
+    try {
+        // Create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        
+        // Set document information
+        $pdf->SetCreator('Barangay Balas System');
+        $pdf->SetAuthor('Barangay Balas');
+        $pdf->SetTitle('Official Document');
+        
+        // Remove default header/footer
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        
+        // Add a page
+        $pdf->AddPage();
+        
+        // Extract text from DOCX (simplified version)
+        $content = extractTextFromDocx($docxPath);
+        
+        // Set font
+        $pdf->SetFont('helvetica', '', 12);
+        
+        // Add content
+        $pdf->Write(0, $content, '', 0, 'L', true);
+        
+        // Add QR code if exists
+        if (file_exists($qrPath)) {
+            $pdf->Image($qrPath, 15, $pdf->GetY() + 10, 30, 30, 'PNG');
+        }
+        
+        // Save PDF
+        $pdf->Output($pdfPath, 'F');
+        
+        return $pdfPath;
+        
+    } catch (Exception $e) {
+        error_log("TCPDF conversion failed: " . $e->getMessage());
+        throw new Exception("PDF generation failed using all available methods.");
+    }
+}
+
+/**
+ * Extract text from DOCX file (basic implementation)
+ */
+function extractTextFromDocx($docxPath) {
+    $zip = new ZipArchive;
+    $content = '';
+    
+    if ($zip->open($docxPath) === TRUE) {
+        // Read document.xml
+        if (($index = $zip->locateName('word/document.xml')) !== FALSE) {
+            $xml = $zip->getFromIndex($index);
+            $xml = preg_replace('/<w:p>/', "\n", $xml);
+            $xml = preg_replace('/<[^>]+>/', ' ', $xml);
+            $xml = preg_replace('/[ ]+/', ' ', $xml);
+            $content = trim(strip_tags($xml));
+        }
+        $zip->close();
+    }
+    
+    return $content;
+}
+
+// Enhanced Report Generation Functions (unchanged from your original code)
 function generateReport($conn) {
     $report_type = $_POST['report_type'] ?? '';
     $month = $_POST['month'] ?? '';
@@ -507,7 +589,6 @@ function getReportDataInternal($conn, $report_type, $month, $year) {
 function generateExcelReport($data, $filename) {
     $filepath = __DIR__ . '../../../temp/' . $filename;
     
-
     if (!is_dir(dirname($filepath))) {
         mkdir(dirname($filepath), 0755, true);
     }

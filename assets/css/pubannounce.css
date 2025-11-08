@@ -1,7 +1,7 @@
      .hero-section {
       background-image: 
         linear-gradient(to right, rgba(0, 51, 204, 0.7) 0%, rgba(153, 0, 0, 0.7) 80%), 
-        url('../img/outpost.jpg');
+        url('../../assets/img/outpost.jpg');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;

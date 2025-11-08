@@ -143,7 +143,7 @@ function approveDocumentRequest() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showAlert('✅ ' + data.message, 'success');
+            showAlert(' ' + data.message, 'success');
             
             // Auto-download if enabled and file is generated
             if (data.auto_download && data.file_path) {

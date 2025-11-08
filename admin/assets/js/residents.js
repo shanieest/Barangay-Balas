@@ -1340,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const purok = purokInput.value.trim();
                 
                 if (houseNumber && purok) {
-                    addressInput.value = `House ${houseNumber}, Purok ${purok}, Balas, Mexico, Pampanga, Philippines`;
+                    addressInput.value = `House ${houseNumber}, ${purok}, Balas, Mexico, Pampanga, Philippines`;
                 } else {
                     addressInput.value = '';
                 }
@@ -1361,7 +1361,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const purok = editPurokInput.value.trim();
                 
                 if (houseNumber && purok) {
-                    editAddressInput.value = `House ${houseNumber}, Purok ${purok}, Balas, Mexico, Pampanga, Philippines`;
+                    editAddressInput.value = `House ${houseNumber}, ${purok}, Balas, Mexico, Pampanga, Philippines`;
                 } else {
                     editAddressInput.value = '';
                 }
@@ -1474,7 +1474,7 @@ if (saveResidentBtn) {
             const purok = purokInput.value.trim();
             
             if (houseNumber && purok) {
-                addressInput.value = `House ${houseNumber}, Purok ${purok}, Balas, Mexico, Pampanga, Philippines`;
+                addressInput.value = `House ${houseNumber}, ${purok}, Balas, Mexico, Pampanga, Philippines`;
                 console.log('Generated address:', addressInput.value);
             }
         }

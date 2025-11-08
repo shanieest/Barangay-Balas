@@ -1,5 +1,4 @@
 <?php
-// admin/census.php - Redesigned Census Management Page
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 requireAuth();
@@ -10,8 +9,16 @@ $stats_query = "
         COUNT(DISTINCT house_number, purok) as total_households,
         COUNT(*) as total_residents
     FROM residents 
-    WHERE resident_status = 'Active'
+    LEFT JOIN resident_accounts ON residents.id = resident_accounts.resident_id
+    WHERE account_status = 'Approved'
 ";
+
+$purok_filter = isset($_GET['purok']) ? $_GET['purok'] : 'all';
+
+if ($purok_filter !== 'all') {
+    $query .= " WHERE a.status = ?";
+}
+
 $stats_result = mysqli_query($conn, $stats_query);
 $stats = mysqli_fetch_assoc($stats_result);
 ?>
@@ -71,19 +78,53 @@ $stats = mysqli_fetch_assoc($stats_result);
                         </ol>
                     </nav>
 
-                    <!-- Export Section -->
+                    <!-- export section -->
                     <div class="export-card">
                         <div class="row align-items-center">
                             <div class="col-md-8">
                                 <h3 class="mb-2">
-                                    <i class="fas fa-file-excel me-2 text-success"></i>Export Census Data
+                                    <i class="fas fa-print me-2 text-primary"></i>Print Reports
                                 </h3>
-                                <p class="mb-0 text-muted">Download comprehensive household records for viewing and analysis. Census data is managed by residents through their accounts.</p>
+                                <p class="mb-0 text-muted">Print and Export Census Data of Residents.</p>
                             </div>
                             <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                                <button class="btn export-btn" onclick="exportToExcel('admin')">
-                                    <i class="fas fa-download me-2"></i>Export All Data
-                                </button>
+                                <div class="btn-group" role="group">
+                                    <button class="btn export-btn-excel me-2" onclick="exportToExcel('admin')">
+                                        <i class="fas fa-file-excel me-2"></i>Excel
+                                    </button>
+                                    <div class="dropdown">
+                                        <button class="btn export-btn-pdf dropdown-toggle" type="button" id="pdfDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-print me-2"></i>Print PDF
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="pdfDropdown">
+                                            <li><a class="dropdown-item" href="#" onclick="printPurokPDF('Purok 1')">
+                                                <i class="fas fa-print me-2"></i>Print Purok 1
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="printPurokPDF('Purok 2')">
+                                                <i class="fas fa-print me-2"></i>Print Purok 2
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="printPurokPDF('Purok 3')">
+                                                <i class="fas fa-print me-2"></i>Print Purok 3
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="printPurokPDF('Purok 4')">
+                                                <i class="fas fa-print me-2"></i>Print Purok 4
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="printPurokPDF('Purok 5')">
+                                                <i class="fas fa-print me-2"></i>Print Purok 5
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="printPurokPDF('Purok 6')">
+                                                <i class="fas fa-print me-2"></i>Print Purok 6
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="printPurokPDF('Purok 7')">
+                                                <i class="fas fa-print me-2"></i>Print Purok 7
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#" onclick="printPurokPDF('all')">
+                                                <i class="fas fa-print me-2"></i>Print All Puroks
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -96,11 +137,14 @@ $stats = mysqli_fetch_assoc($stats_result);
                                     <i class="fas fa-map-marker-alt me-1"></i>Purok Filter
                                 </label>
                                 <select class="form-select" id="purokFilter" onchange="filterHouseholds()">
-                                    <option value="">All Puroks</option>
-                                    <option value="Purok 1">Purok 1</option>
-                                    <option value="Purok 2">Purok 2</option>
-                                    <option value="Purok 3">Purok 3</option>
-                                    <option value="Purok 4">Purok 4</option>
+                                    <option value="all" <?= $purok_filter === 'all' ? 'selected' : ''?>></option>All Puroks</option>
+                                    <option value="Purok 1" <?= $purok_filter === 'Purok 1' ? 'selected' : ''?>></option>>Purok 1</option>
+                                    <option value="Purok 2" <?= $purok_filter === 'Purok 2' ? 'selected' : ''?>></option>>Purok 2</option>
+                                    <option value="Purok 3" <?= $purok_filter === 'Purok 3' ? 'selected' : ''?>></option>>Purok 3</option>
+                                    <option value="Purok 4" <?= $purok_filter === 'Purok 4' ? 'selected' : ''?>></option>>Purok 4</option>
+                                    <option value="Purok 5" <?= $purok_filter === 'Purok 5' ? 'selected' : ''?>></option>>Purok 5</option>
+                                    <option value="Purok 6" <?= $purok_filter === 'Purok 6' ? 'selected' : ''?>></option>>Purok 6</option>
+                                    <option value="Purok 7" <?= $purok_filter === 'Purok 7' ? 'selected' : ''?>></option>>Purok 7</option>
                                 </select>
                             </div>
                             <div class="col-md-6">

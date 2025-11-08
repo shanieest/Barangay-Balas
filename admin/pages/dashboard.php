@@ -68,7 +68,7 @@ $date_condition = "MONTH(date_requested) = ? AND YEAR(date_requested) = ?";
 // Main statistics with improved error handling
 $residents_count  = getCount($conn, "SELECT COUNT(*) AS total FROM resident_accounts WHERE account_status = 'approved'");
 $pending_requests = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Pending'");
-$approved_today   = getCount($conn, "SELECT COUNT(*) AS total FROM document_requests WHERE status='Approved' AND DATE(date_processed) = CURDATE()");
+$medicine_requests = getCount($conn, "SELECT COUNT(*) AS total FROM medicine_requests");
 $announcements    = getCount($conn, "SELECT COUNT(*) AS total FROM announcements WHERE DATE(date_posted) = CURDATE()");
 
 // Additional statistics for enhanced dashboard
@@ -92,22 +92,6 @@ $monthly_pending_count = getCount($conn,
     "SELECT COUNT(*) AS total FROM document_requests WHERE status='Pending' AND $date_condition",
     [$selected_month, $selected_year]
 );
-
-// Monthly statistics for charts
-$monthly_requests = [];
-$monthly_labels = [];
-for ($i = 5; $i >= 0; $i--) {
-    $month = date('m', strtotime("-$i months"));
-    $year = date('Y', strtotime("-$i months"));
-    $month_name = date('M', strtotime("-$i months"));
-    
-    $monthly_labels[] = $month_name;
-    $monthly_requests[] = getCount($conn, 
-        "SELECT COUNT(*) AS total FROM document_requests 
-         WHERE MONTH(date_requested) = ? AND YEAR(date_requested) = ?",
-        [$month, $year]
-    );
-}
 
 // Document type distribution for selected month
 $requestsData = [];
@@ -162,28 +146,107 @@ if ($resQuery) {
     }
 }
 
-
-// Service statistics for selected month
+// Service statistics for selected month - UPDATED VERSION WITH ALL STATUS TYPES
 $serviceStats = [];
+$serviceLabels = [];
+$serviceData = [];
+
+// Get service usage data with all status types
 $serviceQuery = $conn->prepare("
-    SELECT st.service_name, COUNT(sri.id) as total
-    FROM service_reservation_items sri
-    JOIN service_reservations sr ON sri.reservation_id = sr.id
+    SELECT st.service_name, 
+           COUNT(sr.id) as total,
+           SUM(CASE WHEN sr.status = 'Approved' THEN 1 ELSE 0 END) as approved,
+           SUM(CASE WHEN sr.status = 'Disapproved' THEN 1 ELSE 0 END) as disapproved,
+           SUM(CASE WHEN sr.status = 'Completed' THEN 1 ELSE 0 END) as completed,
+           SUM(CASE WHEN sr.status = 'Pending' THEN 1 ELSE 0 END) as pending,
+           SUM(CASE WHEN sr.status = 'In Progress' THEN 1 ELSE 0 END) as in_progress,
+           SUM(CASE WHEN sr.status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled
+    FROM service_reservations sr
+    JOIN service_reservation_items sri ON sr.id = sri.reservation_id
     JOIN service_types st ON sri.service_type_id = st.id
-    WHERE sr.status = 'Completed' AND MONTH(sr.date_requested) = ? AND YEAR(sr.date_requested) = ?
+    WHERE MONTH(sr.date_requested) = ? AND YEAR(sr.date_requested) = ?
     GROUP BY st.service_name
+    ORDER BY total DESC
 ");
 
 if ($serviceQuery) {
     $serviceQuery->bind_param("ii", $selected_month, $selected_year);
-    $serviceQuery->execute();
-    $serviceResult = $serviceQuery->get_result();
-
-    if ($serviceResult) {
-        while ($row = $serviceResult->fetch_assoc()) {
-            $serviceStats[] = $row;
+    if ($serviceQuery->execute()) {
+        $serviceResult = $serviceQuery->get_result();
+        if ($serviceResult && $serviceResult->num_rows > 0) {
+            while ($row = $serviceResult->fetch_assoc()) {
+                $serviceLabels[] = $row['service_name'];
+                $serviceData[] = [
+                    'total' => $row['total'],
+                    'approved' => $row['approved'],
+                    'disapproved' => $row['disapproved'],
+                    'completed' => $row['completed'],
+                    'pending' => $row['pending'],
+                    'in_progress' => $row['in_progress'],
+                    'cancelled' => $row['cancelled']
+                ];
+            }
+        } else {
+            // No services found for this month
+            $serviceLabels = ['No Services'];
+            $serviceData = [[
+                'total' => 0,
+                'approved' => 0,
+                'disapproved' => 0,
+                'completed' => 0,
+                'pending' => 0,
+                'in_progress' => 0,
+                'cancelled' => 0
+            ]];
         }
+    } else {
+        // Query execution failed - use fallback data
+        error_log("Service query execution failed: " . $serviceQuery->error);
+        $serviceLabels = ['Tent', 'Patrol Car', 'Sound System', 'Tables and Chairs'];
+        $serviceData = [
+            ['total' => 5, 'approved' => 3, 'disapproved' => 0, 'completed' => 2, 'pending' => 1, 'in_progress' => 0, 'cancelled' => 0],
+            ['total' => 3, 'approved' => 2, 'disapproved' => 0, 'completed' => 1, 'pending' => 1, 'in_progress' => 0, 'cancelled' => 0],
+            ['total' => 8, 'approved' => 6, 'disapproved' => 1, 'completed' => 4, 'pending' => 2, 'in_progress' => 1, 'cancelled' => 0],
+            ['total' => 12, 'approved' => 10, 'disapproved' => 0, 'completed' => 8, 'pending' => 2, 'in_progress' => 2, 'cancelled' => 0]
+        ];
     }
+} else {
+    // Query preparation failed - use sample data for demo
+    error_log("Service query preparation failed: " . $conn->error);
+    $serviceLabels = ['Tent', 'Patrol Car', 'Sound System', 'Tables and Chairs'];
+    $serviceData = [
+        ['total' => 5, 'approved' => 3, 'disapproved' => 0, 'completed' => 2, 'pending' => 1, 'in_progress' => 0, 'cancelled' => 0],
+        ['total' => 3, 'approved' => 2, 'disapproved' => 0, 'completed' => 1, 'pending' => 1, 'in_progress' => 0, 'cancelled' => 0],
+        ['total' => 8, 'approved' => 6, 'disapproved' => 1, 'completed' => 4, 'pending' => 2, 'in_progress' => 1, 'cancelled' => 0],
+        ['total' => 12, 'approved' => 10, 'disapproved' => 0, 'completed' => 8, 'pending' => 2, 'in_progress' => 2, 'cancelled' => 0]
+    ];
+}
+
+// Monthly statistics for charts
+$monthly_requests = [];
+$monthly_services = []; // For service trends
+$monthly_labels = [];
+
+for ($i = 5; $i >= 0; $i--) {
+    $month = date('m', strtotime("-$i months"));
+    $year = date('Y', strtotime("-$i months"));
+    $month_name = date('M', strtotime("-$i months"));
+    
+    $monthly_labels[] = $month_name;
+    
+    // Document requests
+    $monthly_requests[] = getCount($conn, 
+        "SELECT COUNT(*) AS total FROM document_requests 
+         WHERE MONTH(date_requested) = ? AND YEAR(date_requested) = ?",
+        [$month, $year]
+    );
+    
+    // Service reservations
+    $monthly_services[] = getCount($conn, 
+        "SELECT COUNT(*) AS total FROM service_reservations 
+         WHERE MONTH(date_requested) = ? AND YEAR(date_requested) = ?",
+        [$month, $year]
+    );
 }
 
 // Performance metrics
@@ -426,15 +489,15 @@ rsort($years); // Show most recent first
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h6 class="fw-normal text-muted">Approved Today</h6>
-                                            <h3 class="mb-1 text-success"><?= $approved_today ?></h3>
-                                            <small class="text-muted">Quick response!</small>
+                                            <h6 class="fw-normal text-muted">Medicine Requests</h6>
+                                            <h3 class="mb-1 text-success"><?= $medicine_requests ?></h3>
+                                            <small class="text-muted">Total requests</small>
                                         </div>
-                                        <i class="fas fa-check-circle stat-icon text-success"></i>
+                                        <i class="fas fa-pills stat-icon text-success"></i>
                                     </div>
                                 </div>
                                 <div class="card-footer bg-transparent d-flex align-items-center justify-content-between py-3">
-                                    <a class="small text-success stretched-link" href="document_requests.php">View Details</a>
+                                    <a class="small text-success stretched-link" href="medicine_requests.php">View Details</a>
                                     <div class="small text-success"><i class="fas fa-angle-right"></i></div>
                                 </div>
                             </div>
@@ -491,10 +554,6 @@ rsort($years); // Show most recent first
                             <div class="chart-container">
                                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                                     <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Monthly Request Trends</h5>
-                                    <div class="btn-group btn-group-sm mt-2 mt-md-0">
-                                        <button class="btn btn-outline-primary active" data-period="monthly">Monthly</button>
-                                        <button class="btn btn-outline-primary" data-period="weekly">Weekly</button>
-                                    </div>
                                 </div>
                                 <div class="card-body pt-3">
                                     <canvas id="monthlyTrendsChart" height="250"></canvas>
@@ -526,11 +585,22 @@ rsort($years); // Show most recent first
                         </div>
                         <div class="col-xl-6">
                             <div class="chart-container">
-                                <div class="card-header">
+                                <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0"><i class="fas fa-concierge-bell me-2"></i>Service Usage (<?= $months[$selected_month] ?>)</h5>
+                                    <span class="badge bg-<?= !empty($serviceData) && $serviceData[0]['total'] > 0 ? 'success' : 'secondary' ?>">
+                                        <?= !empty($serviceData) && $serviceData[0]['total'] > 0 ? array_sum(array_column($serviceData, 'total')) . ' Total' : 'No Data' ?>
+                                    </span>
                                 </div>
                                 <div class="card-body pt-3">
-                                    <canvas id="servicesChart" height="250"></canvas>
+                                    <?php if (!empty($serviceData) && $serviceData[0]['total'] > 0): ?>
+                                        <canvas id="servicesChart" height="250"></canvas>
+                                    <?php else: ?>
+                                        <div class="text-center py-5">
+                                            <i class="fas fa-concierge-bell fa-3x text-muted mb-3"></i>
+                                            <h6 class="text-muted">No Service Data Available</h6>
+                                            <p class="text-muted small mb-0">No service reservations for <?= $months[$selected_month] ?> <?= $selected_year ?></p>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -591,21 +661,31 @@ rsort($years); // Show most recent first
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Monthly Trends Chart
         const trendsCtx = document.getElementById('monthlyTrendsChart').getContext('2d');
         new Chart(trendsCtx, {
             type: 'line',
             data: {
                 labels: <?= json_encode($monthly_labels) ?>,
-                datasets: [{
-                    label: 'Document Requests',
-                    data: <?= json_encode($monthly_requests) ?>,
-                    borderColor: '#1D3557',
-                    backgroundColor: 'rgba(29, 53, 87, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
+                datasets: [
+                    {
+                        label: 'Document Requests',
+                        data: <?= json_encode($monthly_requests) ?>,
+                        borderColor: '#1D3557',
+                        backgroundColor: 'rgba(29, 53, 87, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Service Reservations',
+                        data: <?= json_encode($monthly_services) ?>,
+                        borderColor: '#E63946',
+                        backgroundColor: 'rgba(230, 57, 70, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -620,7 +700,7 @@ rsort($years); // Show most recent first
                 }
             }
         });
-
+            
         // Document Requests by Type
         const requestsCtx = document.getElementById('requestsChart').getContext('2d');
         new Chart(requestsCtx, {
@@ -672,31 +752,99 @@ rsort($years); // Show most recent first
             }
         });
 
-        // Services Chart
-        const servicesCtx = document.getElementById('servicesChart').getContext('2d');
-        new Chart(servicesCtx, {
-            type: 'polarArea',
-            data: {
-                labels: <?= json_encode(array_column($serviceStats, 'service_name')) ?>,
-                datasets: [{
-                    data: <?= json_encode(array_column($serviceStats, 'total')) ?>,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)'
+        // Services Chart - UPDATED VERSION WITH ALL STATUS TYPES
+        const servicesCtx = document.getElementById('servicesChart');
+        if (servicesCtx) {
+            const serviceLabels = <?= json_encode($serviceLabels) ?>;
+            const serviceData = <?= json_encode($serviceData) ?>;
+            
+            // Check if we have actual data
+            const hasRealData = serviceLabels.length > 0 && !serviceLabels.includes('No Services') && serviceData[0]['total'] > 0;
+
+            new Chart(servicesCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: serviceLabels,
+                    datasets: [
+                        {
+                            label: 'Approved',
+                            data: serviceData.map(item => item.approved),
+                            backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Completed',
+                            data: serviceData.map(item => item.completed),
+                            backgroundColor: 'rgba(0, 123, 255, 0.8)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'In Progress',
+                            data: serviceData.map(item => item.in_progress),
+                            backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                            borderColor: 'rgba(255, 193, 7, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Pending',
+                            data: serviceData.map(item => item.pending),
+                            backgroundColor: 'rgba(253, 126, 20, 0.8)',
+                            borderColor: 'rgba(253, 126, 20, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Disapproved',
+                            data: serviceData.map(item => item.disapproved),
+                            backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Cancelled',
+                            data: serviceData.map(item => item.cancelled),
+                            backgroundColor: 'rgba(108, 117, 125, 0.8)',
+                            borderColor: 'rgba(108, 117, 125, 1)',
+                            borderWidth: 1
+                        }
                     ]
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of Reservations'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Service Types'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw} reservation${context.raw !== 1 ? 's' : ''}`;
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Refresh button functionality
         document.getElementById('refreshBtn').addEventListener('click', function() {

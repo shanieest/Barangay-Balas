@@ -370,7 +370,7 @@ function handleAddResident() {
         $age = max(0, $age);
 
         // Generate address
-        $address = "House {$data['houseNumber']}, Purok {$data['purok']}, Balas, Mexico, Pampanga, Philippines";
+        $address = "House {$data['houseNumber']}, {$data['purok']}, Balas, Mexico, Pampanga, Philippines";
 
         // Handle optional fields
         $middleName = !empty($data['middleName']) ? trim($data['middleName']) : null;
@@ -666,8 +666,8 @@ function handleProcessRequest() {
         $resident = $result->fetch_assoc();
 
         if ($resident && !empty($resident['email'])) {
-            require_once __DIR__ . '/../config/emailer.php';
-            require_once __DIR__ . '/../email_templates/account_status.php';
+            require_once  '../../config/emailer.php';
+            require_once  '../../email_templates/account_status.php';
 
             $residentName = $resident['first_name'] . ' ' . $resident['last_name'];
             $email = accountStatusEmail($residentName, $status, $note);
