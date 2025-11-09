@@ -67,8 +67,11 @@ Daycare Management
 - Auto-generate DOCX to PDF documents using PHPWord and LibreOffice
 
 Census Management (Resident approved account)
--Serves as the official record of all residents within Barangay Balas.  
--It supports both admin and resident access for transparency and accountability.
+- Serves as the official record of all residents within Barangay Balas.  
+- It supports both admin and resident access for transparency and accountability.
+
+Database cleanup
+- Auto cleanup databse log using Cronjob. (Need the use of domain for automatically cleanup database)
 
 Tech Stack
 
@@ -100,6 +103,7 @@ composer require phpoffice/phpspreadsheet
 composer require setasign/fpdf
 composer require tecnickcom/tcpdf
 composer require dompdf/dompdf
+LibreOffice 
 
 -MySQL  server
 
@@ -109,8 +113,9 @@ DEVELOPER NOTES
 
 Default admin credentials:
 
-Username: mpangilinan
+Username: bpampanga
 Password: 11111111
+OTP: Send OTP to registered email
 
 Database name: Balas
 
