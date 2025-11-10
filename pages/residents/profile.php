@@ -190,8 +190,7 @@ if (empty($_SESSION['csrf_token'])) {
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <!-- Address Information -->
+                                                                
                                 <div class="section-divider">
                                     <div class="section-title">
                                         <i class="fas fa-home me-2"></i>Address Information
@@ -207,15 +206,15 @@ if (empty($_SESSION['csrf_token'])) {
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Purok <span class="text-danger">*</span></label>
-                                            <select class="form-select" name="purok" id="purokSelect" required readonly>
+                                            <select class="form-select" name="purok" id="purokSelect" required>
                                                 <option value="">Select Purok</option>
-                                                <option value="Purok 1" <?= ($profile['purok'] ?? '') == '1' ? 'selected' : '' ?>>Purok 1</option>
-                                                <option value="Purok 2" <?= ($profile['purok'] ?? '') == '2' ? 'selected' : '' ?>>Purok 2</option>
-                                                <option value="Purok 3" <?= ($profile['purok'] ?? '') == '3' ? 'selected' : '' ?>>Purok 3</option>
-                                                <option value="Purok 4" <?= ($profile['purok'] ?? '') == '4' ? 'selected' : '' ?>>Purok 4</option>
-                                                <option value="Purok 5" <?= ($profile['purok'] ?? '') == '5' ? 'selected' : '' ?>>Purok 5</option>
-                                                <option value="Purok 6" <?= ($profile['purok'] ?? '') == '6' ? 'selected' : '' ?>>Purok 6</option>
-                                                <option value="Purok 7" <?= ($profile['purok'] ?? '') == '7' ? 'selected' : '' ?>>Purok 7</option>
+                                                <option value="Purok 1" <?= ($profile['purok'] ?? '') == 'Purok 1' ? 'selected' : '' ?>>Purok 1</option>
+                                                <option value="Purok 2" <?= ($profile['purok'] ?? '') == 'Purok 2' ? 'selected' : '' ?>>Purok 2</option>
+                                                <option value="Purok 3" <?= ($profile['purok'] ?? '') == 'Purok 3' ? 'selected' : '' ?>>Purok 3</option>
+                                                <option value="Purok 4" <?= ($profile['purok'] ?? '') == 'Purok 4' ? 'selected' : '' ?>>Purok 4</option>
+                                                <option value="Purok 5" <?= ($profile['purok'] ?? '') == 'Purok 5' ? 'selected' : '' ?>>Purok 5</option>
+                                                <option value="Purok 6" <?= ($profile['purok'] ?? '') == 'Purok 6' ? 'selected' : '' ?>>Purok 6</option>
+                                                <option value="Purok 7" <?= ($profile['purok'] ?? '') == 'Purok 7' ? 'selected' : '' ?>>Purok 7</option>
                                             </select>
                                         </div>
                                     </div>
@@ -227,7 +226,7 @@ if (empty($_SESSION['csrf_token'])) {
                                                 value="<?= htmlspecialchars($profile['address'] ?? '') ?>" required readonly>
                                         </div>
                                         <div class="form-text text-muted">
-                                            <small>Address is automatically generated. Edit house number and purok to update.</small>
+                                            <small>Address is automatically generated. Click Edit to update house number and purok.</small>
                                         </div>
                                     </div>
                                 </div>
@@ -267,8 +266,17 @@ if (empty($_SESSION['csrf_token'])) {
                                             <input type="text" class="form-control" name="religion" value="<?= htmlspecialchars($profile['religion'] ?? '') ?>" placeholder="e.g. Roman Catholic, Islam, Protestant">
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label">PhilHealth Number</label>
-                                            <input type="text" class="form-control" name="philhealth_number" value="<?= htmlspecialchars($profile['philhealth_number'] ?? '') ?>" placeholder="12-345678901-2">
+                                            <div class="form-check mt-4">
+                                                <input class="form-check-input" type="checkbox" name="has_philhealth" id="has_philhealth" value="1" <?= (!empty($profile['philhealth_number'])) ? 'checked' : '' ?>>
+                                                <label class="form-check-label" for="has_philhealth">
+                                                    <strong>PhilHealth Member</strong>
+                                                    <small class="text-muted d-block">Check if you have PhilHealth coverage</small>
+                                                </label>
+                                            </div>
+                                            <div id="philhealthNumberContainer" style="<?= (!empty($profile['philhealth_number'])) ? '' : 'display: none;' ?>">
+                                                <label class="form-label mt-2">PhilHealth Number</label>
+                                                <input type="text" class="form-control" name="philhealth_number" value="<?= htmlspecialchars($profile['philhealth_number'] ?? '') ?>" placeholder="12-345678901-2">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

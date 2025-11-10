@@ -7,13 +7,8 @@ require_once  '../../config/emailer.php';
 require_once  '../../email_templates/document_status.php';
 
 use PhpOffice\PhpWord\TemplateProcessor;
-use PhpOffice\PhpWord\Settings;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-
-// Set PDF rendering engine to DomPDF
-Settings::setPdfRendererName(Settings::PDF_RENDERER_DOMPDF);
-Settings::setPdfRendererPath('../../vendor/dompdf/dompdf');
 
 header('Content-Type: application/json');
 
@@ -59,10 +54,89 @@ function formatIssuedDate($date = null) {
     return "Issued this {$day}{$ordinal} day of {$month} {$year}";
 }
 
+/**
+ * Check if LibreOffice is installed and available
+ */
+function isLibreOfficeAvailable() {
+    $libreOfficePaths = [
+        'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
+        'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
+        '/usr/bin/libreoffice',
+        '/usr/local/bin/libreoffice'
+    ];
+    
+    foreach ($libreOfficePaths as $path) {
+        if (file_exists($path)) {
+            return $path;
+        }
+    }
+    
+    // Try to find it in system PATH
+    $output = [];
+    $returnVar = 0;
+    
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        exec('where soffice 2>nul', $output, $returnVar);
+    } else {
+        exec('which libreoffice 2>/dev/null', $output, $returnVar);
+    }
+    
+    if ($returnVar === 0 && !empty($output[0])) {
+        return $output[0];
+    }
+    
+    return false;
+}
+
+/**
+ * Convert DOCX to PDF using LibreOffice
+ * Returns the PDF path on success, or false on failure
+ */
+function convertDocxToPdf($docxPath, $outputDir) {
+    $libreOfficePath = isLibreOfficeAvailable();
+    
+    if (!$libreOfficePath) {
+        error_log("LibreOffice not found - will use DOCX format instead");
+        return false;
+    }
+    
+    // Wrap path in quotes if it contains spaces (Windows)
+    if (strpos($libreOfficePath, ' ') !== false && strpos($libreOfficePath, '"') === false) {
+        $libreOfficePath = '"' . $libreOfficePath . '"';
+    }
+    
+    $cmd = "$libreOfficePath --headless --convert-to pdf --outdir " . escapeshellarg($outputDir) . " " . escapeshellarg($docxPath) . " 2>&1";
+    
+    error_log("Executing LibreOffice command: $cmd");
+    
+    exec($cmd, $output, $returnVar);
+    
+    // Generate expected PDF path
+    $pdfPath = $outputDir . '/' . basename($docxPath, '.docx') . '.pdf';
+    
+    // Wait for PDF to be created (max 10 seconds)
+    $maxWait = 10;
+    $waited = 0;
+    while (!file_exists($pdfPath) && $waited < $maxWait) {
+        sleep(1);
+        $waited++;
+    }
+    
+    if ($returnVar !== 0 || !file_exists($pdfPath)) {
+        error_log("LibreOffice conversion failed. Return code: $returnVar");
+        error_log("Output: " . implode("\n", $output));
+        return false;
+    }
+    
+    error_log("PDF successfully generated: $pdfPath");
+    return $pdfPath;
+}
+
 $response = [
     'success' => false,
     'message' => '',
     'file_path' => '',
+    'file_type' => 'pdf',
     'auto_download' => false
 ];
 
@@ -78,10 +152,9 @@ if (isset($_SESSION['admin_id']) && !empty($_SESSION['admin_id'])) {
     if ($admin_result->num_rows > 0) {
         $admin_data = $admin_result->fetch_assoc();
         $current_admin_id = (int)$admin_data['id'];
-        error_log(" Admin authenticated: ID={$current_admin_id}, Name={$admin_data['full_name']}");
+        error_log("✓ Admin authenticated: ID={$current_admin_id}, Name={$admin_data['full_name']}");
     } else {
-        error_log(" ERROR: Session admin_id {$session_admin_id} NOT FOUND in admin_users table or not active!");
-        error_log(" Available admins: " . json_encode($conn->query("SELECT id, username FROM admin_users")->fetch_all(MYSQLI_ASSOC)));
+        error_log("✗ ERROR: Session admin_id {$session_admin_id} NOT FOUND in admin_users table or not active!");
     }
     $admin_check->close();
 } else {
@@ -139,10 +212,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         }
         $stmt->close();
 
-        $verify = $conn->query("SELECT processed_by FROM document_requests WHERE id = {$request_id}");
-        $verify_data = $verify->fetch_assoc();
-        error_log(" Request {$request_id} updated. processed_by = " . ($verify_data['processed_by'] ?? 'NULL'));
-
         if ($status === 'Approved') {
             $timestamp = time();
 
@@ -186,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
             $currentDate = date('Y-m-d H:i:s');
             $issuedDateFormatted = formatIssuedDate($currentDate);
 
-            // Process template and generate PDF
+            // Generate DOCX
             $templateProcessor = new TemplateProcessor($templatePath);
             $templateProcessor->setValue('first_name', htmlspecialchars($request['first_name']));
             $templateProcessor->setValue('middle_name', htmlspecialchars($request['middle_name'] ?? ''));
@@ -209,50 +278,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                 'ratio' => false
             ]);
 
-            // Save DOCX temporarily
+            // Save DOCX
             $docxPath = $outDir . "/request_{$request_id}_{$timestamp}.docx";
             $templateProcessor->saveAs($docxPath);
 
-            // Convert DOCX to PDF using PhpWord's PDF renderer
-            $pdfPath = $outDir . "/request_{$request_id}_{$timestamp}.pdf";
+            // Try to convert to PDF
+            $pdfPath = convertDocxToPdf($docxPath, $outDir);
             
-            try {
-                // Load the Word document
-                $phpWord = \PhpOffice\PhpWord\IOFactory::load($docxPath);
+            $finalFilePath = '';
+            $fileType = 'pdf';
+            
+            if ($pdfPath && file_exists($pdfPath)) {
+                // PDF conversion successful
+                $finalFilePath = "/../public/uploads/generated_docs/request_{$request_id}_{$timestamp}.pdf";
+                $fileType = 'pdf';
                 
-                // Save as PDF
-                $pdfWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'PDF');
-                $pdfWriter->save($pdfPath);
-                
-                if (!file_exists($pdfPath)) {
-                    throw new Exception("PDF file was not created");
+                // Delete the DOCX file since we have PDF
+                if (file_exists($docxPath)) {
+                    @unlink($docxPath);
                 }
                 
-                error_log("✓ PDF generated successfully: " . $pdfPath);
+                error_log("✓ Document generated as PDF: $pdfPath");
+            } else {
+                // PDF conversion failed or LibreOffice not available - use DOCX
+                $finalFilePath = "/../public/uploads/generated_docs/request_{$request_id}_{$timestamp}.docx";
+                $fileType = 'docx';
                 
-            } catch (Exception $e) {
-                error_log("PDF generation failed: " . $e->getMessage());
-                
-                // Fallback: Use TCPDF if DomPDF fails
-                $pdfPath = convertDocxToPdfWithTCPDF($docxPath, $pdfPath, $qrPath);
+                error_log("⚠ Document generated as DOCX (LibreOffice not available): $docxPath");
             }
 
-            // Clean up temporary DOCX file
-            if (file_exists($docxPath)) {
-                @unlink($docxPath);
-            }
-
-            $relativePdfPath = "uploads/generated_docs/request_{$request_id}_{$timestamp}.pdf";
-            $stmt = $conn->prepare("UPDATE document_requests SET document_file_path = ? WHERE id = ?");
-            $stmt->bind_param('si', $relativePdfPath, $request_id);
+            // Update database with file path and type
+            $stmt = $conn->prepare("UPDATE document_requests SET document_file_path = ?, document_file_type = ? WHERE id = ?");
+            $stmt->bind_param('ssi', $finalFilePath, $fileType, $request_id);
             if (!$stmt->execute()) {
                 throw new Exception("Failed to update document file path: " . $stmt->error);
             }
             $stmt->close();
 
             $response['success'] = true;
-            $response['message'] = 'Request approved and document generated successfully.';
-            $response['file_path'] = $relativePdfPath;
+            $response['message'] = $fileType === 'pdf' 
+                ? 'Request approved and PDF document generated successfully.' 
+                : 'Request approved. Document generated as DOCX (PDF conversion unavailable).';
+            $response['file_path'] = $finalFilePath;
+            $response['file_type'] = $fileType;
+            $response['document_type'] = $request['document_type'];
             $response['auto_download'] = $auto_download;
 
             // Send email notification
@@ -261,7 +330,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                     ? $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/barangay-balas/services/download-document.php?id=' . $request_id
                     : '#';
 
-                // Get resident's full name
                 $user_query = $conn->prepare("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
                 $user_query->bind_param('i', $request['resident_id']);
                 $user_query->execute();
@@ -281,8 +349,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                     sendEmail($request['resident_email'], $template['subject'], $template['message']);
                     error_log("✓ Email sent to: " . $request['resident_email']);
                 }
-            } else {
-                error_log("⚠ No email found for resident ID: " . $request['resident_id']);
             }
 
         } else {
@@ -291,7 +357,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
 
             // Send email for disapproval
             if (!empty($request['resident_email'])) {
-                // Get resident's full name
                 $user_query = $conn->prepare("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM residents WHERE id = ?");
                 $user_query->bind_param('i', $request['resident_id']);
                 $user_query->execute();
@@ -317,7 +382,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
     } catch (Exception $e) {
         $conn->rollback();
         $response['message'] = $e->getMessage();
-        error_log(" ERROR processing request {$request_id}: " . $e->getMessage());
+        error_log("✗ ERROR processing request {$request_id}: " . $e->getMessage());
     }
 } else {
     $response['message'] = 'Invalid request.';
@@ -325,76 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
 
 echo json_encode($response);
 
-/**
- * Fallback PDF conversion using TCPDF
- */
-function convertDocxToPdfWithTCPDF($docxPath, $pdfPath, $qrPath) {
-    require_once __DIR__ . '/../../vendor/tecnickcom/tcpdf/tcpdf.php';
-    
-    try {
-        // Create new PDF document
-        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        
-        // Set document information
-        $pdf->SetCreator('Barangay Balas System');
-        $pdf->SetAuthor('Barangay Balas');
-        $pdf->SetTitle('Official Document');
-        
-        // Remove default header/footer
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
-        
-        // Add a page
-        $pdf->AddPage();
-        
-        // Extract text from DOCX (simplified version)
-        $content = extractTextFromDocx($docxPath);
-        
-        // Set font
-        $pdf->SetFont('helvetica', '', 12);
-        
-        // Add content
-        $pdf->Write(0, $content, '', 0, 'L', true);
-        
-        // Add QR code if exists
-        if (file_exists($qrPath)) {
-            $pdf->Image($qrPath, 15, $pdf->GetY() + 10, 30, 30, 'PNG');
-        }
-        
-        // Save PDF
-        $pdf->Output($pdfPath, 'F');
-        
-        return $pdfPath;
-        
-    } catch (Exception $e) {
-        error_log("TCPDF conversion failed: " . $e->getMessage());
-        throw new Exception("PDF generation failed using all available methods.");
-    }
-}
-
-/**
- * Extract text from DOCX file (basic implementation)
- */
-function extractTextFromDocx($docxPath) {
-    $zip = new ZipArchive;
-    $content = '';
-    
-    if ($zip->open($docxPath) === TRUE) {
-        // Read document.xml
-        if (($index = $zip->locateName('word/document.xml')) !== FALSE) {
-            $xml = $zip->getFromIndex($index);
-            $xml = preg_replace('/<w:p>/', "\n", $xml);
-            $xml = preg_replace('/<[^>]+>/', ' ', $xml);
-            $xml = preg_replace('/[ ]+/', ' ', $xml);
-            $content = trim(strip_tags($xml));
-        }
-        $zip->close();
-    }
-    
-    return $content;
-}
-
-// Enhanced Report Generation Functions (unchanged from your original code)
+// Report Generation Functions (unchanged)
 function generateReport($conn) {
     $report_type = $_POST['report_type'] ?? '';
     $month = $_POST['month'] ?? '';
@@ -404,7 +400,6 @@ function generateReport($conn) {
     try {
         $data = getReportDataInternal($conn, $report_type, $month, $year);
         
-        // Generate file
         $filename = "document_requests_" . $report_type . "_" . ($month ? $month . "_" : "") . $year . "_" . date('Y-m-d');
         
         if ($export_type === 'excel') {
@@ -586,7 +581,7 @@ function getReportDataInternal($conn, $report_type, $month, $year) {
 }
 
 function generateExcelReport($data, $filename) {
-    $filepath = __DIR__ . '../../../temp/' . $filename;
+    $filepath = __DIR__ . '/../temp/' . $filename;
     
     if (!is_dir(dirname($filepath))) {
         mkdir(dirname($filepath), 0755, true);
@@ -595,7 +590,6 @@ function generateExcelReport($data, $filename) {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     
-    // Set headers
     $headers = [
         'ID', 'Document Type', 'Resident Name', 'House No', 'Purok', 
         'Contact Number', 'Purpose', 'Status', 'Date Requested', 
@@ -604,7 +598,6 @@ function generateExcelReport($data, $filename) {
     
     $sheet->fromArray($headers, null, 'A1');
     
-    // Add data
     $rowData = [];
     foreach ($data['requests'] as $record) {
         $rowData[] = [
@@ -625,12 +618,10 @@ function generateExcelReport($data, $filename) {
     
     $sheet->fromArray($rowData, null, 'A2');
     
-    // Auto-size columns
     foreach (range('A', 'L') as $column) {
         $sheet->getColumnDimension($column)->setAutoSize(true);
     }
     
-    // Style headers
     $headerStyle = [
         'font' => ['bold' => true],
         'fill' => [
@@ -655,7 +646,6 @@ function generateCSVReport($data, $filename) {
     
     $fp = fopen($filepath, 'w');
     
-    // Add headers
     $headers = [
         'ID', 'Document Type', 'Resident Name', 'House No', 'Purok', 
         'Contact Number', 'Purpose', 'Status', 'Date Requested', 
@@ -663,7 +653,6 @@ function generateCSVReport($data, $filename) {
     ];
     fputcsv($fp, $headers);
     
-    // Add data
     foreach ($data['requests'] as $record) {
         fputcsv($fp, [
             $record['id'],
@@ -687,7 +676,7 @@ function generateCSVReport($data, $filename) {
 
 function downloadReport() {
     $filename = basename($_GET['download_report']);
-    $filepath = __DIR__ . '../../../temp/' . $filename;
+    $filepath = __DIR__ . '/../temp/' . $filename;
     
     if (file_exists($filepath)) {
         if (pathinfo($filename, PATHINFO_EXTENSION) === 'xlsx') {

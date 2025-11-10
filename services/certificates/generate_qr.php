@@ -116,7 +116,6 @@ function generate_simple_barcode($data, $filepath) {
     $text2 = substr($data, 0, 20) . "...";
     imagestring($image, 3, 50, 100, $text, $black);
     imagestring($image, 3, 30, 120, $text2, $black);
-    imagestring($image, 2, 40, 150, "Scan with Barangay Balas App", $black);
     
     // Save image
     imagepng($image, $filepath);

@@ -1,4 +1,5 @@
 <?php
+//generate_barangay_id.php
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_once '../../vendor/autoload.php';
@@ -8,6 +9,149 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 requireAuth();
+
+// Check if LibreOffice is installed and available
+
+function isLibreOfficeAvailable() {
+    $libreOfficePaths = [
+        'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
+        'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
+        '/usr/bin/libreoffice',
+        '/usr/bin/soffice',
+        '/usr/local/bin/libreoffice',
+        '/Applications/LibreOffice.app/Contents/MacOS/soffice'
+    ];
+    
+    foreach ($libreOfficePaths as $path) {
+        if (file_exists($path)) {
+            error_log("✓ Found LibreOffice at: " . $path);
+            return $path;
+        }
+    }
+    
+    // Try to find it in system PATH
+    $output = [];
+    $returnVar = 0;
+    
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        exec('where soffice 2>nul', $output, $returnVar);
+    } else {
+        exec('which libreoffice 2>/dev/null', $output, $returnVar);
+        if ($returnVar !== 0) {
+            exec('which soffice 2>/dev/null', $output, $returnVar);
+        }
+    }
+    
+    if ($returnVar === 0 && !empty($output[0])) {
+        $path = trim($output[0]);
+        error_log("✓ Found LibreOffice via PATH: " . $path);
+        return $path;
+    }
+    
+    error_log("✗ LibreOffice not found - will use DOCX format");
+    return false;
+}
+
+/**
+ * Convert DOCX to PDF using LibreOffice
+ * Returns array with 'success' (bool), 'path' (string), and 'type' (pdf/docx)
+ */
+function convertDocxToPdf($docxPath, $outputDir) {
+    $libreOfficePath = isLibreOfficeAvailable();
+    
+    if (!$libreOfficePath) {
+        error_log("⚠ LibreOffice not available - keeping DOCX format");
+        return [
+            'success' => false,
+            'path' => $docxPath,
+            'type' => 'docx',
+            'message' => 'LibreOffice not installed'
+        ];
+    }
+    
+    $absDocxPath = realpath($docxPath);
+    $absOutputDir = realpath($outputDir);
+    
+    if (!$absDocxPath || !$absOutputDir) {
+        error_log("✗ Cannot resolve absolute paths");
+        return [
+            'success' => false,
+            'path' => $docxPath,
+            'type' => 'docx',
+            'message' => 'Path resolution failed'
+        ];
+    }
+    
+    error_log("=== PDF CONVERSION ATTEMPT ===");
+    error_log("DOCX path: " . $absDocxPath);
+    error_log("Output dir: " . $absOutputDir);
+    
+    // Build conversion command based on OS
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        // Windows command
+        if (strpos($libreOfficePath, ' ') !== false && strpos($libreOfficePath, '"') === false) {
+            $libreOfficePath = '"' . $libreOfficePath . '"';
+        }
+        $cmd = $libreOfficePath . ' --headless --convert-to pdf:writer_pdf_Export --outdir "' . 
+               $absOutputDir . '" "' . $absDocxPath . '" 2>&1';
+    } else {
+        // Unix/Linux/Mac command
+        $cmd = escapeshellarg($libreOfficePath) . 
+               " --headless --convert-to pdf:writer_pdf_Export --outdir " . 
+               escapeshellarg($absOutputDir) . " " . 
+               escapeshellarg($absDocxPath) . " 2>&1";
+    }
+    
+    error_log("Command: " . $cmd);
+    
+    exec($cmd, $output, $returnVar);
+    
+    error_log("Return code: " . $returnVar);
+    error_log("Output: " . implode("\n", $output));
+    
+    // Generate expected PDF path
+    $pdfPath = $outputDir . '/' . basename($docxPath, '.docx') . '.pdf';
+    
+    // Wait for PDF to be created (max 15 seconds)
+    $maxWait = 15;
+    $waited = 0;
+    while (!file_exists($pdfPath) && $waited < $maxWait) {
+        sleep(1);
+        $waited++;
+        error_log("Waiting for PDF... " . $waited . "s");
+    }
+    
+    // Check if PDF was created successfully
+    if ($returnVar === 0 && file_exists($pdfPath) && filesize($pdfPath) > 0) {
+        error_log("✓ PDF conversion successful");
+        error_log("PDF size: " . filesize($pdfPath) . " bytes");
+        error_log("==============================");
+        
+        // Delete the temporary DOCX file
+        if (file_exists($docxPath)) {
+            @unlink($docxPath);
+            error_log("✓ Temporary DOCX deleted");
+        }
+        
+        return [
+            'success' => true,
+            'path' => $pdfPath,
+            'type' => 'pdf',
+            'message' => 'PDF generated successfully'
+        ];
+    } else {
+        error_log("✗ PDF conversion failed");
+        error_log("Falling back to DOCX format");
+        error_log("==============================");
+        
+        return [
+            'success' => false,
+            'path' => $docxPath,
+            'type' => 'docx',
+            'message' => 'PDF conversion failed - using DOCX'
+        ];
+    }
+}
 
 // Check if export action is requested
 if (isset($_GET['action']) && $_GET['action'] === 'export_excel') {
@@ -79,22 +223,19 @@ if (!file_exists($templatePath)) {
     exit;
 }
 
-// absolute path function
+// Function to get absolute file path
 function getAbsoluteFilePath($dbPath) {
     if (!$dbPath) return null;
     
     error_log("=== PATH RESOLUTION DEBUG ===");
     error_log("Input DB path: " . $dbPath);
     
-    
     $projectRoot = realpath(__DIR__ . '/../../');
     error_log("Project root: " . $projectRoot);
     
-    // Clean the path
     $cleanPath = ltrim($dbPath, '/\\');
     error_log("Clean path: " . $cleanPath);
     
-    // Try multiple possible locations
     $possiblePaths = [
         $projectRoot . DIRECTORY_SEPARATOR . $cleanPath, 
         $projectRoot . DIRECTORY_SEPARATOR . 'pages' . DIRECTORY_SEPARATOR . $cleanPath,
@@ -109,7 +250,7 @@ function getAbsoluteFilePath($dbPath) {
         }
     }
     
-    error_log(" FILE NOT FOUND in any location");
+    error_log("✗ FILE NOT FOUND in any location");
     error_log("===========================");
     return null;
 }
@@ -144,7 +285,7 @@ try {
     $age = $birthdate->diff($today)->y;
     $template->setValue('age', $age);
 
-    // Handle formal photo - EXACT MATCH TO YOUR TEMPLATE
+    // Handle formal photo
     if ($data['photo_path']) {
         $photoAbsolutePath = getAbsoluteFilePath($data['photo_path']);
         
@@ -153,7 +294,6 @@ try {
                 error_log("=== PHOTO INSERTION ===");
                 error_log("Inserting photo from: " . $photoAbsolutePath);
                 
-                // TEMPLATE USES: $formalPhoto (case-sensitive!)
                 if (in_array('formalPhoto', $templateVariables)) {
                     $template->setImageValue('formalPhoto', [
                         'path' => $photoAbsolutePath,
@@ -164,7 +304,6 @@ try {
                     error_log("✓ Photo inserted successfully using 'formalPhoto'");
                 } else {
                     error_log("✗ 'formalPhoto' placeholder not found in template!");
-                    error_log("Available variables: " . implode(', ', $templateVariables));
                     $template->setValue('formalPhoto', '[PHOTO]');
                 }
                 error_log("======================");
@@ -173,8 +312,7 @@ try {
                 $template->setValue('formalPhoto', '[Photo Error: ' . $e->getMessage() . ']');
             }
         } else {
-            error_log("Photo file not accessible: " . ($photoAbsolutePath ?: 'Path resolution failed'));
-            error_log("DB path was: " . $data['photo_path']);
+            error_log("Photo file not accessible");
             $template->setValue('formalPhoto', '[Photo Not Found]');
         }
     } else {
@@ -182,6 +320,7 @@ try {
         $template->setValue('formalPhoto', '[No Photo]');
     }
 
+    // Handle signature
     if ($data['signature_path']) {
         $signatureAbsolutePath = getAbsoluteFilePath($data['signature_path']);
         
@@ -190,7 +329,6 @@ try {
                 error_log("=== SIGNATURE INSERTION ===");
                 error_log("Inserting signature from: " . $signatureAbsolutePath);
                 
-              
                 if (in_array('signature', $templateVariables)) {
                     $template->setImageValue('signature', [
                         'path' => $signatureAbsolutePath,
@@ -198,10 +336,9 @@ try {
                         'height' => 40,
                         'ratio' => true
                     ]);
-                    error_log("✓ Signature inserted successfully using 'signature'");
+                    error_log("✓ Signature inserted successfully");
                 } else {
                     error_log("✗ 'signature' placeholder not found in template!");
-                    error_log("Available variables: " . implode(', ', $templateVariables));
                     $template->setValue('signature', '[SIGNATURE]');
                 }
                 error_log("===========================");
@@ -210,8 +347,7 @@ try {
                 $template->setValue('signature', '[Signature Error: ' . $e->getMessage() . ']');
             }
         } else {
-            error_log("Signature file not accessible: " . ($signatureAbsolutePath ?: 'Path resolution failed'));
-            error_log("DB path was: " . $data['signature_path']);
+            error_log("Signature file not accessible");
             $template->setValue('signature', '[Signature Not Found]');
         }
     } else {
@@ -220,110 +356,36 @@ try {
     }
 
     // Save the filled DOCX template
-    $docxFile = $outputDir . "barangay_id_" . $data['resident_id'] . "_" . time() . ".docx";
+    $timestamp = time();
+    $docxFile = $outputDir . "barangay_id_" . $data['resident_id'] . "_" . $timestamp . ".docx";
     $template->saveAs($docxFile);
     
-    error_log("DOCX template saved successfully: " . $docxFile);
+    error_log("✓ DOCX template saved successfully: " . $docxFile);
 
 } catch (Exception $e) {
-    error_log("Template processing error: " . $e->getMessage());
+    error_log("✗ Template processing error: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
     header("Location: ../pages/barangay_id_records.php?error=template_processing_failed&message=" . urlencode($e->getMessage()));
     exit;
 }
 
-// PDF conversion with better error handling
-$pdfFile = $outputDir . "barangay_id_" . $data['resident_id'] . "_" . time() . ".pdf";
+// Try PDF conversion with fallback to DOCX
+$conversionResult = convertDocxToPdf($docxFile, $outputDir);
 
-// Try multiple possible LibreOffice paths
-$libreOfficePaths = [
-    '/usr/bin/libreoffice',
-    '/usr/bin/soffice',
-    'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
-    'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
-    '/Applications/LibreOffice.app/Contents/MacOS/soffice'
-];
+$finalFile = $conversionResult['path'];
+$fileType = $conversionResult['type'];
+$finalFileBasename = basename($finalFile);
+$pdfPathDB = "uploads/digital_ids/" . $finalFileBasename;
 
-$libreOfficePath = null;
-foreach ($libreOfficePaths as $path) {
-    if (file_exists($path)) {
-        $libreOfficePath = $path;
-        error_log("Found LibreOffice at: " . $path);
-        break;
-    }
+error_log("=== FINAL FILE INFO ===");
+error_log("File type: " . $fileType);
+error_log("File path: " . $finalFile);
+error_log("DB path: " . $pdfPathDB);
+error_log("File exists: " . (file_exists($finalFile) ? 'Yes' : 'No'));
+if (file_exists($finalFile)) {
+    error_log("File size: " . filesize($finalFile) . " bytes");
 }
-
-if (!$libreOfficePath) {
-    exec('which libreoffice 2>/dev/null', $output, $return_var);
-    if ($return_var === 0 && !empty($output[0])) {
-        $libreOfficePath = trim($output[0]);
-    } else {
-        exec('which soffice 2>/dev/null', $output, $return_var);
-        if ($return_var === 0 && !empty($output[0])) {
-            $libreOfficePath = trim($output[0]);
-        }
-    }
-}
-
-if ($libreOfficePath) {
-    $absDocxFile = realpath($docxFile);
-    $absOutputDir = realpath($outputDir);
-    
-    if (!$absDocxFile || !$absOutputDir) {
-        error_log("Cannot get absolute paths for conversion");
-        error_log("DOCX file: " . $docxFile);
-        error_log("Output dir: " . $outputDir);
-        header("Location: ../pages/barangay_id_records.php?error=path_error");
-        exit;
-    }
-    
-    // Enhanced conversion command
-    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-        $cmd = '"' . $libreOfficePath . '"' . 
-               ' --headless --convert-to pdf:writer_pdf_Export --outdir "' . $absOutputDir . '"' . 
-               ' "' . $absDocxFile . '" 2>&1';
-    } else {
-        $cmd = escapeshellarg($libreOfficePath) . 
-               " --headless --convert-to pdf:writer_pdf_Export --outdir " . 
-               escapeshellarg($absOutputDir) . " " . 
-               escapeshellarg($absDocxFile) . " 2>&1";
-    }
-    
-    error_log("=== PDF CONVERSION ===");
-    error_log("Command: " . $cmd);
-    exec($cmd, $output, $return_var);
-    error_log("Return code: " . $return_var);
-    error_log("Output: " . implode("\n", $output));
-    
-    // Wait for conversion
-    $maxWait = 15;
-    $waited = 0;
-    while (!file_exists($pdfFile) && $waited < $maxWait) {
-        sleep(1);
-        $waited++;
-        error_log("Waiting for PDF... " . $waited . "s");
-    }
-    
-    if ($return_var === 0 && file_exists($pdfFile) && filesize($pdfFile) > 0) {
-        if (file_exists($docxFile)) {
-            unlink($docxFile);
-        }
-        
-        $pdfPathDB = "uploads/digital_ids/" . basename($pdfFile);
-        error_log("✓ PDF conversion successful. DB path: " . $pdfPathDB);
-        error_log("PDF size: " . filesize($pdfFile) . " bytes");
-        $finalFile = $pdfFile;
-    } else {
-        error_log("✗ PDF conversion failed. Using DOCX fallback.");
-        $finalFile = $docxFile;
-        $pdfPathDB = "uploads/digital_ids/" . basename($docxFile);
-    }
-    error_log("=====================");
-} else {
-    error_log("LibreOffice not found. Using DOCX file.");
-    $finalFile = $docxFile;
-    $pdfPathDB = "uploads/digital_ids/" . basename($docxFile);
-}
+error_log("======================");
 
 // Update database
 $valid_until = "$year-12-31";
@@ -332,147 +394,37 @@ $admin_id = $_SESSION['admin_id'] ?? 1;
 error_log("=== DATABASE UPDATE ===");
 error_log("Saving path to DB: " . $pdfPathDB);
 error_log("ID Number: " . $idNumber);
+error_log("File Type: " . $fileType);
+
+// Add a note about the file format if DOCX was used
+$approvalNotes = $data['notes'] ?? '';
+if ($fileType === 'docx') {
+    $formatNote = "\n[System Note: Generated as DOCX format - PDF conversion unavailable]";
+    $approvalNotes .= $formatNote;
+}
 
 $update = $conn->prepare("
     UPDATE barangay_id_applications 
-    SET status='Approved', valid_until=?, digital_id_path=?, id_number=?, date_processed=NOW(), processed_by=?
+    SET status='Approved', valid_until=?, digital_id_path=?, id_number=?, 
+        date_processed=NOW(), processed_by=?, notes=?
     WHERE id=?
 ");
-$update->bind_param("sssii", $valid_until, $pdfPathDB, $idNumber, $admin_id, $application_id);
+$update->bind_param("sssisi", $valid_until, $pdfPathDB, $idNumber, $admin_id, $approvalNotes, $application_id);
 
 if ($update->execute()) {
     $update->close();
     error_log("✓ Database updated successfully");
     error_log("======================");
-    header("Location: ../pages/barangay_id_records.php?success=approved&id=" . $application_id);
+    
+    // Add success message with format info
+    $successParam = $fileType === 'pdf' ? 'approved' : 'approved_docx';
+    header("Location: ../pages/barangay_id_records.php?success=" . $successParam . "&id=" . $application_id);
 } else {
     error_log("✗ Database update error: " . $update->error);
     error_log("======================");
     header("Location: ../pages/barangay_id_records.php?error=update_failed&message=" . urlencode($update->error));
 }
 exit;
-
-// Set ID number and update application status
-$valid_until = "$year-12-31";
-$admin_id = $_SESSION['admin_id'] ?? 1;
-$update = $conn->prepare("
-    UPDATE barangay_id_applications 
-    SET status='Approved', valid_until=?, digital_id_path=?, id_number=?, date_processed=NOW(), processed_by=?
-    WHERE id=?
-");
-$update->bind_param("sssii", $valid_until, $pdfPathDB, $idNumber, $admin_id, $application_id);
-
-if ($update->execute()) {
-    $update->close();
-    header("Location: ../pages/barangay_id_records.php?success=approved");
-} else {
-    error_log("Database update error: " . $update->error);
-    header("Location: barangay_id_records.php?error=update_failed");
-}
-exit;
-
-// Function to verify PDF creation
-function verifyPDFCreation($pdfPath, $docxPath) {
-    error_log("=== PDF VERIFICATION ===");
-    error_log("PDF Path: " . $pdfPath);
-    error_log("PDF Exists: " . (file_exists($pdfPath) ? 'YES' : 'NO'));
-    
-    if (file_exists($pdfPath)) {
-        error_log("PDF Size: " . filesize($pdfPath) . " bytes");
-        error_log("PDF Readable: " . (is_readable($pdfPath) ? 'YES' : 'NO'));
-        
-        // Check if it's a valid PDF file
-        $fileHeader = file_get_contents($pdfPath, false, null, 0, 5);
-        error_log("File Header: " . bin2hex($fileHeader));
-        error_log("Is PDF: " . (strpos($fileHeader, '%PDF-') === 0 ? 'YES' : 'NO'));
-        
-        return filesize($pdfPath) > 0 && strpos($fileHeader, '%PDF-') === 0;
-    }
-    
-    error_log("DOCX Fallback Path: " . $docxPath);
-    error_log("DOCX Exists: " . (file_exists($docxPath) ? 'YES' : 'NO'));
-    
-    return file_exists($docxPath);
-}
-
-
-
-if ($data['photo_path']) {
-    $photoAbsolutePath = getAbsoluteFilePath($data['photo_path']);
-    
-    if ($photoAbsolutePath) {
-        try {
-            $photoPlaceholders = ['photo', 'formalPhoto', 'profilePhoto', 'picture', 'userPhoto'];
-            $photoInserted = false;
-            
-            foreach ($photoPlaceholders as $placeholder) {
-                if (in_array($placeholder, $templateVariables)) {
-                    error_log("Found photo placeholder: " . $placeholder);
-                    $template->setImageValue($placeholder, [
-                        'path' => $photoAbsolutePath,
-                        'width' => 120,
-                        'height' => 120,
-                        'ratio' => true
-                    ]);
-                    $photoInserted = true;
-                    error_log("Successfully inserted photo for placeholder: " . $placeholder);
-                    break;
-                }
-            }
-            
-            if (!$photoInserted) {
-                error_log("No image placeholder found for photo");
-                $template->setValue('photo', '[PHOTO INSERTED]');
-            }
-            
-        } catch (Exception $e) {
-            error_log("Photo insertion error: " . $e->getMessage());
-            $template->setValue('photo', '[Photo Error]');
-        }
-    } else {
-        error_log("Photo file not found");
-        $template->setValue('photo', '[Photo Not Found]');
-    }
-}
-
-if ($data['signature_path']) {
-    $signatureAbsolutePath = getAbsoluteFilePath($data['signature_path']);
-    
-    if ($signatureAbsolutePath) {
-        try {
-            $signaturePlaceholders = ['signature', 'digitalSignature', 'sig', 'userSignature'];
-            $signatureInserted = false;
-            
-            foreach ($signaturePlaceholders as $placeholder) {
-                if (in_array($placeholder, $templateVariables)) {
-                    error_log("Found signature placeholder: " . $placeholder);
-                    $template->setImageValue($placeholder, [
-                        'path' => $signatureAbsolutePath,
-                        'width' => 120,
-                        'height' => 40,
-                        'ratio' => true
-                    ]);
-                    $signatureInserted = true;
-                    error_log("Successfully inserted signature for placeholder: " . $placeholder);
-                    break;
-                }
-            }
-            
-            if (!$signatureInserted) {
-                error_log("No signature placeholder found");
-                $template->setValue('signature', '[SIGNATURE INSERTED]');
-            }
-            
-        } catch (Exception $e) {
-            error_log("Signature insertion error: " . $e->getMessage());
-            $template->setValue('signature', '[Signature Error]');
-        }
-    } else {
-        error_log("Signature file not found");
-        $template->setValue('signature', '[Signature Not Found]');
-    }
-}
-
 
 // EXPORT TO EXCEL FUNCTION
 function exportToExcel($conn) {

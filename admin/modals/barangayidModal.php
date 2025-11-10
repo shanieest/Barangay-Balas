@@ -21,7 +21,7 @@
   </div>
 </div>
 
-<!-- Digital Barangay ID Preview Modal  -->
+<!-- Digital Barangay ID Preview Modal - UPDATED -->
 <div class="modal fade" id="viewIdModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -36,8 +36,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" onclick="downloadCurrentPDF()">
-          <i class="fas fa-download me-2"></i>Download PDF
+        <button type="button" class="btn btn-primary" onclick="downloadCurrentFile()">
+          <i class="fas fa-download me-2"></i>Download File
         </button>
       </div>
     </div>

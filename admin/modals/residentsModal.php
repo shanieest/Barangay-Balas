@@ -91,13 +91,13 @@
                                 <label for="purok">Purok*</label>
                                 <select class="form-control" id="purok" name="purok" required>
                                     <option value="">-- Select Purok --</option>
-                                    <option value="Purok 1">Purok 1</option>
-                                    <option value="Purok 2">Purok 2</option>
-                                    <option value="Purok 3">Purok 3</option>
-                                    <option value="Purok 4">Purok 4</option>
-                                    <option value="Purok 5">Purok 5</option>
-                                    <option value="Purok 6">Purok 6</option>
-                                    <option value="Purok 7">Purok 7</option>
+                                    <option value="Purok 1">1</option>
+                                    <option value="Purok 2">2</option>
+                                    <option value="Purok 3">3</option>
+                                    <option value="Purok 4">4</option>
+                                    <option value="Purok 5">5</option>
+                                    <option value="Purok 6">6</option>
+                                    <option value="Purok 7">7</option>
                                 </select>
                              </div>
                                 <div class="mb-3">
@@ -252,11 +252,21 @@
                                     <input type="text" class="form-control" id="editHouseNumber" name="houseNumber" required>
                                     <div class="invalid-feedback">Please provide a house number.</div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="editPurok" class="form-label">Purok (Zone) *</label>
-                                    <input type="text" class="form-control" id="editPurok" name="purok" required>
-                                    <div class="invalid-feedback">Please provide a purok/zone.</div>
-                                </div>
+                                
+                            <div class="form-group">
+                                <label for="editPurok">Purok*</label>
+                                <select class="form-control" id="editPurok" name="purok" required>
+                                    <option value="">-- Select Purok --</option>
+                                    <option value="Purok 1">1</option>
+                                    <option value="Purok 2">2</option>
+                                    <option value="Purok 3">3</option>
+                                    <option value="Purok 4">4</option>
+                                    <option value="Purok 5">5</option>
+                                    <option value="Purok 6">6</option>
+                                    <option value="Purok 7">7</option>
+                                </select>
+                             </div>
+
                                 <div class="mb-3">
                                     <label for="editAddress" class="form-label">Complete Address *</label>
                                     <textarea class="form-control" id="editAddress" name="address" rows="2" required readonly></textarea>

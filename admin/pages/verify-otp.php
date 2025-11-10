@@ -250,10 +250,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
             </form>
             
-            <div class="resend-option">
-                Didn't receive the code? <a href="#" class="resend-link">Resend Code</a>
-            </div>
-            
             <div class="footer">
             <div class="text-muted">Copyright &copy; Barangay Balas <?php echo date('Y'); ?></div>
             </div>

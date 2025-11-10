@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeAdminPanel() {
-    // Initialize all admin functionalities
     initializeDocumentRequests();
     initializeServiceReservations();
     initializeReportGeneration();
@@ -32,7 +31,6 @@ function initializeDocumentRequests() {
             const requestId = button.getAttribute('data-id');
             document.getElementById('approveRequestId').value = requestId;
             
-            // Set auto-download preference
             const autoDownloadCheckbox = document.getElementById('autoDownload');
             if (autoDownloadCheckbox) {
                 autoDownloadCheckbox.checked = getAdminPreference('autoDownload', true);
@@ -73,7 +71,6 @@ function loadRequestDetails(requestId) {
         .then(data => {
             console.log('Request Details:', data);
             
-            // Populate modal with data
             document.getElementById('viewRequestId').textContent = data.id;
             document.getElementById('viewDocumentType').textContent = data.document_type;
             document.getElementById('viewDateRequested').textContent = formatDate(data.date_requested);
@@ -104,9 +101,8 @@ function loadRequestDetails(requestId) {
                 statusBadge.className = 'badge bg-success';
                 if (data.document_path) {
                     downloadBtn.style.display = 'inline-block';
-                    // Admin download - no watermark
                     downloadBtn.href = `/barangay-balas/services/download-document.php?id=${requestId}&admin=true`;
-                    downloadBtn.setAttribute('data-filename', data.document_type + '_' + requestId + '.pdf');
+                    downloadBtn.setAttribute('data-filename', data.document_type + '_' + requestId + '.' + (data.document_file_type || 'pdf'));
                 } else {
                     downloadBtn.style.display = 'none';
                 }
@@ -148,7 +144,7 @@ function approveDocumentRequest() {
             // Auto-download if enabled and file is generated
             if (data.auto_download && data.file_path) {
                 setTimeout(() => {
-                    downloadAdminDocument(requestId, data.document_type || 'document');
+                    downloadAdminDocument(requestId, data.document_type || 'document', data.file_type || 'pdf');
                 }, 1000);
             }
 
@@ -210,7 +206,6 @@ function initializeServiceReservations() {
         });
     }
 
-    // Service status update handlers
     document.querySelectorAll('.update-service-status').forEach(button => {
         button.addEventListener('click', function() {
             const reservationId = this.getAttribute('data-id');
@@ -227,9 +222,6 @@ function loadServiceReservationDetails(reservationId) {
         .then(res => res.json())
         .then(data => {
             console.log('Service Details:', data);
-            
-            // Populate modal with data
-            
             hideLoading('viewServiceModal');
         })
         .catch(err => {
@@ -273,7 +265,6 @@ function initializeReportGeneration() {
     const monthlyReportForm = document.getElementById('monthlyReportForm');
     const yearlyReportForm = document.getElementById('yearlyReportForm');
     
-    // Set current year and month as default
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -309,7 +300,6 @@ function generateReport(reportType) {
     const button = form.querySelector('button[type="submit"]');
     const originalText = button.innerHTML;
     
-    // Add loading state
     button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating Report...';
     button.disabled = true;
     
@@ -320,7 +310,6 @@ function generateReport(reportType) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // Download the generated file
             const downloadLink = document.createElement('a');
             downloadLink.href = data.filepath;
             downloadLink.style.display = 'none';
@@ -338,7 +327,6 @@ function generateReport(reportType) {
         showAlert('Something went wrong while generating the report.', 'danger');
     })
     .finally(() => {
-        // Restore button state
         button.innerHTML = originalText;
         button.disabled = false;
     });
@@ -346,7 +334,6 @@ function generateReport(reportType) {
 
 // Admin Download System with Watermark Control
 function initializeAdminDownloadSystem() {
-    // Handle all admin download links
     document.addEventListener('click', function(e) {
         const downloadLink = e.target.closest('a[href*="barangay-balas/services/download-document.php"]');
         if (downloadLink && !downloadLink.href.includes('admin=true')) {
@@ -355,7 +342,6 @@ function initializeAdminDownloadSystem() {
         }
     });
 
-    // Add admin download notice
     addAdminDownloadNotice();
 }
 
@@ -363,10 +349,8 @@ function handleAdminDownload(link) {
     const url = new URL(link.href);
     const requestId = url.searchParams.get('id');
     
-    // Add admin parameter for clean download (no watermark)
     const adminUrl = link.href + (link.href.includes('?') ? '&' : '?') + 'admin=true';
     
-    // Trigger download
     const downloadLink = document.createElement('a');
     downloadLink.href = adminUrl;
     downloadLink.target = '_blank';
@@ -375,13 +359,12 @@ function handleAdminDownload(link) {
     downloadLink.click();
     document.body.removeChild(downloadLink);
     
-    // Log admin download activity
     logAdminActivity('document_download', { requestId: requestId, adminDownload: true });
 }
 
-function downloadAdminDocument(requestId, documentType) {
+function downloadAdminDocument(requestId, documentType, fileType = 'pdf') {
     const downloadUrl = `/barangay-balas/services/download-document.php?id=${requestId}&admin=true`;
-    const filename = `${documentType}_${requestId}.pdf`;
+    const filename = `${documentType}_${requestId}.${fileType}`;
     
     const link = document.createElement('a');
     link.href = downloadUrl;
@@ -393,11 +376,10 @@ function downloadAdminDocument(requestId, documentType) {
 }
 
 function addAdminDownloadNotice() {
-    // Show admin download info only once per session
     if (!sessionStorage.getItem('adminDownloadNoticeShown')) {
         setTimeout(() => {
             showAlert(
-                '<i class="fas fa-info-circle me-2"></i><strong>Admin Note:</strong> Downloaded documents are clean copies without watermarks. Residents receive watermarked copies for authenticity.',
+                '<i class="fas fa-info-circle me-2"></i><strong>Admin Note:</strong> Downloaded documents are clean copies without watermarks. If PDF is unavailable, DOCX format will be provided automatically.',
                 'info',
                 8000
             );
@@ -470,7 +452,6 @@ function initializeBulkActions() {
         });
     }
     
-    // Row selection for bulk actions
     document.addEventListener('click', function(e) {
         if (e.target.closest('table tbody tr') && !e.target.closest('button') && !e.target.closest('a')) {
             const row = e.target.closest('tr');
@@ -526,7 +507,6 @@ function performBulkAction(requestIds, action) {
 
 // Utility Functions
 function showAlert(message, type = 'info', duration = 5000) {
-    // Remove existing alerts
     const existingAlert = document.querySelector('.alert-dismissible');
     if (existingAlert) {
         existingAlert.remove();
@@ -542,7 +522,6 @@ function showAlert(message, type = 'info', duration = 5000) {
     
     document.body.appendChild(alertDiv);
     
-    // Auto-dismiss after duration
     if (duration > 0) {
         setTimeout(() => {
             if (alertDiv.parentNode) {
@@ -595,11 +574,9 @@ function setAdminPreference(key, value) {
 }
 
 function logAdminActivity(action, data = {}) {
-    // Log admin activities for audit trail
     console.log('Admin Activity:', action, data);
     
-    // You can send this to your backend for logging
-    fetch('log-admin-activity.php', {
+    fetch('../backend/process_request.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, data, timestamp: new Date().toISOString() })
@@ -742,7 +719,6 @@ function exportTableData(tableId, filename = 'export') {
         let row = [], cols = rows[i].querySelectorAll('td, th');
         
         for (let j = 0; j < cols.length; j++) {
-            // Skip action columns
             if (cols[j].querySelector('button') || cols[j].querySelector('a')) {
                 continue;
             }
@@ -752,7 +728,6 @@ function exportTableData(tableId, filename = 'export') {
         csv.push(row.join(','));
     }
     
-    // Download CSV file
     const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
     const downloadLink = document.createElement('a');
     downloadLink.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
@@ -762,5 +737,3 @@ function exportTableData(tableId, filename = 'export') {
     downloadLink.click();
     document.body.removeChild(downloadLink);
 }
-
-document.addEventListener('DOMContentLoaded', initializeAdminPanel);

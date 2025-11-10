@@ -105,21 +105,33 @@ $stats = mysqli_fetch_assoc($stats_result);
                     <?php if (isset($_GET['success']) && $_GET['success'] == 'approved'): ?>
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <i class="fas fa-check-circle me-2"></i>
-                            Application approved successfully! Barangay ID has been generated.
+                            <strong>Success!</strong> Application approved and Barangay ID generated as PDF successfully.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (isset($_GET['success']) && $_GET['success'] == 'approved_docx'): ?>
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Success!</strong> Application approved and Barangay ID generated successfully.
+                            <br>
+                            <small><i class="fas fa-info-circle me-1"></i>Note: ID was generated in DOCX format (PDF conversion unavailable - LibreOffice not installed).</small>
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
 
                     <?php if (isset($_GET['success']) && $_GET['success'] == 'id_updated'): ?>
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i>ID Number updated successfully!
+                            <i class="fas fa-check-circle me-2"></i>
+                            ID Number updated successfully!
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
 
                     <?php if (isset($_GET['success']) && $_GET['success'] == 'rejected'): ?>
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i>Application rejected successfully!
+                            <i class="fas fa-check-circle me-2"></i>
+                            Application rejected successfully!
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
@@ -133,13 +145,20 @@ $stats = mysqli_fetch_assoc($stats_result);
                                     echo "Application not found.";
                                     break;
                                 case 'pdf_conversion_failed':
-                                    echo "Failed to generate PDF. Please try again.";
+                                    echo "Failed to generate PDF. Document was saved as DOCX instead.";
                                     break;
                                 case 'update_failed':
                                     echo "Failed to update application status.";
                                     break;
                                 case 'file_not_found':
                                     echo "Generated file not found.";
+                                    break;
+                                case 'template_not_found':
+                                    echo "Document template not found. Please contact administrator.";
+                                    break;
+                                case 'template_processing_failed':
+                                    $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : 'Unknown error';
+                                    echo "Failed to process document template: " . $message;
                                     break;
                                 default:
                                     echo "An error occurred. Please try again.";
@@ -275,9 +294,9 @@ $stats = mysqli_fetch_assoc($stats_result);
                                                 <td><?= $row['valid_until'] ? date('M d, Y', strtotime($row['valid_until'])) : '-' ?></td>
                                                 <td>
                                                     <?php if ($row['notes']): ?>
-                                                        <button class="btn btn-sm btn-outline-info" onclick="viewNotes('<?= htmlspecialchars($row['notes'], ENT_QUOTES) ?>')">
-                                                            <i class="fas fa-sticky-note"></i> View
-                                                        </button>
+                                                    <button class="btn btn-sm btn-outline-info" onclick="viewNotes(`<?= htmlspecialchars($row['notes']) ?>`)">
+                                                        <i class="fas fa-sticky-note"></i> View
+                                                    </button>
                                                     <?php else: ?>
                                                         <span class="text-muted">None</span>
                                                     <?php endif; ?>

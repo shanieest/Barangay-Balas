@@ -143,23 +143,23 @@ function viewApplicationDetails(id) {
     modal.show();
 }
 
-// PDF Path Construction
+// File Path Construction - UPDATED VERSION
 document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (e.target.closest('.view-id')) {
             const btn = e.target.closest('.view-id');
             const dbPath = btn.dataset.path;
             
-            console.log('=== PDF VIEWER - CRITICAL FIX ===');
+            console.log('=== FILE VIEWER - CRITICAL FIX ===');
             console.log('Database path:', dbPath);
             
             if (!dbPath) {
-                showToast('Error: PDF path not found in database', 'error');
+                showToast('Error: File path not found in database', 'error');
                 return;
             }
             
-            const getCorrectPDFPath = (dbPath) => {
-                let cleanPath = dbPath.replace(/^\.\.\//, '').replace(/^\.\//, '').replace(/^\//, '');
+            const getCorrectFilePath = (dbPath) => {
+                let cleanPath = dbPath.replace(/^\.\.\//, '').replace(/^\.\.\\\\/, '').replace(/^\.\//, '').replace(/^\//, '');
                 
                 const correctPath = `../../${cleanPath}`;
                 
@@ -168,47 +168,147 @@ document.addEventListener('DOMContentLoaded', function() {
                 return correctPath;
             };
             
-            const pdfPath = getCorrectPDFPath(dbPath);
+            const filePath = getCorrectFilePath(dbPath);
+            const fileExtension = filePath.split('.').pop().toLowerCase();
             
-            console.log('Final PDF path:', pdfPath);
+            console.log('Final file path:', filePath);
+            console.log('File extension:', fileExtension);
             console.log('================================');
             
-            // Show modal with working PDF embed
-            const modalContent = `
-                <div class="pdf-viewer-container">
-                    <div class="text-center mb-3">
-                        <div class="btn-group" role="group">
-                            <button class="btn btn-primary" onclick="openPDFInNewTab('${pdfPath}')">
-                                <i class="fas fa-external-link-alt me-2"></i>Open in New Tab
-                            </button>
-                            <a href="${pdfPath}" download class="btn btn-success">
-                                <i class="fas fa-download me-2"></i>Download PDF
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <!-- PDF Embed with fallback -->
-                    <div class="pdf-embed-wrapper" style="height: 600px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
-                        <iframe 
-                            src="${pdfPath}#toolbar=1&navpanes=0&scrollbar=1" 
-                            width="100%" 
-                            height="100%" 
-                            style="border: none;"
-                            onload="console.log('PDF loaded successfully')"
-                            onerror="handlePDFLoadError('${pdfPath}')">
-                        </iframe>
-                    </div>
-                
-                </div>
-            `;
-            
-            document.getElementById('pdfViewerContent').innerHTML = modalContent;
-            
-            const modal = new bootstrap.Modal(document.getElementById('viewIdModal'));
-            modal.show();
+            // Show modal with appropriate content based on file type
+            if (fileExtension === 'pdf') {
+                showPDFModal(filePath);
+            } else if (fileExtension === 'docx') {
+                showDOCXModal(filePath);
+            } else {
+                showDownloadModal(filePath);
+            }
         }
     });
 });
+
+// Show PDF in modal
+function showPDFModal(pdfPath) {
+    const modalContent = `
+        <div class="pdf-viewer-container">
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                This is a PDF document. For best viewing experience, download the file or open in a new tab.
+            </div>
+            
+            <div class="text-center mb-3">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-primary" onclick="openFileInNewTab('${pdfPath}')">
+                        <i class="fas fa-external-link-alt me-2"></i>Open in New Tab
+                    </button>
+                    <a href="${pdfPath}" download class="btn btn-success">
+                        <i class="fas fa-download me-2"></i>Download PDF
+                    </a>
+                </div>
+            </div>
+            
+            <!-- PDF Embed with fallback -->
+            <div class="pdf-embed-wrapper" style="height: 600px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
+                <iframe 
+                    src="${pdfPath}#toolbar=1&navpanes=0&scrollbar=1" 
+                    width="100%" 
+                    height="100%" 
+                    style="border: none;"
+                    onload="console.log('PDF loaded successfully')"
+                    onerror="handlePDFLoadError('${pdfPath}')">
+                </iframe>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('pdfViewerContent').innerHTML = modalContent;
+    
+    const modal = new bootstrap.Modal(document.getElementById('viewIdModal'));
+    modal.show();
+}
+
+// Show DOCX in modal with download options
+function showDOCXModal(docxPath) {
+    const modalContent = `
+        <div class="docx-viewer-container">
+            <div class="alert alert-warning mb-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>DOCX Format</strong><br>
+                This Barangay ID was generated as a DOCX document (PDF conversion unavailable). 
+                You can download the file and open it with Microsoft Word, LibreOffice, or Google Docs.
+            </div>
+            
+            <div class="text-center py-4">
+                <i class="fas fa-file-word text-primary mb-3" style="font-size: 4rem;"></i>
+                <h4 class="mb-3">Barangay ID Document</h4>
+                <p class="text-muted mb-4">
+                    This document is in Microsoft Word format (.docx).<br>
+                    Download the file to view or print the Barangay ID.
+                </p>
+                
+                <div class="row g-3 justify-content-center">
+                    <div class="col-md-6">
+                        <a href="${docxPath}" download class="btn btn-primary w-100 p-3">
+                            <i class="fas fa-download fa-2x mb-2"></i><br>
+                            <strong>Download DOCX</strong>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-success w-100 p-3" onclick="openFileInNewTab('${docxPath}')">
+                            <i class="fas fa-external-link-alt fa-2x mb-2"></i><br>
+                            <strong>Open in New Tab</strong>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6><i class="fas fa-lightbulb me-2"></i>How to View:</h6>
+                    <small class="text-muted">
+                        • <strong>Microsoft Word:</strong> Double-click the downloaded file<br>
+                        • <strong>LibreOffice:</strong> Free alternative that can open DOCX files<br>
+                        • <strong>Google Docs:</strong> Upload the file to docs.google.com<br>
+                        • <strong>Online viewers:</strong> Use services like office.com or viewer.aspx
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('pdfViewerContent').innerHTML = modalContent;
+    
+    const modal = new bootstrap.Modal(document.getElementById('viewIdModal'));
+    modal.show();
+}
+
+// Show generic download modal for unknown file types
+function showDownloadModal(filePath) {
+    const modalContent = `
+        <div class="download-container">
+            <div class="text-center py-4">
+                <i class="fas fa-file-download text-primary mb-3" style="font-size: 4rem;"></i>
+                <h4 class="mb-3">Download File</h4>
+                <p class="text-muted mb-4">
+                    This file format cannot be previewed in the browser.<br>
+                    Please download the file to view it.
+                </p>
+                
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="${filePath}" download class="btn btn-primary btn-lg">
+                        <i class="fas fa-download me-2"></i>Download File
+                    </a>
+                    <button class="btn btn-success btn-lg" onclick="openFileInNewTab('${filePath}')">
+                        <i class="fas fa-external-link-alt me-2"></i>Open File
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('pdfViewerContent').innerHTML = modalContent;
+    
+    const modal = new bootstrap.Modal(document.getElementById('viewIdModal'));
+    modal.show();
+}
 
 // Handle PDF load errors
 function handlePDFLoadError(pdfPath) {
@@ -222,7 +322,7 @@ function handlePDFLoadError(pdfPath) {
             
             <div class="row g-3 justify-content-center">
                 <div class="col-md-4">
-                    <button class="btn btn-primary w-100 p-3" onclick="openPDFInNewTab('${pdfPath}')">
+                    <button class="btn btn-primary w-100 p-3" onclick="openFileInNewTab('${pdfPath}')">
                         <i class="fas fa-external-link-alt fa-2x mb-2"></i><br>
                         <strong>Open in New Tab</strong>
                     </button>
@@ -247,14 +347,14 @@ function handlePDFLoadError(pdfPath) {
     `;
 }
 
-// Open PDF in new tab
-function openPDFInNewTab(pdfPath) {
-    console.log('Opening PDF in new tab:', pdfPath);
-    window.open(pdfPath, '_blank', 'noopener,noreferrer');
+// Open any file in new tab
+function openFileInNewTab(filePath) {
+    console.log('Opening file in new tab:', filePath);
+    window.open(filePath, '_blank', 'noopener,noreferrer');
 }
 
-// Download current PDF
-function downloadCurrentPDF() {
+// Download current file
+function downloadCurrentFile() {
     const downloadLink = document.querySelector('#pdfViewerContent a[download]');
     if (downloadLink) {
         downloadLink.click();
