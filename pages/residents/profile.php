@@ -119,43 +119,43 @@ if (empty($_SESSION['csrf_token'])) {
                                 <div class="section-title"><i class="fas fa-user me-2"></i>Basic Information</div>
                                 <div class="row mb-3">
                                     <div class="col-md-3">
-                                        <label class="form-label">First Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="first_name" value="<?= htmlspecialchars($profile['first_name'] ?? '') ?>" required>
+                                        <label class="form-label">First Name</label>
+                                        <input type="text" class="form-control" name="first_name" value="<?= htmlspecialchars($profile['first_name'] ?? '') ?>" readonly>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label">Middle Name</label>
-                                        <input type="text" class="form-control" name="middle_name" value="<?= htmlspecialchars($profile['middle_name'] ?? '') ?>">
+                                        <input type="text" class="form-control" name="middle_name" value="<?= htmlspecialchars($profile['middle_name'] ?? '') ?>" readonly>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Last Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="last_name" value="<?= htmlspecialchars($profile['last_name'] ?? '') ?>" required>
+                                        <label class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" name="last_name" value="<?= htmlspecialchars($profile['last_name'] ?? '') ?>" readonly>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label">Suffix</label>
-                                        <select class="form-select" name="suffix">
-                                            <option value="">None</option>
-                                            <option value="Jr." <?= ($profile['suffix'] ?? '') == 'Jr.' ? 'selected' : '' ?>>Jr.</option>
-                                            <option value="Sr." <?= ($profile['suffix'] ?? '') == 'Sr.' ? 'selected' : '' ?>>Sr.</option>
-                                            <option value="II" <?= ($profile['suffix'] ?? '') == 'II' ? 'selected' : '' ?>>II</option>
-                                            <option value="III" <?= ($profile['suffix'] ?? '') == 'III' ? 'selected' : '' ?>>III</option>
-                                            <option value="IV" <?= ($profile['suffix'] ?? '') == 'IV' ? 'selected' : '' ?>>IV</option>
+                                        <select class="form-select" name="suffix" readonly>
+                                            <option value="" readonly>None</option>
+                                            <option value="Jr." <?= ($profile['suffix'] ?? '') == 'Jr.' ? 'selected' : '' ?> readonly>Jr.</option>
+                                            <option value="Sr." <?= ($profile['suffix'] ?? '') == 'Sr.' ? 'selected' : '' ?> readonly>Sr.</option>
+                                            <option value="II" <?= ($profile['suffix'] ?? '') == 'II' ? 'selected' : '' ?> readonly>II</option>
+                                            <option value="III" <?= ($profile['suffix'] ?? '') == 'III' ? 'selected' : '' ?> readonly>III</option>
+                                            <option value="IV" <?= ($profile['suffix'] ?? '') == 'IV' ? 'selected' : '' ?> readonly>IV</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 <div class="row mb-3">
                                     <div class="col-md-4">
-                                        <label class="form-label">Birthdate <span class="text-danger">*</span></label>
-                                        <input type="date" class="form-control" name="birthdate" value="<?= $profile['birthdate'] ?? '' ?>" required>
+                                        <label class="form-label">Birthdate</label>
+                                        <input type="date" class="form-control" name="birthdate" value="<?= $profile['birthdate'] ?? '' ?>" readonly>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">Place of Birth <span class="text-danger">*</span></label>
+                                        <label class="form-label">Place of Birth</label>
                                         <input type="text" class="form-control" name="place_of_birth" value="<?= htmlspecialchars($profile['place_of_birth'] ?? '') ?>" required placeholder="e.g., Mexico, Pampanga">
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">Gender <span class="text-danger">*</span></label>
-                                        <select class="form-select" name="sex" required>
-                                            <option value="">Select Gender</option>
+                                        <label class="form-label">Sex</label>
+                                        <select class="form-select" name="sex" readonly>
+                                            <option value="">Select Sex</option>
                                             <option value="male" <?= ($profile['sex'] ?? '') == 'male' ? 'selected' : '' ?>>Male</option>
                                             <option value="female" <?= ($profile['sex'] ?? '') == 'female' ? 'selected' : '' ?>>Female</option>
                                         </select>
@@ -164,8 +164,8 @@ if (empty($_SESSION['csrf_token'])) {
 
                                 <div class="row mb-3">
                                     <div class="col-md-4">
-                                        <label class="form-label">Civil Status <span class="text-danger">*</span></label>
-                                        <select class="form-select" name="civil_status">
+                                        <label class="form-label">Civil Status</label>
+                                        <select class="form-select" name="civil_status" required>
                                             <option value="">Select Status</option>
                                             <option value="Single" <?= ($profile['civil_status'] ?? '') == 'Single' ? 'selected' : '' ?>>Single</option>
                                             <option value="Married" <?= ($profile['civil_status'] ?? '') == 'Married' ? 'selected' : '' ?>>Married</option>
@@ -194,18 +194,18 @@ if (empty($_SESSION['csrf_token'])) {
                                 <div class="section-divider">
                                     <div class="section-title">
                                         <i class="fas fa-home me-2"></i>Address Information
-                                        <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="toggleAddressEdit">
-                                            <i class="fas fa-edit me-1"></i>Edit
+                                        <!--<button type="button" class="btn btn-sm btn-outline-primary ms-2" id="toggleAddressEdit">
+                                            <i class="fas fa-edit me-1"></i>Edit-->
                                         </button>
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-md-4">
-                                            <label class="form-label">House Number <span class="text-danger">*</span></label>
+                                            <label class="form-label">House Number</label>
                                             <input type="text" class="form-control" name="house_number" id="houseNumberInput" 
                                                 value="<?= htmlspecialchars($profile['house_number'] ?? '') ?>" required readonly>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Purok <span class="text-danger">*</span></label>
+                                            <label class="form-label">Purok</label>
                                             <select class="form-select" name="purok" id="purokSelect" required>
                                                 <option value="">Select Purok</option>
                                                 <option value="Purok 1" <?= ($profile['purok'] ?? '') == 'Purok 1' ? 'selected' : '' ?>>Purok 1</option>
@@ -220,7 +220,7 @@ if (empty($_SESSION['csrf_token'])) {
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <label class="form-label">Complete Address <span class="text-danger">*</span></label>
+                                        <label class="form-label">Complete Address</label>
                                         <div class="input-group">
                                             <input type="text" class="form-control" name="address" id="addressInput" 
                                                 value="<?= htmlspecialchars($profile['address'] ?? '') ?>" required readonly>
