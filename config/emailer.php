@@ -14,8 +14,8 @@ function sendEmail($to, $subject, $body, $toName = '', $fromEmail = 'balasmexico
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'balasmexico2026@gmail.com'; // Use consistent email
-        $mail->Password = 'pccn pswg xyie jkrq'; // Your app password
+        $mail->Username = 'uhiouhiojk'; // Use consistent email
+        $mail->Password = 'llllllllllllllllllllllllllll'; // Your app password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
         $mail->SMTPDebug = 0; // Set to 2 for debugging
