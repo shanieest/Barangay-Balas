@@ -95,16 +95,6 @@ Make sure you have installed:
 ;extension=gd  to extension=gd
 ;extension=zip to extension=zip
 
-- Composer (for dependency management)
-•Install in VS Code terminal
-composer require phpoffice/phpword
-composer require chillerlan/php-qrcode
-composer require phpoffice/phpspreadsheet
-composer require setasign/fpdf
-composer require tecnickcom/tcpdf
-composer require dompdf/dompdf
-LibreOffice 
-
 -MySQL  server
 
 
